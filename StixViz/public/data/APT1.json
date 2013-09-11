@@ -1,0 +1,211 @@
+{
+    "type":"top",
+    "name":"APT1",
+    "children":[
+        {
+            "type":"threatActor",
+            "name":"People's Liberation Army\nUnit 61398\nAPT1",
+            "children":[
+                {
+                    "type":"ObservedTTP",
+                    "name":"APT1 Tactics, Techniques and Procedures",
+                    "children":[
+                        {
+                            "type":"Indicator-Utility",
+                            "name":"GDOCUPLOAD (Family)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"GREENCAT (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"HELAUTO (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"BOUNCER (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"LONGRUN (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"KURTON (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"MINIASP (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"MANITSME (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"SEASALT (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"WARP (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"COMBOS (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Utility",
+                            "name":"MAPIGET (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"CALENDAR (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"HACKSFASE (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"SWORD (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"GLOOXMAIL (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"NEWSREELS (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"TABMSGSQL (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"COOKIEBAG (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"DAIRY (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Composite",
+                            "name":"Appendix E - APT1 File Hashes"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"BISCUIT (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Utility",
+                            "name":"GETMAIL (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"BANGAT (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"TARSIP-ECLIPSE (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Utility",
+                            "name":"LIGHTBOLT (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"STARSYPOUND (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"AURIGA (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Backdoor",
+                            "name":"TARSIP-MOON (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Downloader",
+                            "name":"GOGGLES (FAMILY)"
+                        },
+                        {
+                            "type":"Indicator-Utility",
+                            "name":"LIGHTDART (FAMILY)"
+                        },
+                        {
+                            "type":"VictimTargeting",
+                            "name":"United States\nCanada\nUnited Kingdom\nNorway\nFrance\nBelgium\nLuxembourg\nSwitzerland\nIsrael\nUAE\nSouth Africa\nIndia\nJapan\nTaiwan\nSingapore"
+                         
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type":"threatActor",
+            "name":"Ugly Gorilla\nWang Dong\nJackWang\nGreenfield” (绿野)",
+            "children":[
+                {
+                    "type":"Observable-URI",
+                    "name":"hugesoft.org"
+                },
+                {
+                    "type":"MalwareBehavior",
+                    "name":"MANITSME"
+                }
+            ]
+        },
+        {
+            "type":"threatActor",
+            "name":"dota\nDOTA\nRodney\nRaith"
+        },
+        {
+            "type":"threatActor",
+            "name":"SuperHard\nMei Qiang",
+            "children":[
+                {
+                    "type":"MalwareBehavior",
+                    "name":"AURIGA"
+                },
+                {
+                    "type":"MalwareBehavior",
+                    "name":"BANGAT"
+                }
+            ]
+        },
+        {
+            "type":"threatActor",
+            "name":"Comment Crew"
+        },
+        {
+            "type":"threatActor",
+            "name":"Comment Group"
+        },
+        {
+            "type":"threatActor",
+            "name":"Shady Rat"
+        },
+        {
+            "type":"threatActor",
+            "name":"GSD 3rd Department / 2nd Bureau"
+        },
+        {
+            "type":"threatActor",
+            "name":"GSD 3rd Department"
+        },
+        {
+            "type":"threatActor",
+            "name":"PLA General Staff"
+        },
+        {
+            "type":"threatActor",
+            "name":"Communist Part of China"
+        },
+        {
+            "type":"threatActor",
+            "name":"China Telecom"
+        }
+    ]
+}

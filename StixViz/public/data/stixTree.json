@@ -1,0 +1,87 @@
+{"type": "top",
+ "name": "APT1",
+ "children": [ 
+     {"type": "threatActor",
+      "name": "Pamina Republic Army\nUnit 31459",
+      "children": [
+          {"type":"VictimTargeting",
+  	   "name":"Khaffeine\nBronxistan\nPerturbia\nBlahniks\n..."
+	  },
+	  {"type":"Indicator",
+	   "name":"C2 Servers",
+	   "children":[
+	       {"type":"Observable-IPRange",
+	        "name":"172.24.0.0-112.25.255.255"
+	       }
+           ]
+          },
+	  {"type":"ObservedTTP",
+	   "name":"Exfiltration",
+	   "children":[
+               {"type":"UsesTool",
+                "name":"GETMAIL"
+               }     
+           ]
+          },
+	  {"type":"ObservedTTP",
+	   "name":"Internal Reconnaissance",
+	   "children":[
+	       {"type":"AttackPattern",
+	        "name":"ipconfig\nnet view\nnet group 'domain admins'"
+               }
+	   ]
+	  },
+	  {"type":"ObservedTTP",
+	   "name":"Escalate Privilege",
+	   "children":[
+	       {"type":"UsesTool",
+	        "name":"cachedump"
+	       },
+	       {"type":"UsesTool",
+	        "name":"lslsass"
+	       }
+	   ]	
+	  },
+	  {"type":"ObservedTTP",
+	   "name":"Establish Foothold",
+	   "children": [
+	       {"type":"MalwareBehavior",
+	        "name":"WEBC2",
+		"children":[
+		    {"type":"Indicator",
+		     "name":"",
+		     "children":[
+		         {"type":"Observable-MD5",
+			  "name":"MD5:d8bb32a7465f55c368230bb52d52d885"
+			 }
+		     ]
+		    }
+		]
+	       }
+	   ]
+	  },
+	  {"type":"ObservedTTP",
+	   "name":"Initial Compromise",
+	   "children":[
+	       {"type":"Indicator",
+	        "name":"Spear Phishing Email",
+		"children":[
+		    {"type":"Observable-Email",
+		     "name":"Sender: John Smith\nSubject: Press Release"
+		    }
+		]
+	       }
+	   ]
+	  }
+      ]
+     },
+     {"type": "threatActor",
+      "name": "Leet",
+      "children": [
+          {"type": "Observable-ElectronicAddress",
+	   "name": "133t007@badassin.com"
+          }
+      ]
+     }
+ ]
+}

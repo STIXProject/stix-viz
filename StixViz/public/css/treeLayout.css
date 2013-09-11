@@ -1,0 +1,73 @@
+.NodeTypeLabel {
+    font-size : 10px;
+    fill: white;
+}
+
+body { 
+  cursor:default;
+}
+
+.node.parent {
+  cursor: pointer;
+}
+
+.node rect { 
+	stroke: black;
+	stroke-width: 1.5px;
+}
+
+.node text,h1 { 
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: moz-none;
+-ms-user-select: none;
+user-select: none;
+}
+
+.node rect.leaf {
+  stroke: lightgray;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.TTPs,.ObservedTTP,.AttackPattern,.MalwareBehavior {
+  fill: purple;
+}
+
+.Indicator,.Indicator-Utility,.Indicator-Composite,.Indicator-Backdoor,.Indicator-Downloader {
+  fill: #B8860B;
+}
+
+
+.Observable,.Observable-ElectronicAddress,.Observable-Email,.Observable-IPRange,.Observable-MD5,.Observable-URI {
+  fill: #007aa5;
+}
+
+.ThreatActors,.threatActor {
+  fill:red;
+	}
+
+.top {
+  fill: blue;
+}
+
+.UsesTool {
+  fill: purple;
+}
+
+.VictimTargeting {
+  fill: #eb4c42;
+}
+
+
+
+

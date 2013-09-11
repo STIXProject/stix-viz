@@ -1,0 +1,16 @@
+{
+    "name":"StixViz",
+    "main":"index.html",
+    "description":"stix visualization app",
+    "version":"0.0.1",
+    "private":true,
+    "dependencies": {
+        "mime":"1.2.10"
+    },
+    "window":{
+        "toolbar":true,  
+        "width":1200,
+        "height":700
+    }
+    
+}
