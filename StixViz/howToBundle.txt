@@ -1,0 +1,10 @@
+make zip (NOT zipx) of folders, package.json and index.html - call it StixViz.nw
+
+C:\node-webkit>copy /b nw.exe+C:\Users\slubar\Documents\DHS\standalone-unbundled
+\StixViz\StixViz.nw C:\Users\slubar\Documents\DHS\standalone-unbundled\StixViz\S
+tixViz.exe
+
+from node-webkit dir, add new .exe to StixDistro.zip
+
+extract & test
+

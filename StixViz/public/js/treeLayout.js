@@ -35,7 +35,8 @@ $(function() {
 
 	var typeLabelMap = {"ThreatActors":"Threat Actors","TTPs":"TTPs","AttackPattern":"Attack Pattern", "Indicator": "Indicator", 
 			"MalwareBehavior":"Malware Behavior","Observable":"Observable","Observable-ElectronicAddress": "Observable",
-			"Observable-Email":"Observable", "Observable-IPRange":"Observable",
+                            "Observable-Email":"Observable", "Observable-IPRange":"Observable", "Indicators":"Indicators",
+                            "Campaigns":"Campaigns", "campaign":"Campaign",
 			"Observable-MD5":"Observable","Observable-URI":"Observable", "ObservedTTP":"TTP", "threatActor": "Threat Actor",
 			"top":"Report", "UsesTool":"TTP", "VictimTargeting":"Victim Targeting", "Indicator-Utility":"Indicator",
 			"Indicator-Composite":"Indicator","Indicator-Backdoor":"Indicator","Indicator-Downloader":"Indicator"};

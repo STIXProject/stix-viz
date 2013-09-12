@@ -39,11 +39,15 @@ user-select: none;
   stroke-width: 1.5px;
 }
 
+.Campaigns,.campaign {
+  fill: green;
+}
+
 .TTPs,.ObservedTTP,.AttackPattern,.MalwareBehavior {
   fill: purple;
 }
 
-.Indicator,.Indicator-Utility,.Indicator-Composite,.Indicator-Backdoor,.Indicator-Downloader {
+.Indicators,.Indicator,.Indicator-Utility,.Indicator-Composite,.Indicator-Backdoor,.Indicator-Downloader {
   fill: #B8860B;
 }
 
@@ -60,7 +64,7 @@ user-select: none;
   fill: blue;
 }
 
-.UsesTool {
+.Tools, .UsesTool {
   fill: purple;
 }
 
