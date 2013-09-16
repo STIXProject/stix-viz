@@ -1,18 +1,48 @@
 $(function() {
 	$('#files').on('change', function () { handleFileSelect($(this)); });
+	
+	$('#treeView').height('95%');
+	$('#wrapper').css('display','none');
     });
 
 var typeLabelMap = {"ThreatActors":"Threat Actors","TTPs":"TTPs","AttackPattern":"Attack Pattern", "Indicator": "Indicator", 
-                    "MalwareBehavior":"Malware Behavior","Observable":"Observable","Observable-ElectronicAddress": "Observable",
-                    "Observable-Email":"Observable", "Observable-IPRange":"Observable", "Indicators":"Indicators",
-                    "Campaigns":"Campaigns", "campaign":"Campaign",
-                    "Observable-MD5":"Observable","Observable-URI":"Observable", "ObservedTTP":"TTP", "threatActor": "Threat Actor",
-                    "top":"Report", "UsesTool":"TTP", "Tools":"Tools", "VictimTargeting":"Victim Targeting", "Indicator-Utility":"Indicator",
-                    "Indicator-Composite":"Indicator","Indicator-Backdoor":"Indicator","Indicator-Downloader":"Indicator"};
+        "MalwareBehavior":"Malware Behavior","Observable":"Observable","Observable-ElectronicAddress": "Observable",
+        "Observable-Email":"Observable", "Observable-IPRange":"Observable", "Indicators":"Indicators",
+        "Campaigns":"Campaigns", "campaign":"Campaign",
+        "Observable-MD5":"Observable","Observable-URI":"Observable", "ObservedTTP":"TTP", "threatActor": "Threat Actor",
+        "top":"Report", "UsesTool":"TTP", "Tools":"Tools", "VictimTargeting":"Victim Targeting", "Indicator-Utility":"Indicator",
+        "Indicator-Composite":"Indicator","Indicator-Backdoor":"Indicator","Indicator-Downloader":"Indicator"};
+
+var typeIconMap = {
+	"ThreatActors" : "ThreatActor",
+	"TTPs" : "TTP",
+	"AttackPattern" : "TTP",
+	"Indicator" : "Indicator",
+	"MalwareBehavior" : "TTP",
+	"Observable" : "Observable",
+	"Observable-ElectronicAddress" : "Observable",
+	"Observable-Email" : "Observable",
+	"Observable-IPRange" : "Observable",
+	"Indicators" : "Indicator",
+	"Campaigns" : "Campaign",
+	"campaign" : "Campaign",
+	"Observable-MD5" : "Observable",
+	"Observable-URI" : "Observable",
+	"ObservedTTP" : "TTP",
+	"threatActor" : "ThreatActor",
+	"UsesTool" : "TTP",
+	"Tools" : "TTP",
+	"VictimTargeting" : "Victim",
+	"Indicator-Utility" : "Indicator",
+	"Indicator-Composite" : "Indicator",
+	"Indicator-Backdoor" : "Indicator",
+	"Indicator-Downloader" : "Indicator",
+	"top" : "Report"
+};
 
 
 var nodeWidth = 60;
-var nodeHeight = 40;
+var nodeHeight = 60;
 var i = 0;
 
 var tree,root,svg,diagonal;
@@ -42,11 +72,18 @@ function displayTree(report) {
 
     d3.select("svg").remove();
 		
-    svg = d3.select("#content").append("svg")
+    svg = d3.select("#treeContent").append("svg")
         .attr("width", width + margin.right + margin.left)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+    
+    svg.append("defs")
+    .append("filter")
+    .attr("id","lighten")
+    .append("feColorMatrix")
+    	.attr("type","matrix")
+    	.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 		
 		
 
@@ -72,6 +109,13 @@ function collapse(d) {
         d._children.forEach(collapse);
         d.children = null;
     }
+}
+
+function expand (d) { 
+	if (d._children) { 
+		d.children = d._children; 
+		d._children = null;
+	}
 }
 	
 function addParents(parent) { 
@@ -132,33 +176,44 @@ function update(source) {
             });
 
 		
-    nodeEnter.append("rect")
+    nodeEnter.append("svg:image")
         .attr("height", 1e-6)
         .attr("width", 1e-6)
-        .attr("rx", "5") // round the corners with rx and ry
-        .attr("ry", "5")
+        .attr("xlink:href",function (d) {  return "./public/icons/13-008 ICONS - STIX_"+typeIconMap[d.type]+".png"; })
+//        .attr("rx", "5") // round the corners with rx and ry
+//        .attr("ry", "5")
         .attr("transform","translate("+ -nodeWidth/2 + ")")
         .attr("class", function(d) { return d.type; })
+        .attr("filter",function (d) { 
+            return (!d.children && !d._children) || (d.children && d.children.length == 0) || (d._children && d._children.length == 0) ? "url(#lighten)" : "none"; 
+        })
         .classed("leaf",function (d) { 
-                return (!d.children && !d._children) || (d.children && d.children.length == 0) || (d._children && d._children.length == 0); 
+            return (!d.children && !d._children) || (d.children && d.children.length == 0) || (d._children && d._children.length == 0);             
             });
 	      
 	      
     nodeEnter.append("text")
         .attr("y", function(d) { return nodeHeight + 12; })
         .attr("text-anchor", "middle")
-        .text(function(d) {return d.name;})
+        .text(function(d) {
+        	if (typeof(d.subtype) === 'undefined') {
+                return d.name;
+            }
+            else {
+                return d.subtype ;
+            }
+        })
         .style("fill-opacity", 1e-6);
 		
-    // add node type labels (indicator, ttp, ...)
-    nodeEnter.append("text")
-        .attr("dy", nodeHeight/2)
-        .attr("class", "NodeTypeLabel")
-        .style("text-anchor", "middle")
-        .text(function(d) { 
-                return typeLabelMap[d.type];	
-            });
-		
+//    // add node type labels (indicator, ttp, ...)
+//    nodeEnter.append("text")
+//        .attr("dy", nodeHeight/2)
+//        .attr("class", "NodeTypeLabel")
+//        .style("text-anchor", "middle")
+//        .text(function(d) { 
+//                return typeLabelMap[d.type];	
+//            });
+//		
 
     // wrap text description
     svg.selectAll('text').each(wraptext);
@@ -169,22 +224,22 @@ function update(source) {
         .duration(duration)
         .attr("transform",function(d) {	return "translate(" + d.x + "," + d.y + ")";	});
 
-    nodeUpdate.select("rect")
-        .attr("height", nodeHeight)
-        .attr("width", nodeWidth)
-        .attr("rx", "5") // round the corners with rx and ry
-        .attr("ry", "5");
+    nodeUpdate.select("image")
+        .attr("height", String(nodeHeight)+"px")
+        .attr("width", String(nodeWidth)+"px");
+//        .attr("rx", "5") // round the corners with rx and ry
+//        .attr("ry", "5");
 	      
 
     nodeUpdate.select("text").style("fill-opacity", 1);
 
     // Transition exiting nodes to the parent's new position.
     var nodeExit = node.exit().transition().duration(duration).attr(
-                                                                    "transform", function(d) {
-                                                                        return "translate(" + (source.x + (nodeWidth/2)) + "," + (source.y + (nodeWidth/2)) + ")";
-                                                                    }).remove();
+    		"transform", function(d) {
+    			return "translate(" + (source.x + (nodeWidth/2)) + "," + (source.y + (nodeWidth/2)) + ")";
+    		}).remove();
 
-    nodeExit.select("rect")
+    nodeExit.select("image")
         .attr("height", 1e-6)
         .attr("width", 1e-6);
 
@@ -268,10 +323,11 @@ function click(d) {
 function doubleclick (d) { 
     d3.event.stopPropagation();
 		
-    if (d.depth != 0) { 
+    if (d.depth != 0) {   // If we are not clicking on the root 
         root = d;
+        expand(d);
         update(d); 
-    } else if (d.parent) { 
+    } else if (d.parent) {    // we are clicking on the root 
         d.parent.depth = -1;
         doubleclick(d.parent);
     } 
@@ -352,3 +408,15 @@ function handleFileSelect(fileinput) {
     //displayTree(result);
 };
 
+
+function toggleHtml () { 
+	if ($('#wrapper').css('display') == 'none') { 
+		$('#wrapper').css('display','block');
+		$('#treeView').height('65%');
+		$('#toggleHtml').text("Hide HTML");
+	} else { 
+		$('#wrapper').css('display','none');
+		$('#treeView').height('95%');
+		$('#toggleHtml').text("Show HTML");
+	}
+}

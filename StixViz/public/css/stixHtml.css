@@ -1,0 +1,495 @@
+body
+{
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+td, th
+{
+  vertical-align: top;
+}
+
+.topLevelCategoryTable
+{
+  font-weight: bold;
+  margin: 5px;
+  color: #BD9C8C;
+}
+
+/* define table skin */
+table.grid {
+margin: 0px;
+margin-left: 25px;
+padding: 0;
+border-collapse: separate;
+border-spacing: 0;
+width: 100%;
+border-style:solid;
+border-width:1px;
+}
+
+/*
+table.grid thead,
+table.grid .collapsible
+*/
+table.grid > thead > tr > th
+{
+background-color: #c7c3bb;
+}
+
+/* table.grid th */
+table.grid > thead > tr > th,
+table.grid > tbody > tr > th
+{
+color: #565770;
+padding: 4px 16px 4px 0;
+padding-left: 10px;
+font-weight: bold;
+text-align: left;
+} 
+
+table.grid td {
+color: #565770;
+padding: 4px 6px;
+}
+
+table.grid tr.even {
+background-color: #EDEDE8;
+}
+
+body {
+/*font: 11px Arial, Helvetica, sans-serif;*/
+/*font-size: 13px;*/
+}
+#wrapper { 
+margin: 0 auto;
+width: 100%;
+height: 30%;
+padding: 10px;
+overflow-y: auto;
+border-top: 2px solid gray;
+}
+#header {
+color: #333;
+padding: 10px;
+/*border: 2px solid #ccc;*/
+margin: 10px 0px 5px 0px;
+/*background: #BD9C8C;*/
+}
+#content { 
+width: 100%;
+color: #333;
+border: 2px solid #ccc;
+background: #FFFFFF;
+margin: 0px 0px 5px 0px;
+padding: 10px;
+/*font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;*/
+font-size: 11px;
+color: #039;
+}
+
+.stixHeader
+{
+font-weight:bold; margin:5px; color:#BD9C8C;
+}
+
+.stixHeader > table > tbody > tr:nth-child(even)
+{
+  background-color: lavender;
+}
+
+#hor-minimalist-a,
+.hor-minimalist-a
+{
+  font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+  font-size: 12px;
+}
+#hor-minimalist-a > thead > tr > th,
+.hor-minimalist-a > thead > tr > th
+{
+  border-bottom: 2px solid #6678b1;
+  text-align: left;
+}
+.one-column-emphasis
+{
+/*font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;*/
+/*font-size: 12px;*/
+margin: 0px;
+text-align: left;
+/*border-collapse: collapse;*/
+width: 100%;
+border-spacing: 0;
+}
+.one-column-emphasis > tbody > tr > td
+{
+padding: 5px 10px;
+color: #200;
+}
+.oce-first
+{
+background: #d0dafd;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+.oce-first-obs
+{
+background: #EFF8F4;
+/*border-right: 10px solid transparent;*/
+border-right: 10px solid black;
+}
+.oce-first-obscomp-or
+{
+background: #E9EEF4;
+border-right: 10px solid transparent;
+}
+.oce-first-obscomp-and
+{
+background: #F2F4E9;
+border-right: 10px solid transparent;
+}
+.oce-first-inner
+{
+background: #EFF8F4;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+.oce-first-inner-inner
+{
+background: #E5F4EE;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+.oce-first-inner-inner-inner
+{
+background: #DBEFE6;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+.oce-first-inner-inner-inner-inner
+{
+background: #D0EAE0;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+.oce-first-inner-inner-inner-inner-inner
+{
+background: #B7D1C6;
+border-right: 10px solid transparent;
+border-left: 10px solid transparent;
+}
+#container { 
+color: #333;
+border: 1px solid #ccc;
+background: #FFFFFF;
+margin: 0px 0px 10px 0px;
+padding: 10px;
+}
+#section { 
+color: #333;
+background: #FFFFFF;
+margin: 0px 0px 5px 0px;
+}
+#object_label_div div {
+/*display: inline;*/
+/*width: 30%;*/
+}
+#object_type_label {
+width:200px;
+background: #e8edff;
+border-top: 1px solid #ccc;
+border-left: 1px solid #ccc;
+border-right: 5px solid #ccc;
+padding: 1px;
+}
+#defined_object_type_label {
+width:400px;
+background: #E9F3CF;
+border-top: 1px solid #ccc;
+border-left: 1px solid #ccc;
+border-right: 1px solid #ccc;
+padding: 1px;
+}
+#associated_object_label {
+/*font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;*/
+font-size: 12px;
+margin-bottom: 2px;
+}
+.heading,
+.eventTypeHeading
+{
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+.contents,
+.eventDescription
+{
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.container
+{
+  margin-left: 1em;
+  padding-left: 0.5em;
+}
+.eventDescription,
+.description
+{
+  font-style: italic!important;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.description::before
+{
+  font-weight: bold;
+  content: "Description: "
+}
+.emailDiv
+{
+  display: block!important;
+}
+.relatedTarget
+{
+animation: targetHighlightAnimation 0.2s 10;
+animation-direction: alternate;
+-webkit-animation: targetHighlightAnimation 0.2s;
+-webkit-animation-direction: alternate;
+-webkit-animation-iteration-count: 10;
+}
+@keyframes targetHighlightAnimation
+{
+0% {background: hsla(360, 100%, 50%, .3); }
+100% {background: hsla(360, 100%, 50%, .7); }
+}
+@-webkit-keyframes targetHighlightAnimation
+{
+0% {background: hsla(360, 100%, 50%, .3); }
+100% {background: hsla(360, 100%, 50%, .7); }
+}
+
+.highlightTargetLink
+{
+color: blue;
+text-decoration: underline;
+}
+
+table.compositionTableOperator > tbody > tr > td
+{
+  padding: 0.5em;
+}
+table.compositionTableOperand > tbody > tr > td
+{
+  padding: 0;
+}
+table.compositionTableOperator > tbody > tr > td,
+table.compositionTableOperand > tbody > tr > td
+{
+  /* border: solid gray thin; */
+  /* border-collapse: collapse; */
+  border: none;
+  padding: 0.5em;
+}
+.compositionTable,
+.compositionTableOperator,
+.compositionTableOperand
+{
+  border-collapse: collapse;
+  padding: 0!important;
+  border: none;
+}
+td.compositionTable,
+td.compositionTableOperator,
+td.compositionTableOperand
+{
+  padding: 0!important;
+  border: none;
+}
+.compositionTableOperand
+{
+  padding: 0.5em;
+}
+.compositionTableOperand > tbody > tr > td > div 
+{
+  background-color: lightcyan;
+  padding: 0.7em;
+}
+
+/* make DL look like a table */
+dl.table-display
+{
+float: left;
+width: 520px;
+margin: 1em 0;
+padding: 0;
+border-bottom: 1px solid #999;
+}
+
+.table-display dt
+{
+clear: left;
+float: left;
+width: 200px;
+margin: 0;
+padding: 5px;
+border-top: 1px solid #999;
+font-weight: bold;
+}
+
+.table-display dd
+{
+float: left;
+width: 300px;
+margin: 0;
+padding: 5px;
+border-top: 1px solid #999;
+}
+
+.verbatim
+{
+  white-space: pre-line;
+  margin-left: 1em;
+}
+table
+{
+  empty-cells: show;
+}
+
+.externalLinkWarning
+{
+  font-weight: bold;
+  color: red;
+}
+
+.inlineOrByReferenceLabel
+{
+  font-style: italic!important;
+  color: lightgray;
+}
+
+.contents
+{
+  padding-left: 1em;
+}
+
+.cyboxPropertiesValue
+{
+  font-weight: normal;
+}
+
+.cyboxPropertiesConstraints
+{
+  font-weight: normal;
+  font-style: italic!important;
+  color: red;
+}
+
+.cyboxPropertiesConstraints .objectReference
+{
+  color: black;
+}
+
+.objectReference
+{
+  margin-left: 1em;
+}
+
+.expandableContainer.collapsed > .expandableToggle::before,
+.expandableContainer.collapsed.expandableToggle::before,
+tbody.expandableContainer.collapsed > tr > td > .expandableToggle::before
+{
+  content: "+";
+}
+.expandableContainer.expanded > .expandableToggle::before,
+.expandableContainer.expanded.expandableToggle::before,
+tbody.expandableContainer.expanded > tr > td > .expandableToggle::before
+{
+  content: "\2212"; /* that's the minus sign, which is the same width as + */
+}
+.expandableContainer > .expandableToggle::before,
+.expandableContainer.expandableToggle::before,
+.nonexpandableContainer::before,
+tbody.expandableContainer > tr > td > .expandableToggle::before
+{
+  color: goldenrod;
+  /*
+  display: inline-block;
+  width: 1em;
+  */
+}
+.nonexpandableContainer::before
+{
+  content: "";
+}
+
+.expandableToggle
+{
+  cursor: pointer;
+  padding-left: 1.0em;
+  text-indent: -0.5em;
+}
+.expandableContainer > .expandableContents,
+tbody.expandableContainer > tr > td > .expandableContents
+{
+  background-color: #A8CBDE;
+  padding-top: 0.25em;
+  padding-right: 1em;
+  padding-left: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+.expandableSeparate.expandableContainer.collapsed > .expandableContents,
+tbody.expandableSeparate.expandableContainer.collapsed > tr > td > .expandableContents
+{
+  display: none;
+}
+
+.longText
+{
+   width: 60em;
+}
+.expandableSame.expandableContainer.collapsed
+{
+  overflow: hidden;
+  height: 1em;
+}
+.expandableSame.expandableContainer.expanded
+{
+    word-wrap: break-word;
+}
+
+.associatedObjectContents
+{
+    font-weight: normal;
+}
+.baseobj
+{
+}
+.copyobj
+{
+}
+.baseobserv
+{
+}
+.copyobserv
+{
+}
+
+.debug
+{
+  display: none;
+  /*display: block;*/
+}
+
+.indicator-sub-table > colgroup > col.heading-column
+{
+  width: 15em;
+}
+
+.StixDescriptionValue
+{
+  white-space: pre-line;
+}
+
+.reference
+{
+  /*display: block;*/
+  display: none;
+}

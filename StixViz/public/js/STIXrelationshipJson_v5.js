@@ -54,16 +54,25 @@ function addReportChildren(reportChildren, objMap, parentName) {
 function createReport(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
     var reportChildren = [];
     var mergedIndicatorList = [];
+    var mergedIndicatorMap = {};
     addReportChildren(reportChildren, campaignMap, 'Campaigns');
     addReportChildren(reportChildren, taMap, 'ThreatActors');
     addReportChildren(reportChildren, ttpMap, 'TTPs');
-    $.map(indicatorMap, function(indicators, ttpId) {
+    $.map(indicatorMap, function(indicators, ttpId) {  // each in
             $(indicators).each(function(index, indi) {
                     if (indi.type == 'Indicator') {
-                        mergedIndicatorList.push(indi);
+                        if (typeof(mergedIndicatorMap[indi.subtype]) === 'undefined') {
+                            mergedIndicatorMap[indi.subtype] = indi;
+                        }
+                        else {  // already have a node of this subtype, just add new children
+                            $.merge(mergedIndicatorMap[indi.subtype].children, indi.children);
+                        }
                     }
                 });
 	});
+    $.map(mergedIndicatorMap, function(node, subtype) {
+            mergedIndicatorList.push(node);
+        });
     if (mergedIndicatorList.length > 0) {
 	reportChildren.push({"type":'Indicators', "children":mergedIndicatorList});
     }
@@ -131,12 +140,26 @@ function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap) {
     return actorJson;
 }
 
+function createTTPObjMap(ttpObjs) {
+    var ttpObjMap = {};
+    $(ttpObjs).each(function(index, ttp) {
+            var id = $(ttp).attr('id');
+            ttpObjMap[id] = ttp;
+        });
+    return ttpObjMap;
+}
+
+// if indicatorMap is null, it means json is going to be used
+// as child of an indicator - don't want circular references
 function createSingleTTPJson(ttp, id, indicatorMap) {
+    var ttpChildren = [];
     var ttpName = $(xpFindSingle('.//ttp:Title', ttp)).text();
     if (typeof(ttpName) === 'undefined') {
 	ttpName = "";
     }
-    var ttpChildren = getTTPChildren(ttp, indicatorMap[id]);
+    if (indicatorMap != null) {
+        ttpChildren = getTTPChildren(ttp, indicatorMap[id]);
+    }
     var ttpJson = {"type": "ObservedTTP",
 		   "name": ttpName};
     if (ttpChildren.length > 0) {
@@ -321,11 +344,13 @@ function processStixObservables(observables) {
 // then for each ttp, sort indicators by subtype
 //   create a json node for each subtype
 //   add list of nodes for ttp to the map
-function processStixIndicators(indicators) {
+function processStixIndicators(indicators, ttpObjMap) {
     var indicatorMap = {};
     var ttpIndiMap = {};
+    var indiTTPMap = {};
     //first sort indis by indicated ttp
     $(indicators).each(function (index, indi) {
+            var indiId = $(indi).attr('id');
 	    var ttpId = "";
             var ttpIdObj = null;
 	    var ttp = xpFindSingle('.//indicator:Indicated_TTP', indi);
@@ -339,12 +364,18 @@ function processStixIndicators(indicators) {
 	    else {
 		ttpIndiMap[ttpId].push(indi);
 	    }
+            if (typeof(indiTTPMap[indiId]) === 'undefined') {
+                indiTTPMap[indiId] = [ttpId];
+            }
+            else {
+                indiTTPMap[indiId].push(ttpId);
+            }
 	});
 
     // now create indicator Json for each ttp - one entry per subType
-    //  combining indicator names for each subType
+    //  with child nodes for each indicator of that subtype
     $.map(ttpIndiMap, function(indiObjs, ttpId) {
-	    var ttpJsonMap = {};
+            var subTypeMap = {};
 	    var subType = "";
 	    indicatorMap[ttpId] = [];
 	    // sort indiObjs by subtype
@@ -354,16 +385,23 @@ function processStixIndicators(indicators) {
 		    if (typeNode != null) {
 			subType = $(typeNode).text();
 		    }
-		    if (typeof(ttpJsonMap[subType]) == 'undefined') {
-			ttpJsonMap[subType] = indiName;
-		    }
-		    else {
-			ttpJsonMap[subType] = ttpJsonMap[subType] + "\n" + indiName;
-		    }
+                    var childNode = {"type":"Indicator", "name":indiName};
+                    var indicatedTTPs = indiTTPMap[$(indi).attr('id')];
+                    var indiChildren = [];
+                    $(indicatedTTPs).each(function(index, ttpid) {
+                            indiChildren.push(createSingleTTPJson(ttpObjMap[ttpid], null, null));
+                        });
+                    childNode["children"] = indiChildren;
+                    if (typeof(subTypeMap[subType]) == 'undefined') {
+                        subTypeMap[subType] = [childNode];
+                    }
+                    else {
+                        subTypeMap[subType].push(childNode);
+                    }
 		});
 	    // for each subtype add a child indicator node
-	    $.map(ttpJsonMap, function(indiName, subType) {
-		    var indiJson = {"type":"Indicator", "subtype":subType, "name":indiName};
+	    $.map(subTypeMap, function(children, subType) {
+		    var indiJson = {"type":"Indicator", "subtype":subType, "children":children};
 		    (indicatorMap[ttpId]).push(indiJson);
 		});
 	});
@@ -391,6 +429,7 @@ function generateTreeJson(inputFiles) {
 	var obsObjs = [];
 	var campaignObjs = [];
 	var incidentObjs = [];
+        var ttpObjMap = [];
 
 	var taMap = {};
 	var ttpMap = {};
@@ -415,7 +454,8 @@ function generateTreeJson(inputFiles) {
 
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
-                                indicatorMap = processStixIndicators(indiObjs);
+                                ttpObjMap = createTTPObjMap(ttpObjs);  // need this to use in indicator processing
+                                indicatorMap = processStixIndicators(indiObjs, ttpObjMap);
                                 //obsMap = processStixObservables(obsObjs);
                                 ttpMap = createJsonMapForObjs(ttpObjs, 'createSingleTTPJson', indicatorMap);
                                 taMap = createJsonMapForObjs(taObjs, 'createSingleThreatActorJson', indicatorMap, ttpMap);
