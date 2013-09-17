@@ -14,31 +14,7 @@
 // create report node w/children: TTPs, Threat_Actors
 //   
 
-function nsResolver(prefix) {
-    var nsMap =  {'campaign': 'http://stix.mitre.org/Campaign-1', 'ttp': 'http://stix.mitre.org/TTP-1', 'stixVocabs': 'http://stix.mitre.org/default_vocabularies-1', 'marking': 'http://data-marking.mitre.org/Marking-1', 'stix-ciq': 'http://stix.mitre.org/extensions/Identity#CIQIdentity3.0-1', 'stixCommon': 'http://stix.mitre.org/common-1', 'mandiant': 'http://www.mandiant.com', 'xal': 'urn:oasis:names:tc:ciq:xal:3', 'stix': 'http://stix.mitre.org/stix-1', 'mitre': 'http://www.mitre.org', 'threat-actor': 'http://stix.mitre.org/ThreatActor-1', 'cyboxCommon': 'http://cybox.mitre.org/common-2', 'xpil': 'urn:oasis:names:tc:ciq:xpil:3', 'indicator': 'http://stix.mitre.org/Indicator-2', 'URIObject': 'http://cybox.mitre.org/objects#URIObject-2', 'simpleMarking': 'http://data-marking.mitre.org/extensions/MarkingStructure#Simple-1', 'cyboxVocabs': 'http://cybox.mitre.org/default_vocabularies-2', 'lmco': 'lockheedmartin.com', 'AddressObject': 'http://cybox.mitre.org/objects#AddressObject-2', 'cybox': 'http://cybox.mitre.org/cybox-2', 'LinkObject': 'http://cybox.mitre.org/objects#LinkObject-1', 'xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xnl': 'urn:oasis:names:tc:ciq:xnl:3'};
-    return nsMap[prefix] || null;
-}
-
-// use xpath to deal with default namespaces
-function xpFind(path, startNode) {
-    var newNodes = [];
-    var xpathResult = doc.evaluate(path, startNode, nsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-    for (var i=0; i< xpathResult.snapshotLength; i++) {
-        newNodes.push(xpathResult.snapshotItem(i));
-    }	
-    return newNodes;
-}
-
-function xpFindSingle(path, startNode) {
-    var descendants = xpFind(path, startNode);
-    var singleDescendant = null;
-    if (descendants.length == 1) {
-        singleDescendant =  descendants[0];
-    }
-    return singleDescendant;
-}
-
-function addReportChildren(reportChildren, objMap, parentName) {
+function addSTIXChildren(reportChildren, objMap, parentName) {
     var allObjJson = [];
     $.map(objMap, function (objJson, objId) {
 	    allObjJson.push(objJson);
@@ -51,13 +27,13 @@ function addReportChildren(reportChildren, objMap, parentName) {
 // top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action,
 //   Observable is not at top level because it has no outgoing relationships - it will appear under
 //   other branches since it has incoming relationships.
-function createReport(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
+function createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
     var reportChildren = [];
     var mergedIndicatorList = [];
     var mergedIndicatorMap = {};
-    addReportChildren(reportChildren, campaignMap, 'Campaigns');
-    addReportChildren(reportChildren, taMap, 'ThreatActors');
-    addReportChildren(reportChildren, ttpMap, 'TTPs');
+    addSTIXChildren(reportChildren, campaignMap, 'Campaigns');
+    addSTIXChildren(reportChildren, taMap, 'ThreatActors');
+    addSTIXChildren(reportChildren, ttpMap, 'TTPs');
     $.map(indicatorMap, function(indicators, ttpId) {  // each in
             $(indicators).each(function(index, indi) {
                     if (indi.type == 'Indicator') {
@@ -82,51 +58,9 @@ function createReport(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
     return jsonObj;
 }
 
-// create a name for a threat_actor based on it's Identity Specification if there
-// is one.  Otherwise use it's common name
-function getBestActorName(xmlNode) {
-    var nameStr = "";
-    if (xmlNode.nodeName == 'stix:Threat_Actor') {
-	var specification = xpFindSingle('.//stix-ciq:Specification', xmlNode);
-	if (specification != null) {
-	    var orgNames = xpFind('.//xpil:PartyName//xnl:OrganisationName', specification)
-		if (orgNames.length > 0) { // PartyName is an organisation
-		    $(orgNames).each(function (index, org) {
-			    var nameElt = xpFindSingle('.//xnl:NameElement', org);
-			    nameStr = nameStr + $(nameElt).text();
-			    var subdivElt = xpFindSingle('.//xnl:SubDivisionName', org);
-			    if (subdivElt != null) {
-				nameStr = nameStr + "\n" + $(subdivElt).text();
-			    }
-			    if (index < orgNames.length-1) {
-				nameStr = nameStr + "\n";
-			    }
-			});
-		}
-		else {
-		    var personNames = xpFind('.//xnl:PersonName', specification);
-		    if (personNames.length > 0) {
-			$(personNames).each(function (index, person) {
-				var nameElt = xpFindSingle('.//xnl:NameElement', person);
-				nameStr = nameStr + $(nameElt).text();
-				if (index < personNames.length-1) {
-				    nameStr = nameStr + "\n";
-				}
-			    });
-		    }
-		}
-	}
-	else {
-	    var commonName = xpFindSingle('.//stixCommon:Name', xmlNode);
-	    nameStr = $(commonName).text();
-	}
-    }
-    return nameStr;
-}
-
 function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap) {
     var actorJson = {"type":"threatActor"};
-    actorJson["name"] = getBestActorName(ta);
+    actorJson["name"] = getBestThreatActorName(ta);
     var obsTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
     var actorChildren = [];
     // add observed ttps as children of the threat_actor node
@@ -153,10 +87,7 @@ function createTTPObjMap(ttpObjs) {
 // as child of an indicator - don't want circular references
 function createSingleTTPJson(ttp, id, indicatorMap) {
     var ttpChildren = [];
-    var ttpName = $(xpFindSingle('.//ttp:Title', ttp)).text();
-    if (typeof(ttpName) === 'undefined') {
-	ttpName = "";
-    }
+    var ttpName = getBestTTPName(ttp);
     if (indicatorMap != null) {
         ttpChildren = getTTPChildren(ttp, indicatorMap[id]);
     }
@@ -170,7 +101,7 @@ function createSingleTTPJson(ttp, id, indicatorMap) {
 
 function createSingleCampaignJson(ca, id, indicatorMap, ttpMap, taMap) {
     var campaignJson = {"type":"campaign"};
-    campaignJson["name"] = $(xpFindSingle('.//campaign:Title', ca)).text();
+    campaignJson["name"] = getBestCampaignName(ca);
     var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
     var campaignChildren = [];
     $(relatedTTPs).each(function (index, ttp) {
@@ -272,9 +203,11 @@ function findTTPBehaviors(ttp) {
     var mName = "";
     if (malware != null) {
 	malware = $(malware).get(0);
-	var instance = $(malware).children('ttp\\:Malware_Instance, Malware_Instance');
-	if (instance.length > 0) {
-	    mName = $(instance).children('ttp\\:Name, Name').text();
+	//var instance = $(malware).children('ttp\\:Malware_Instance, Malware_Instance');
+	var instance = xpFindSingle('.//ttp:Malware_Instance', malware);
+	if (instance != null) {
+	    //mName = $(instance).children('ttp\\:Name, Name').text();
+		mName = $(xpFindSingle('.//ttp:Name', instance)).text();
 	}
 	behaviors.push({"type":'MalwareBehavior', "name":mName});
     }
@@ -352,24 +285,23 @@ function processStixIndicators(indicators, ttpObjMap) {
     $(indicators).each(function (index, indi) {
             var indiId = $(indi).attr('id');
 	    var ttpId = "";
-            var ttpIdObj = null;
 	    var ttp = xpFindSingle('.//indicator:Indicated_TTP', indi);
             ttpObj = xpFindSingle('.//stixCommon:TTP', ttp);
             if (ttpObj != null) {
                 ttpId = $(ttpObj).attr('idref');
             }
 	    if (typeof(ttpIndiMap[ttpId]) == 'undefined') {
-		ttpIndiMap[ttpId] = [indi];
+	    	ttpIndiMap[ttpId] = [indi];
 	    }
 	    else {
-		ttpIndiMap[ttpId].push(indi);
+	    	ttpIndiMap[ttpId].push(indi);
 	    }
-            if (typeof(indiTTPMap[indiId]) === 'undefined') {
-                indiTTPMap[indiId] = [ttpId];
-            }
-            else {
-                indiTTPMap[indiId].push(ttpId);
-            }
+	    if (typeof(indiTTPMap[indiId]) === 'undefined') {
+	    	indiTTPMap[indiId] = [ttpId];
+	    }
+	    else {
+	    	indiTTPMap[indiId].push(ttpId);
+	    }
 	});
 
     // now create indicator Json for each ttp - one entry per subType
@@ -380,7 +312,7 @@ function processStixIndicators(indicators, ttpObjMap) {
 	    indicatorMap[ttpId] = [];
 	    // sort indiObjs by subtype
 	    $(indiObjs).each(function(index, indi) {
-                    var indiName = $(xpFindSingle('.//indicator:Title', indi)).text();
+	    	var indiName = getBestIndicatorName(indi);
 		    var typeNode = xpFindSingle('.//indicator:Type', indi);
 		    if (typeNode != null) {
 			subType = $(typeNode).text();
@@ -426,15 +358,15 @@ function generateTreeJson(inputFiles) {
 	var taObjs = [];
 	var ttpObjs = [];
 	var indiObjs = [];
-	var obsObjs = [];
+	// var obsObjs = [];
 	var campaignObjs = [];
 	var incidentObjs = [];
-        var ttpObjMap = [];
+	var ttpObjMap = [];
 
 	var taMap = {};
 	var ttpMap = {};
 	var indicatorMap = {};
-	var obsMap = {};
+	// var obsMap = {};
 	var campaignMap = {};
 	var incidentMap = {};
 	
@@ -454,13 +386,13 @@ function generateTreeJson(inputFiles) {
 
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
+                                //obsMap = processStixObservables(obsObjs);
                                 ttpObjMap = createTTPObjMap(ttpObjs);  // need this to use in indicator processing
                                 indicatorMap = processStixIndicators(indiObjs, ttpObjMap);
-                                //obsMap = processStixObservables(obsObjs);
                                 ttpMap = createJsonMapForObjs(ttpObjs, 'createSingleTTPJson', indicatorMap);
                                 taMap = createJsonMapForObjs(taObjs, 'createSingleThreatActorJson', indicatorMap, ttpMap);
                                 campaignMap = createJsonMapForObjs(campaignObjs, 'createSingleCampaignJson', indicatorMap, ttpMap, taMap);
-                                jsonObj = createReport(jsonObj, taMap, ttpMap, campaignMap, indicatorMap);
+                                jsonObj = createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap);
                                 // displays to web page
                                 // $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 displayTree(JSON.stringify(jsonObj, null, 2));
