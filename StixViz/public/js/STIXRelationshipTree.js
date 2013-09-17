@@ -175,6 +175,10 @@ function update(source) {
                 return d.children || d._children;
             });
 
+    nodeEnter.append("title")
+    .text(function (d) { 
+    	return (typeof(d.subtype) === 'undefined') ? d.name : d.subtype ;
+    });
 		
     nodeEnter.append("svg:image")
         .attr("height", 1e-6)
@@ -196,12 +200,7 @@ function update(source) {
         .attr("y", function(d) { return nodeHeight + 12; })
         .attr("text-anchor", "middle")
         .text(function(d) {
-        	if (typeof(d.subtype) === 'undefined') {
-                return d.name;
-            }
-            else {
-                return d.subtype ;
-            }
+        	return (typeof(d.subtype) === 'undefined') ? d.name : d.subtype ;
         })
         .style("fill-opacity", 1e-6);
 		
@@ -384,7 +383,7 @@ function wraptext (d) {
             }
         }
     }
-			
+	el.selectAll('tspan').filter(function (d,i) { return i > 2; }).remove();
 }
 
 function handleFileSelect(fileinput) {
