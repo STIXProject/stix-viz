@@ -45,3 +45,13 @@ function xpFindSingle(path, startNode) {
     }
     return singleDescendant;
 }
+
+function getObjIdStr(obj) {
+	var id = $(obj).attr('id');
+	if (typeof(id) != 'undefined') {
+		return id;
+	}
+	else {
+		return "";
+	}
+}
