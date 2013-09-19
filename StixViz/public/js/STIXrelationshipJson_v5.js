@@ -20,20 +20,21 @@ function addSTIXChildren(reportChildren, objMap, parentName) {
 	    allObjJson.push(objJson);
 	});
     if (allObjJson.length > 0) {
-	reportChildren.push({"type":parentName, "children":allObjJson});
+    	reportChildren.push({"type":parentName, "children":allObjJson});
     }
 }
 
 // top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action,
 //   Observable is not at top level because it has no outgoing relationships - it will appear under
 //   other branches since it has incoming relationships.
-function createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
+function createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap, incidentMap) {
     var reportChildren = [];
     var mergedIndicatorList = [];
     var mergedIndicatorMap = {};
     addSTIXChildren(reportChildren, campaignMap, 'Campaigns');
     addSTIXChildren(reportChildren, taMap, 'ThreatActors');
     addSTIXChildren(reportChildren, ttpMap, 'TTPs');
+    addSTIXChildren(reportChildren, incidentMap, 'Incidents');
     $.map(indicatorMap, function(indicators, ttpId) {  // each in
             $(indicators).each(function(index, indi) {
                     if (indi.type == 'Indicator') {
@@ -58,8 +59,9 @@ function createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap) {
     return jsonObj;
 }
 
-function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap) {
+function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap, taMap, incidentMap) {
     var actorJson = {"type":"threatActor"};
+    actorJson["nodeId"] = getObjIdStr(ta);
     actorJson["name"] = getBestThreatActorName(ta);
     var obsTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
     var actorChildren = [];
@@ -69,7 +71,7 @@ function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap) {
 	});
     // only add children if there are some
     if (actorChildren.length > 0) {
-	actorJson["children"] = actorChildren;
+    	actorJson["children"] = actorChildren;
     }
     return actorJson;
 }
@@ -77,7 +79,7 @@ function createSingleThreatActorJson(ta, id, indicatorMap, ttpMap) {
 function createTTPObjMap(ttpObjs) {
     var ttpObjMap = {};
     $(ttpObjs).each(function(index, ttp) {
-            var id = $(ttp).attr('id');
+            var id = getObjIdStr(ttp);
             ttpObjMap[id] = ttp;
         });
     return ttpObjMap;
@@ -85,22 +87,25 @@ function createTTPObjMap(ttpObjs) {
 
 // if indicatorMap is null, it means json is going to be used
 // as child of an indicator - don't want circular references
-function createSingleTTPJson(ttp, id, indicatorMap) {
+function createSingleTTPJson(ttp, id, indicatorMap, ttpMap, taMap, incidentMap) {
     var ttpChildren = [];
     var ttpName = getBestTTPName(ttp);
+    var id = getObjIdStr(ttp);
     if (indicatorMap != null) {
         ttpChildren = getTTPChildren(ttp, indicatorMap[id]);
     }
     var ttpJson = {"type": "ObservedTTP",
+    		"nodeId": id,
 		   "name": ttpName};
     if (ttpChildren.length > 0) {
-	ttpJson["children"] = ttpChildren;
+    	ttpJson["children"] = ttpChildren;
     }
     return ttpJson;
 }
 
-function createSingleCampaignJson(ca, id, indicatorMap, ttpMap, taMap) {
+function createSingleCampaignJson(ca, id, indicatorMap, ttpMap, taMap, incidentMap) {
     var campaignJson = {"type":"campaign"};
+    campaignJson["nodeId"] = getObjIdStr(ca);
     campaignJson["name"] = getBestCampaignName(ca);
     var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
     var campaignChildren = [];
@@ -120,17 +125,25 @@ function createSingleCampaignJson(ca, id, indicatorMap, ttpMap, taMap) {
     return campaignJson;
 }
 
+function createSingleIncidentJson(incident, id, indicatorMap, ttpMap, taMap, incidentMap) {
+	var incidentJson = {"type":"Incident"};
+	incidentJson["nodeId"] = getObjIdStr(incident);
+	incidentJson["name"] = getBestIncidentName(incident);
+	//TODO fill in children here
+	return incidentJson;
+}
+
 function addTTPChildJson(childList, ttp, ttpMap, indicatorMap) {
     var idRef = $(xpFindSingle('.//stixCommon:TTP', ttp)).attr('idref');
     if (typeof(idRef) != 'undefined') {   // TTP info is in the TTP section
-	childList.push(ttpMap[idRef]);
+    	childList.push(ttpMap[idRef]);
     }
     else {  // TTP info is inline, need to process
-	var id = $(ttp).attr('id');
-	var inlineTTP = createSingleTTPJson(ttp, id, indicatorMap);
-	if (typeof(inlineTTP) != 'undefined') {
-	    childList.push(inlineTTP);
-	}
+		var id = getObjIdStr(ttp);
+		var inlineTTP = createSingleTTPJson(ttp, id, indicatorMap, null, null, null);
+		if (typeof(inlineTTP) != 'undefined') {
+		    childList.push(inlineTTP);
+		}
     }
 }
 
@@ -157,40 +170,40 @@ function getCyboxObservableJson(obs) {
 // RESOURCES (cybox observables (URI, ip addresses, ttp:Tool), 
 // SRL - need to add more child types
 function findTTPResources(ttp) {
+	var id="";
     resources = [];
     resourceObj = xpFindSingle('.//ttp:Resources', ttp);
     if (resourceObj != null) {
-	var resourceName = $(xpFindSingle('.//ttp:Type', resourceObj)).text();
-	if (typeof(name) == 'undefined') {
-	    resourceName = "";
-	}
-
-	// see if there are Observables
-	var observable = xpFind('.//cybox:Observable', resourceObj);
-	if (observable.length > 0) {   // found at least one
-	    // don't go to next level right now
-	    // call this for an observable such as a URI or Address_Value (IPRange)
-	    //resources.push(getCyboxObservableJson($(observable).get(0)));
-	    resources.push({"type":"Observable", "name":resourceName});
-	}
-	else {
-	    var tools = xpFind('.//ttp:Tool', resourceObj);
-	    var toolString = "";
-	    $(tools).each(function (index, tool) {
-		    var toolName = $(xpFindSingle('.//cyboxCommon:Name', tool)).text();
-		    if (typeof(toolName) != 'undefined') {
-			if (toolString.length > 0) {
-			    toolString = toolString + "\n" + toolName;
-			}
-			else {
-			    toolString = toolName;
-			}
+    	var resourceName = $(xpFindSingle('.//ttp:Type', resourceObj)).text();
+		if (typeof(name) == 'undefined') {
+		    resourceName = "";
+		}
+		// see if there are Observables
+		var observable = xpFind('.//cybox:Observable', resourceObj);
+		if (observable.length > 0) {   // found at least one
+		    // don't go to next level right now
+		    // call this for an observable such as a URI or Address_Value (IPRange)
+		    //resources.push(getCyboxObservableJson($(observable).get(0)));
+		    resources.push({"type":"Observable", "name":resourceName});
+		}
+		else {
+		    var tools = xpFind('.//ttp:Tool', resourceObj);
+		    var toolString = "";
+		    $(tools).each(function (index, tool) {
+			    var toolName = $(xpFindSingle('.//cyboxCommon:Name', tool)).text();
+			    if (typeof(toolName) != 'undefined') {
+				if (toolString.length > 0) {
+				    toolString = toolString + "\n" + toolName;
+				}
+				else {
+				    toolString = toolName;
+				}
+			    }
+			});
+		    if (toolString.length>0) {
+			resources.push({"type":"Tools", "nodeId":id, "name":toolString});
 		    }
-		});
-	    if (toolString.length>0) {
-		resources.push({"type":"Tools", "name":toolString});
-	    }
-	}
+		}
     }
     return resources;
 }
@@ -202,14 +215,14 @@ function findTTPBehaviors(ttp) {
     var malware = xpFindSingle('.//ttp:Behavior//ttp:Malware', ttp);
     var mName = "";
     if (malware != null) {
-	malware = $(malware).get(0);
-	//var instance = $(malware).children('ttp\\:Malware_Instance, Malware_Instance');
-	var instance = xpFindSingle('.//ttp:Malware_Instance', malware);
-	if (instance != null) {
-	    //mName = $(instance).children('ttp\\:Name, Name').text();
-		mName = $(xpFindSingle('.//ttp:Name', instance)).text();
-	}
-	behaviors.push({"type":'MalwareBehavior', "name":mName});
+		malware = $(malware).get(0);
+		//var instance = $(malware).children('ttp\\:Malware_Instance, Malware_Instance');
+		var instance = xpFindSingle('.//ttp:Malware_Instance', malware);
+		if (instance != null) {
+		    //mName = $(instance).children('ttp\\:Name, Name').text();
+			mName = $(xpFindSingle('.//ttp:Name', instance)).text();
+		}
+		behaviors.push({"type":'MalwareBehavior', "name":mName});
     }
     var attackPats = xpFind('.//ttp:Behavior//ttp:Attack_Pattern', ttp);
     $(attackPats).each(function (index, pat) {
@@ -236,26 +249,26 @@ function getTTPChildren(ttp, indicators) {
     // Victim_Targeting
     var victimTargets = xpFindSingle('.//ttp:Victim_Targeting', ttp);
     if (victimTargets != null) {
-	var nameElts = xpFind('.//xal:NameElement', victimTargets);
-	$(nameElts).each(function (index, thisElt) {
-		nameStr = nameStr + $(thisElt).text();
-		if (index < nameElts.length-1) {
-		    nameStr = nameStr + "\n";
-		}
-	    });
-	children.push({"type":"VictimTargeting", "name":nameStr});
+		var nameElts = xpFind('.//xal:NameElement', victimTargets);
+		$(nameElts).each(function (index, thisElt) {
+			nameStr = nameStr + $(thisElt).text();
+			if (index < nameElts.length-1) {
+			    nameStr = nameStr + "\n";
+			}
+		    });
+		children.push({"type":"VictimTargeting", "name":nameStr});
     }
     return children;
 }
 
-function createJsonMapForObjs(objs, singleJsonFnName, indicatorMap, ttpMap, taMap) {
+function createJsonMapForObjs(objs, singleJsonFnName, indicatorMap, ttpMap, taMap, incidentMap) {
     var objMap = {};
     //Create the function
     var singleJsonfn = window[singleJsonFnName];
 
     $(objs).each(function(index, obj) {
-	    var id = $(obj).attr('id');
-	    objMap[id] = singleJsonfn(obj, id, indicatorMap, ttpMap, taMap);
+	    var id = getObjIdStr(obj);
+	    objMap[id] = singleJsonfn(obj, id, indicatorMap, ttpMap, taMap, incidentMap);
 	});
     return objMap;
 }
@@ -283,24 +296,28 @@ function processStixIndicators(indicators, ttpObjMap) {
     var indiTTPMap = {};
     //first sort indis by indicated ttp
     $(indicators).each(function (index, indi) {
-            var indiId = $(indi).attr('id');
-	    var ttpId = "";
-	    var ttp = xpFindSingle('.//indicator:Indicated_TTP', indi);
-            ttpObj = xpFindSingle('.//stixCommon:TTP', ttp);
-            if (ttpObj != null) {
-                ttpId = $(ttpObj).attr('idref');
-            }
+    	var indiId = getObjIdStr(indi);
+    	var ttpId = "";
+    	var ttp = xpFindSingle('.//indicator:Indicated_TTP', indi);
+    	ttpObj = xpFindSingle('.//stixCommon:TTP', ttp);
+    	if (ttpObj != null) {
+    		ttpId = $(ttpObj).attr('idref');
+    	}
+    	// inline ttps will have an undefined val for ttpId
+    	// ok for now
 	    if (typeof(ttpIndiMap[ttpId]) == 'undefined') {
 	    	ttpIndiMap[ttpId] = [indi];
 	    }
 	    else {
 	    	ttpIndiMap[ttpId].push(indi);
 	    }
-	    if (typeof(indiTTPMap[indiId]) === 'undefined') {
-	    	indiTTPMap[indiId] = [ttpId];
-	    }
-	    else {
-	    	indiTTPMap[indiId].push(ttpId);
+	    if (typeof(ttpId) != 'undefined') {   // don't add for inline ttps
+		    if (typeof(indiTTPMap[indiId]) === 'undefined') {
+		    	indiTTPMap[indiId] = [ttpId];
+		    }
+		    else {
+		    	indiTTPMap[indiId].push(ttpId);
+		    }
 	    }
 	});
 
@@ -308,28 +325,29 @@ function processStixIndicators(indicators, ttpObjMap) {
     //  with child nodes for each indicator of that subtype
     $.map(ttpIndiMap, function(indiObjs, ttpId) {
             var subTypeMap = {};
-	    var subType = "";
+	    var subType = "not specified";
 	    indicatorMap[ttpId] = [];
 	    // sort indiObjs by subtype
 	    $(indiObjs).each(function(index, indi) {
+	    	var id = getObjIdStr(indi);
 	    	var indiName = getBestIndicatorName(indi);
 		    var typeNode = xpFindSingle('.//indicator:Type', indi);
 		    if (typeNode != null) {
-			subType = $(typeNode).text();
+		    	subType = $(typeNode).text();
 		    }
-                    var childNode = {"type":"Indicator", "name":indiName};
-                    var indicatedTTPs = indiTTPMap[$(indi).attr('id')];
-                    var indiChildren = [];
-                    $(indicatedTTPs).each(function(index, ttpid) {
-                            indiChildren.push(createSingleTTPJson(ttpObjMap[ttpid], null, null));
-                        });
-                    childNode["children"] = indiChildren;
-                    if (typeof(subTypeMap[subType]) == 'undefined') {
-                        subTypeMap[subType] = [childNode];
-                    }
-                    else {
-                        subTypeMap[subType].push(childNode);
-                    }
+		    var childNode = {"type":"Indicator", "nodeId":id, "name":indiName};
+		    var indicatedTTPs = indiTTPMap[getObjIdStr(indi)];
+		    var indiChildren = [];
+		    $(indicatedTTPs).each(function(index, ttpid) { 
+		    	indiChildren.push(createSingleTTPJson(ttpObjMap[ttpid], null, null, null, null, null));
+		    });
+		    childNode["children"] = indiChildren;
+		    if (typeof(subTypeMap[subType]) == 'undefined') {
+		    	subTypeMap[subType] = [childNode];
+		    }
+		    else {
+		    	subTypeMap[subType].push(childNode);
+		    }
 		});
 	    // for each subtype add a child indicator node
 	    $.map(subTypeMap, function(children, subType) {
@@ -383,18 +401,21 @@ function generateTreeJson(inputFiles) {
                             $.merge(ttpObjs, xpFind('//stix:TTPs/stix:TTP', xml));
                             $.merge(indiObjs, xpFind('//stix:Indicators/stix:Indicator', xml));
                             $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
-
+                            $.merge(incidentObjs, xpFind('//stix:Incidents/stix:Incident', xml));
+                            
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
                                 //obsMap = processStixObservables(obsObjs);
                                 ttpObjMap = createTTPObjMap(ttpObjs);  // need this to use in indicator processing
                                 indicatorMap = processStixIndicators(indiObjs, ttpObjMap);
-                                ttpMap = createJsonMapForObjs(ttpObjs, 'createSingleTTPJson', indicatorMap);
-                                taMap = createJsonMapForObjs(taObjs, 'createSingleThreatActorJson', indicatorMap, ttpMap);
-                                campaignMap = createJsonMapForObjs(campaignObjs, 'createSingleCampaignJson', indicatorMap, ttpMap, taMap);
-                                jsonObj = createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap);
+                                ttpMap = createJsonMapForObjs(ttpObjs, 'createSingleTTPJson', indicatorMap, ttpMap, taMap, incidentMap);
+                                taMap = createJsonMapForObjs(taObjs, 'createSingleThreatActorJson', indicatorMap, ttpMap, taMap, incidentMap);
+                                campaignMap = createJsonMapForObjs(campaignObjs, 'createSingleCampaignJson', indicatorMap, ttpMap, taMap, incidentMap);
+                                incidentMap = createJsonMapForObjs(incidentObjs, 'createSingleIncidentJson', indicatorMap, ttpMap, taMap, incidentMap);
+                                jsonObj = createTreeJson(jsonObj, taMap, ttpMap, campaignMap, indicatorMap, incidentMap);
                                 // displays to web page
-                                // $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                                
+                                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 displayTree(JSON.stringify(jsonObj, null, 2));
                             }
                         };

@@ -23,8 +23,15 @@ function getBestCampaignName(ca) {
         if (nameStr.length > 0) {
             return nameStr;
         }
-        else { // TODO - look for intended effect+@id
-        	return "";
+        else { 
+        	var id = getObjIdStr(ca);
+        	var effect = xpFindSingle('./campaign:Intended_Effect/stixCommon:Value', ca);
+            if (effect != null) {
+            	return $(effect)+id;
+            }
+            else {
+            	return id;
+            }
         }
     }
 }
@@ -78,8 +85,20 @@ function getBestIndicatorName(indi) {
 	if (titleNode != null) {
 		return $(titleNode).text();
 	}
-	else { // TODO - implement backup titles
-		return "";
+	else { 
+		var desc = xpFindSingle('./indicator:Description', indi);
+		if (desc != null) {
+			return $(desc).text();
+		}
+		else { 
+			var obsTitle = xpFindSingle('.//indicator:Observable//cybox:Title', indi);
+			if (obsTitle != null) {
+				return $(obsTitle).text();
+			}
+			else {
+				return "";
+			}
+		}
 	}
 }
 
@@ -87,6 +106,8 @@ function getBestIndicatorName(indi) {
 // is one.  Otherwise use it's common name
 // Title
 // Identity.Name
+// Specification.OrganisationNames.NameElement+SubdivisionName
+// Specification.PersonName.NameElement
 // Type + @id
 function getBestThreatActorName(actor) {
     var titleNode = xpFindSingle('.//threat-actor:Title', actor);
@@ -128,8 +149,18 @@ function getBestThreatActorName(actor) {
 						});
 					}
 				}
+				return nameStr;
 			}
-			return nameStr;
+			else {
+				var id = getObjIdStr(actor);
+				var type = xpFindSingle('./threat-actor:Type/stixCommon:Value', actor);
+				if (type != null) {
+					return $(type).text()+id;
+				}		
+				else {
+					return id;
+				}
+			}
 		}
 	}
 }

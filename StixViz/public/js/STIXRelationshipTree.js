@@ -37,6 +37,9 @@ var typeIconMap = {
 	"Indicator-Composite" : "Indicator",
 	"Indicator-Backdoor" : "Indicator",
 	"Indicator-Downloader" : "Indicator",
+	"Incident" : "Incident",
+	"Incidents" : "Incident",
+	"ExploitTarget" : "ExplotTarget",
 	"top" : "Report"
 };
 
