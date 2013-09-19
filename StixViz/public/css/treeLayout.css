@@ -8,14 +8,19 @@ body {
   padding: 0;
 }
 
-html { 
-	margin-top: 10px;
-}
 
 #treeView { 
 	width: 100%;
-	padding: 0 10px;
+	padding: 0;
 	overflow: auto;
+}
+
+#files { 
+  margin-left: 10px;
+}
+
+#toggleHtml { 
+	margin-right:10px;
 }
 
 .NodeTypeLabel {

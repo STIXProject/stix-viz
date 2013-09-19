@@ -61,13 +61,17 @@ var margin = {
 	
 
 var duration = 750;
+
+var findBaseNode;
 	
 
 // Compute the new tree layout.
 function displayTree(report) { 
+	
 
 
-    tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([width,height]);
+	
+	tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([width,height]);
 
     diagonal = d3.svg.diagonal()
     .source(function (d) { 
@@ -95,6 +99,27 @@ function displayTree(report) {
 		
 
     root = $.parseJSON(report);
+    
+    
+	findBaseNode = function (nodeId) { 
+		var queue = [root];
+		var node;
+		while (queue.length > 0) {
+			node = queue.shift();
+			if ('nodeId' in node && node.nodeId == nodeId) { 
+				return node;
+			} else { 
+				if (node.children) { 
+					$.each(node.children,function(i,c) { queue.push(c); });
+				} else if (node._children) { 
+					$.each(node._children,function(i,c) { queue.push(c); });
+				}
+			} 	
+		} 
+		return null;
+	};
+	
+	
     root.y0 = height / 2;
     root.x0 = 0;
 		
@@ -105,8 +130,6 @@ function displayTree(report) {
 
     update(root);
 
-
-    //d3.select(self.frameElement).style("height", "800px");
 }
 	
 
@@ -125,6 +148,8 @@ function expand (d) {
 	}
 }
 	
+
+// add parents to each node so that we can walk back up the tree after drilling down
 function addParents(parent) { 
     if (parent.children && parent.children.length > 0) { 
         parent.children.forEach(function (child) {
@@ -171,7 +196,7 @@ function update(source) {
 
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter()
-        .append("g")
+    	.append("g")
         .attr("class", "node")
         .attr("transform", function(d) {
                 return "translate(" + (source.x0 + (nodeHeight/2)) + "," + (source.y0 + (nodeWidth/2)) + ")";
@@ -196,10 +221,10 @@ function update(source) {
         .attr("transform","translate("+ -nodeWidth/2 + ")")
         .attr("class", function(d) { return d.type; })
         .attr("filter",function (d) { 
-            return (!d.children && !d._children) || (d.children && d.children.length == 0) || (d._children && d._children.length == 0) ? "url(#lighten)" : "none"; 
+            return !hasChildren(d) ? "url(#lighten)" : "none"; 
         })
         .classed("leaf",function (d) { 
-            return (!d.children && !d._children) || (d.children && d.children.length == 0) || (d._children && d._children.length == 0);             
+            return !hasChildren(d);             
             });
 	      
 	      
@@ -211,15 +236,7 @@ function update(source) {
         })
         .style("fill-opacity", 1e-6);
 		
-//    // add node type labels (indicator, ttp, ...)
-//    nodeEnter.append("text")
-//        .attr("dy", nodeHeight/2)
-//        .attr("class", "NodeTypeLabel")
-//        .style("text-anchor", "middle")
-//        .text(function(d) { 
-//                return typeLabelMap[d.type];	
-//            });
-//		
+
 
     // wrap text description
     svg.selectAll('text').each(wraptext);
@@ -319,9 +336,15 @@ function click(d) {
     if (d.children) {
         d._children = d.children;
         d.children = null;
-    } else {
+    } else if (d._children) {
         d.children = d._children;
         d._children = null;
+    } else { 
+    	// Infinite tree - if there are no children, find the matching base node and use its children
+    	var base = findBaseNode(d.nodeId);
+    	if (base && hasDirectChildren(base)) { 
+    		d.children = clone(base.children ? base.children : base._children); 
+    	}
     }
     update(d);
 }
@@ -393,27 +416,64 @@ function wraptext (d) {
 	el.selectAll('tspan').filter(function (d,i) { return i > 2; }).remove();
 }
 
+function hasChildren (d) {
+	if (hasDirectChildren(d)) return true;
+	else { 
+		var base = findBaseNode(d.nodeId);
+		return base ? hasDirectChildren(base) : false;
+	}
+}
+
+function hasDirectChildren (d) { 
+	return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
+}
+
+function clone (dlist) {
+	clist = [];
+	$.each(dlist, function (i,d) { 
+		if (!hasDirectChildren(d)) { 
+			clist.push({name:d.name,type:d.type,nodeId:d.nodeId});
+		} else { 
+			clist.push({name:d.name,type:d.type,nodeId:d.nodeId,children:clone(d.children ? d.children : d._children)});
+		}	
+	});
+	return clist;
+}
+
 function handleFileSelect(fileinput) {
     var mime = require('mime');
 		
     var files = fileinput.get(0).files;
 
-    $(files).each(function (index, f) {
-            var mimetype = mime.lookup(f.name);
-                        
-            // Only process xml files.
-            if (!mimetype.match('application/xml')) {
-                return;
-            }
-        });
+    // If only one JSON file was loaded (for testing)
+    if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
+        var reader = new FileReader();
 
-    // create json tree structure from xml files read in
-    generateTreeJson(files);
-                
-    // do this inside of generateTreeJson due to asynchronous processing
-    //displayTree(result);
+        // Closure to capture the file information.
+        reader.onload = (function(theFile) {
+          return function(e) {
+            displayTree(e.target.result);
+          };
+        })(files[0]);
+
+        // Read in the JSON file as text
+        reader.readAsText(files[0]);
+
+    } else { 
+    	$(files).each(function (index, f) {
+    		var mimetype = mime.lookup(f.name);
+
+    		// Only process xml files.
+    		if (!mimetype.match('application/xml')) {
+    			return;
+    		}
+    	});
+
+    	// create json tree structure from xml files read in
+    	generateTreeJson(files);
+    }
+
 };
-
 
 function toggleHtml () { 
 	if ($('#wrapper').css('display') == 'none') { 
