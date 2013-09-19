@@ -64,10 +64,14 @@ var duration = 750;
 function displayTree(report) { 
 
 
-    tree = d3.layout.tree().size([ width, height ]);
+    tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([width,height]);
 
-    diagonal = d3.svg.diagonal().projection(function(d) {
-            return [ d.x, d.y + nodeHeight];
+    diagonal = d3.svg.diagonal()
+    .source(function (d) { 
+    	return {x:d.source.x, y:d.source.y+nodeHeight};
+    })
+    .projection(function(d) {
+            return [ d.x, d.y ];
         });
 
     d3.select("svg").remove();
@@ -155,9 +159,9 @@ function update(source) {
     // Normalize for fixed-depth.
     nodes.sort(function(a,b) { return a.id - b.id; } ).forEach(function(d,i) {
             if (zigzag[d.depth] && i % 2 == 0) { 
-                d.y = (d.depth * 180) + 80;
+                d.y = (d.depth * 160) + 80;
             } else { 
-                d.y = d.depth * 180;
+                d.y = d.depth * 160;
             }
         });
 
