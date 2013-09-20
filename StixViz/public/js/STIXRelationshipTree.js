@@ -1,9 +1,36 @@
-$(function() {
-	$('#files').on('change', function () { handleFileSelect($(this)); });
+var nodeWidth = 60;
+var nodeHeight = 60;
+var i = 0;
+
+
+// Root is the node that is currently at the top of the tree. Report is the root of the entire report
+var root,report,svg;
 	
-	$('#treeView').height('95%');
-	$('#wrapper').css('display','none');
+var margin = {
+    top : 20,
+    right : 10,
+    bottom : 35,
+    left : 10
+}, 
+    width = 1100 - margin.right - margin.left,
+    height = 1200 - margin.top- margin.bottom;
+	
+
+var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([$(window).width()-margin.right-margin.left,height]);
+
+var diagonal = d3.svg.diagonal()
+.source(function (d) { 
+	return {x:d.source.x, y:d.source.y+nodeHeight};
+})
+.projection(function(d) {
+        return [ d.x, d.y ];
     });
+
+	
+
+var duration = 750;
+
+var findBaseNode;
 
 var typeLabelMap = {"ThreatActors":"Threat Actors","TTPs":"TTPs","AttackPattern":"Attack Pattern", "Indicator": "Indicator", 
         "MalwareBehavior":"Malware Behavior","Observable":"Observable","Observable-ElectronicAddress": "Observable",
@@ -44,85 +71,49 @@ var typeIconMap = {
 };
 
 
-var nodeWidth = 60;
-var nodeHeight = 60;
-var i = 0;
 
-var tree,root,svg,diagonal;
+$(function() {
+	$('#files').on('change', function () { handleFileSelect($(this)); });
 	
-var margin = {
-    top : 20,
-    right : 10,
-    bottom : 20,
-    left : 10
-}, 
-    width = 1100 - margin.right - margin.left,
-    height = 1200 - margin.top- margin.bottom;
+	// 98% fits the div vertically in the window including the upper and lower padding
+	$('#treeView').height('98%');
+	$('#wrapper').css('display','none');
 	
+	svg = d3.select("#treeContent").append("svg")
+    .attr("width", $(window).width())
+    .attr("height", nodeHeight * 2 + 180) //height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
-var duration = 750;
+	svg.append("defs")
+	.append("filter")
+	.attr("id","lighten")
+	.append("feColorMatrix")
+		.attr("type","matrix")
+		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 
-var findBaseNode;
+
+	$(window).resize(function () { 
+		tree.size([$(window).width()-margin.left-margin.right,height]);
+		$('svg').width($(window).width()-margin.left-margin.right);
+		update(root);
+	});
+	
+});
+
+
 	
 
 // Compute the new tree layout.
-function displayTree(report) { 
+function displayTree(jsonString) { 
 	
+	svg.selectAll("g.node").remove();
 
-
-	
-	tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([width,height]);
-
-    diagonal = d3.svg.diagonal()
-    .source(function (d) { 
-    	return {x:d.source.x, y:d.source.y+nodeHeight};
-    })
-    .projection(function(d) {
-            return [ d.x, d.y ];
-        });
-
-    d3.select("svg").remove();
-		
-    svg = d3.select("#treeContent").append("svg")
-        .attr("width", width + margin.right + margin.left)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
-    
-    svg.append("defs")
-    .append("filter")
-    .attr("id","lighten")
-    .append("feColorMatrix")
-    	.attr("type","matrix")
-    	.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
-		
-		
-
-    root = $.parseJSON(report);
-    
-    
-	findBaseNode = function (nodeId) { 
-		var queue = [root];
-		var node;
-		while (queue.length > 0) {
-			node = queue.shift();
-			if ('nodeId' in node && node.nodeId == nodeId) { 
-				return node;
-			} else { 
-				if (node.children) { 
-					$.each(node.children,function(i,c) { queue.push(c); });
-				} else if (node._children) { 
-					$.each(node._children,function(i,c) { queue.push(c); });
-				}
-			} 	
-		} 
-		return null;
-	};
-	
+    report = $.parseJSON(jsonString);
+    root = report;
 	
     root.y0 = height / 2;
     root.x0 = 0;
-		
 		
     root.children.forEach(collapse);
 		
@@ -185,13 +176,17 @@ function update(source) {
     }
 		
     // Normalize for fixed-depth.
+    var maxY = 0;
     nodes.sort(function(a,b) { return a.id - b.id; } ).forEach(function(d,i) {
             if (zigzag[d.depth] && i % 2 == 0) { 
                 d.y = (d.depth * 160) + 80;
             } else { 
                 d.y = d.depth * 160;
             }
+            if (d.y > maxY) maxY = d.y;
         });
+    
+    $('svg').height(maxY+margin.top+margin.bottom+nodeHeight);
 
 
     // Enter any new nodes at the parent's previous position.
@@ -416,6 +411,25 @@ function wraptext (d) {
 	el.selectAll('tspan').filter(function (d,i) { return i > 2; }).remove();
 }
 
+
+function findBaseNode (nodeId) { 
+	var queue = [report];
+	var node;
+	while (queue.length > 0) {
+		node = queue.shift();
+		if ('nodeId' in node && node.nodeId == nodeId) { 
+			return node;
+		} else { 
+			if (node.children) { 
+				$.each(node.children,function(i,c) { queue.push(c); });
+			} else if (node._children) { 
+				$.each(node._children,function(i,c) { queue.push(c); });
+			}
+		} 	
+	} 
+	return null;
+};
+
 function hasChildren (d) {
 	if (hasDirectChildren(d)) return true;
 	else { 
@@ -482,7 +496,7 @@ function toggleHtml () {
 		$('#toggleHtml').text("Hide HTML");
 	} else { 
 		$('#wrapper').css('display','none');
-		$('#treeView').height('95%');
+		$('#treeView').height('98%');
 		$('#toggleHtml').text("Show HTML");
 	}
 }
