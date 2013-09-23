@@ -28,6 +28,11 @@ body {
     fill: white;
 }
 
+.nodeborder { 
+	stroke: yellow;
+	stroke-width: 5px;
+	fill:none;
+}
 
 .node.parent {
   cursor: pointer;

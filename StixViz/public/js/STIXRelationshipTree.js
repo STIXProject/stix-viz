@@ -203,9 +203,7 @@ function update(source) {
             });
 
     nodeEnter.append("title")
-    .text(function (d) { 
-    	return (typeof(d.subtype) === 'undefined') ? d.name : d.subtype ;
-    });
+    .text(getName);
 		
     nodeEnter.append("svg:image")
         .attr("height", 1e-6)
@@ -226,12 +224,23 @@ function update(source) {
     nodeEnter.append("text")
         .attr("y", function(d) { return nodeHeight + 12; })
         .attr("text-anchor", "middle")
-        .text(function(d) {
-        	return (typeof(d.subtype) === 'undefined') ? d.name : d.subtype ;
-        })
+        .text(getName)
         .style("fill-opacity", 1e-6);
 		
 
+    $(".node").on("mouseenter", function () { 
+    	d3.select(this).append("rect")
+        .attr("height", String(nodeHeight+10)+"px")
+        .attr("width", String(nodeWidth+10)+"px")
+    	.attr("rx","10")
+    	.attr("ry","10")
+    	.attr("class","nodeborder")
+    	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+    });
+    
+    $(".node").on("mouseleave", function () { 
+    	d3.select(this).selectAll("rect").remove();
+    });
 
     // wrap text description
     svg.selectAll('text').each(wraptext);
@@ -245,9 +254,6 @@ function update(source) {
     nodeUpdate.select("image")
         .attr("height", String(nodeHeight)+"px")
         .attr("width", String(nodeWidth)+"px");
-//        .attr("rx", "5") // round the corners with rx and ry
-//        .attr("ry", "5");
-	      
 
     nodeUpdate.select("text").style("fill-opacity", 1);
 
@@ -334,9 +340,9 @@ function click(d) {
     } else if (d._children) {
         d.children = d._children;
         d._children = null;
-    } else { 
+    } else if (d.nodeIdRef) { 
     	// Infinite tree - if there are no children, find the matching base node and use its children
-    	var base = findBaseNode(d.nodeId);
+    	var base = findBaseNode(d.nodeIdRef);
     	if (base && hasDirectChildren(base)) { 
     		d.children = clone(base.children ? base.children : base._children); 
     	}
@@ -432,8 +438,8 @@ function findBaseNode (nodeId) {
 
 function hasChildren (d) {
 	if (hasDirectChildren(d)) return true;
-	else { 
-		var base = findBaseNode(d.nodeId);
+	else if (d.nodeIdRef) { 
+		var base = findBaseNode(d.nodeIdRef);
 		return base ? hasDirectChildren(base) : false;
 	}
 }
@@ -442,13 +448,17 @@ function hasDirectChildren (d) {
 	return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
 }
 
+function getName (d) { 
+	return d.name ? d.name : d.nodeIdRef ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
+}
+
 function clone (dlist) {
 	clist = [];
 	$.each(dlist, function (i,d) { 
 		if (!hasDirectChildren(d)) { 
-			clist.push({name:d.name,type:d.type,nodeId:d.nodeId});
+			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef});
 		} else { 
-			clist.push({name:d.name,type:d.type,nodeId:d.nodeId,children:clone(d.children ? d.children : d._children)});
+			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef,children:clone(d.children ? d.children : d._children)});
 		}	
 	});
 	return clist;

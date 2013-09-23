@@ -10,7 +10,8 @@
     "window":{
         "toolbar":true,  
         "width":1200,
-        "height":700
+        "height":700,
+        "icon":"public/icons/werner_icon.png"
     }
     
 }
