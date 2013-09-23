@@ -229,17 +229,25 @@ function update(source) {
 		
 
     $(".node").on("mouseenter", function () { 
-    	d3.select(this).append("rect")
-        .attr("height", String(nodeHeight+10)+"px")
-        .attr("width", String(nodeWidth+10)+"px")
-    	.attr("rx","10")
-    	.attr("ry","10")
-    	.attr("class","nodeborder")
-    	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+    	var d = d3.select(this).datum();  
+    	var nodeId = d.nodeId ? d.nodeId : d.nodeIdRef;
+    	if (!nodeId) return;
+    	var matches = d3.selectAll(".node").filter(function (d) { 
+    		return d.nodeId == nodeId || d.nodeIdRef == nodeId;
+    	});
+    	if (matches.size() > 1) { 
+    		matches.append("rect")
+    		.attr("height", String(nodeHeight+10)+"px")
+    		.attr("width", String(nodeWidth+10)+"px")
+    		.attr("rx","10")
+    		.attr("ry","10")
+    		.attr("class","nodeborder")
+    		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+    	}
     });
     
     $(".node").on("mouseleave", function () { 
-    	d3.select(this).selectAll("rect").remove();
+    	svg.selectAll("rect.nodeborder").remove();
     });
 
     // wrap text description
