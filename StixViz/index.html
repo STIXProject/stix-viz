@@ -15,9 +15,11 @@
 
   <link rel="stylesheet" type="text/css"  href="./public/css/treeLayout.css" />
   <link rel="stylesheet" type="text/css"  href="./public/css/stixHtml.css" />
-
+  <link rel="stylesheet" type="text/css"  href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.css" />
+  
   <script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
   <script type="text/javascript" src="./public/js/jquery/jquery-1.10.2.js"></script>
+  <script type="text/javascript" src="./public/js/jquery-ui/jquery-ui-1.10.3.custom.js"></script>
   <script type="text/javascript" src="./public/js/STIXUtilities.js"></script>
   <script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
   <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
@@ -31,15 +33,17 @@
 <body onload="runtimeCopyObjects();">
 
 	<div id="treeView">
-		<input type="file" id="files" name="file" accept="application/xml"
-			multiple />
-		<output id="list"></output>
-
-    <button id="toggleHtml" style="float:right;" value="Show HTML" onClick="toggleHtml();">Show HTML</button>
-    
+	  <div id="treeButtons">
+			<input type="file" id="files" name="file" accept="application/xml"
+				multiple />
+			<output id="list"></output>
+	
+	    <button id="toggleHtml" style="float:right;" value="Show HTML" onClick="toggleHtml();">Show HTML</button>
+    </div>
 		<div id="treeContent"></div>
 	</div>
-	<div id="jsonOutput"></div> <!--  leave for debugging purposes -->
+	<!-- <div id="jsonOutput"></div> --> <!--  leave for debugging purposes -->
+	<div id="htmlView">
 	<div id="wrapper">
          <div id="header">
             <h1>STIX Output</h1>
@@ -1091,5 +1095,6 @@
             </table>
          </div>
       </div>
+    </div>
 </body>
 </html>

@@ -1,10 +1,11 @@
-var nodeWidth = 60;
-var nodeHeight = 60;
+var nodeWidth = 60,
+ nodeHeight = 60,
+ nodeSep = 160;
 var i = 0;
 
 
 // Root is the node that is currently at the top of the tree. Report is the root of the entire report
-var root,report,svg;
+var stixroot,report,svg;
 	
 var margin = {
     top : 20,
@@ -31,14 +32,6 @@ var diagonal = d3.svg.diagonal()
 var duration = 750;
 
 var findBaseNode;
-
-var typeLabelMap = {"ThreatActors":"Threat Actors","TTPs":"TTPs","AttackPattern":"Attack Pattern", "Indicator": "Indicator", 
-        "MalwareBehavior":"Malware Behavior","Observable":"Observable","Observable-ElectronicAddress": "Observable",
-        "Observable-Email":"Observable", "Observable-IPRange":"Observable", "Indicators":"Indicators",
-        "Campaigns":"Campaigns", "campaign":"Campaign",
-        "Observable-MD5":"Observable","Observable-URI":"Observable", "ObservedTTP":"TTP", "threatActor": "Threat Actor",
-        "top":"Report", "UsesTool":"TTP", "Tools":"Tools", "VictimTargeting":"Victim Targeting", "Indicator-Utility":"Indicator",
-        "Indicator-Composite":"Indicator","Indicator-Backdoor":"Indicator","Indicator-Downloader":"Indicator"};
 
 var typeIconMap = {
 	"ThreatActors" : "ThreatActor",
@@ -76,12 +69,17 @@ $(function() {
 	$('#files').on('change', function () { handleFileSelect($(this)); });
 	
 	// 98% fits the div vertically in the window including the upper and lower padding
-	$('#treeView').height('98%');
-	$('#wrapper').css('display','none');
+	$('#treeView').height($(window).height());
+	$('#htmlView').css('display','none');
+	$('#htmlView').resizable({
+		handles:"n",
+		resize: function (event, ui) {
+			ui.element.css("top","0");
+			$('#treeView').height($(window).height() - ui.size.height);
+		}
+	});
 	
 	svg = d3.select("#treeContent").append("svg")
-    .attr("width", $(window).width())
-    .attr("height", nodeHeight * 2 + 180) //height + margin.top + margin.bottom)
     .append("g")
     .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
@@ -95,8 +93,10 @@ $(function() {
 
 	$(window).resize(function () { 
 		tree.size([$(window).width()-margin.left-margin.right,height]);
-		$('svg').width($(window).width()-margin.left-margin.right);
-		update(root);
+		$('#treeView').width($(window).width());
+		$('#treeView').height($(window).height() - $('#htmlView').height());
+		
+		if (stixroot) update(stixroot);
 	});
 	
 });
@@ -110,16 +110,16 @@ function displayTree(jsonString) {
 	svg.selectAll("g.node").remove();
 
     report = $.parseJSON(jsonString);
-    root = report;
+    stixroot = report;
 	
-    root.y0 = height / 2;
-    root.x0 = 0;
+    stixroot.y0 = height / 2;
+    stixroot.x0 = 0;
 		
-    root.children.forEach(collapse);
+    stixroot.children.forEach(collapse);
 		
-    addParents(root);
+    addParents(stixroot);
 
-    update(root);
+    update(stixroot);
 
 }
 	
@@ -153,7 +153,7 @@ function addParents(parent) {
 	
 function update(source) {
 
-    var nodes = tree.nodes(root),//.reverse(),
+    var nodes = tree.nodes(stixroot),//.reverse(),
         links = tree.links(nodes);
 
     // Update the nodes…
@@ -179,14 +179,14 @@ function update(source) {
     var maxY = 0;
     nodes.sort(function(a,b) { return a.id - b.id; } ).forEach(function(d,i) {
             if (zigzag[d.depth] && i % 2 == 0) { 
-                d.y = (d.depth * 160) + 80;
+                d.y = (d.depth * nodeSep) + nodeHeight+20;
             } else { 
-                d.y = d.depth * 160;
+                d.y = d.depth * nodeSep;
             }
             if (d.y > maxY) maxY = d.y;
         });
     
-    $('svg').height(maxY+margin.top+margin.bottom+nodeHeight);
+    $('svg').height(maxY+margin.top+margin.bottom+(2*nodeHeight)+nodeSep);
 
 
     // Enter any new nodes at the parent's previous position.
@@ -209,8 +209,6 @@ function update(source) {
         .attr("height", 1e-6)
         .attr("width", 1e-6)
         .attr("xlink:href",function (d) {  return "./public/icons/13-008 ICONS - STIX_"+typeIconMap[d.type]+".png"; })
-//        .attr("rx", "5") // round the corners with rx and ry
-//        .attr("ry", "5")
         .attr("transform","translate("+ -nodeWidth/2 + ")")
         .attr("class", function(d) { return d.type; })
         .attr("filter",function (d) { 
@@ -229,17 +227,25 @@ function update(source) {
 		
 
     $(".node").on("mouseenter", function () { 
-    	d3.select(this).append("rect")
-        .attr("height", String(nodeHeight+10)+"px")
-        .attr("width", String(nodeWidth+10)+"px")
-    	.attr("rx","10")
-    	.attr("ry","10")
-    	.attr("class","nodeborder")
-    	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+    	var d = d3.select(this).datum();  
+    	var nodeId = d.nodeId ? d.nodeId : d.nodeIdRef;
+    	if (!nodeId) return;
+    	var matches = d3.selectAll(".node").filter(function (d) { 
+    		return d.nodeId == nodeId || d.nodeIdRef == nodeId;
+    	});
+    	if (matches.size() > 1) { 
+    		matches.append("rect")
+    		.attr("height", String(nodeHeight+10)+"px")
+    		.attr("width", String(nodeWidth+10)+"px")
+    		.attr("rx","10")
+    		.attr("ry","10")
+    		.attr("class","nodeborder")
+    		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+    	}
     });
     
     $(".node").on("mouseleave", function () { 
-    	d3.select(this).selectAll("rect").remove();
+    	svg.selectAll("rect.nodeborder").remove();
     });
 
     // wrap text description
@@ -354,7 +360,7 @@ function doubleclick (d) {
     d3.event.stopPropagation();
 		
     if (d.depth != 0) {   // If we are not clicking on the root 
-        root = d;
+        stixroot = d;
         expand(d);
         update(d); 
     } else if (d.parent) {    // we are clicking on the root 
@@ -453,12 +459,12 @@ function getName (d) {
 }
 
 function clone (dlist) {
-	clist = [];
+	var clist = [];
 	$.each(dlist, function (i,d) { 
 		if (!hasDirectChildren(d)) { 
 			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef});
 		} else { 
-			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef,children:clone(d.children ? d.children : d._children)});
+			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef,_children:clone(d.children ? d.children : d._children)});
 		}	
 	});
 	return clist;
@@ -500,13 +506,13 @@ function handleFileSelect(fileinput) {
 };
 
 function toggleHtml () { 
-	if ($('#wrapper').css('display') == 'none') { 
-		$('#wrapper').css('display','block');
-		$('#treeView').height('65%');
+	if ($('#htmlView').css('display') == 'none') { 
+		$('#htmlView').css('display','block');
+		$('#treeView').height($(window).height() - $('#htmlView').height());
 		$('#toggleHtml').text("Hide HTML");
 	} else { 
-		$('#wrapper').css('display','none');
-		$('#treeView').height('98%');
+		$('#htmlView').css('display','none');
+		$('#treeView').height($(window).height());
 		$('#toggleHtml').text("Show HTML");
 	}
 }
