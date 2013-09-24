@@ -46,6 +46,16 @@ function xpFindSingle(path, startNode) {
     return singleDescendant;
 }
 
+function getObjIdRefStr(obj) {
+	var idRef = $(obj).attr('idref');
+	if (typeof(idRef) != 'undefined') {
+		return idRef;
+	}
+	else {
+		return "";
+	}
+}
+
 function getObjIdStr(obj) {
 	var id = $(obj).attr('id');
 	if (typeof(id) != 'undefined') {
