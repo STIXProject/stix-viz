@@ -10,17 +10,20 @@ body {
 
 
 #treeView { 
-	width: 100%;
-	padding-top: 10px;
+/* 	width: 100%; */
 	overflow: auto;
 }
 
-#files { 
-  margin-left: 10px;
+#htmlView {
+margin: 0;
+width: 100%;
+height: 30%;
+padding: 0;
+overflow-y: auto;
 }
 
-#toggleHtml { 
-	margin-right:10px;
+#treeButtons { 
+  padding: 10px;	 
 }
 
 .NodeTypeLabel {

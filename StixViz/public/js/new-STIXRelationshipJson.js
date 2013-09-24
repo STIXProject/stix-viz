@@ -392,8 +392,8 @@ function generateTreeJson(inputFiles) {
                                 jsonObj = createTreeJson(jsonObj, campaignNodes, incidentNodes, taNodes, ttpNodes);
                                 // displays to web page
                                 
-                                $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
-                                //displayTree(JSON.stringify(jsonObj, null, 2));
+                                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                                displayTree(JSON.stringify(jsonObj, null, 2));
                             }
                         };
                     }) (f);
