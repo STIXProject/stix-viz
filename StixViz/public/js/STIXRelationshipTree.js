@@ -5,19 +5,25 @@ var i = 0;
 
 
 // Root is the node that is currently at the top of the tree. Report is the root of the entire report
-var stixroot,report,svg;
-	
+var stixroot,report,svg,layout;
+
+var xmlDocs = [];
+
+
 var margin = {
     top : 20,
-    right : 10,
+    right : 20,
     bottom : 35,
     left : 10
 }, 
     width = 1100 - margin.right - margin.left,
     height = 1200 - margin.top- margin.bottom;
 	
+function treeWidth () { 
+	return $(window).width() - nodeWidth;
+}
 
-var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([$(window).width()-margin.right-margin.left,height]);
+var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([treeWidth(),height]);
 
 var diagonal = d3.svg.diagonal()
 .source(function (d) { 
@@ -68,18 +74,57 @@ var typeIconMap = {
 $(function() {
 	$('#files').on('change', function () { handleFileSelect($(this)); });
 	
-	// 98% fits the div vertically in the window including the upper and lower padding
-	$('#treeView').height($(window).height());
-	$('#htmlView').css('display','none');
-	$('#htmlView').resizable({
-		handles:"n",
-		resize: function (event, ui) {
-			ui.element.css("top","0");
-			$('#treeView').height($(window).height() - ui.size.height);
-		}
+	layout = $('body').layout({ 
+		defaults: { 
+			resizable:true,
+			fxName:'slide',
+			fxSpeed:'slow'
+		},
+		north: { 
+			size:"auto",
+			spacing_open:			0,			// cosmetic spacing
+			togglerLength_open:		0,			// HIDE the toggler button
+			togglerLength_closed:	-1,			// "100%" OR -1 = full width of pane
+			resizable: 				false,
+			slidable:				false,		//	override default effect
+			fxName:					"none",
+		},
+		center: { 
+			minSize:400,
+		},
+		south: {
+			initClosed:true,
+			size:200,
+			maxSize:300,
+		} 			
 	});
 	
-	svg = d3.select("#treeContent").append("svg")
+	// 98% fits the div vertically in the window including the upper and lower padding
+//	$('#treeView').height($(window).height()-$('nav').outerHeight());
+//	$('#htmlView').css('display','none');
+//	$('#htmlView').resizable({
+//		handles:"n",
+//		resize: function (event, ui) {
+//			ui.element.css("top","0");
+//
+//			$('#treeView').height($(window).height() - $('nav').outerHeight() - $('#htmlView').outerHeight());
+//			$('#treeView').width($(window).width());
+//			
+//			
+//			// Even though the width shouldn't be changing here, it is necessary to do this 
+//			// to reverse the effect of the resize event propagating up to the window
+//			// For some reason the window width gets set to the width minus the scrollbar when 
+//			// resizing the html panel upward, but then gets reset back to the correct value here. 
+//			tree.size([$(window).width()-margin.left-margin.right,height]);
+//
+//			if (stixroot) { 
+//				update(stixroot);
+//			}
+//		}
+//	});
+
+	
+	svg = d3.select("#treeView").append("svg")
     .append("g")
     .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
@@ -91,12 +136,15 @@ $(function() {
 		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 
 
-	$(window).resize(function () { 
-		tree.size([$(window).width()-margin.left-margin.right,height]);
-		$('#treeView').width($(window).width());
-		$('#treeView').height($(window).height() - $('#htmlView').height());
-		
-		if (stixroot) update(stixroot);
+	$(window).resize(function (e) { 
+		//$('#treeView').width($(window).width());
+		//$('#treeView').height($(window).height() - $('nav').outerHeight() - ($('#htmlView').css('display') == 'none' ? 0 : $('#htmlView').outerHeight()));
+
+		tree.size([treeWidth(),height]);
+
+		if (stixroot) { 
+			update(stixroot);
+		}
 	});
 	
 });
@@ -105,7 +153,8 @@ $(function() {
 	
 
 // Compute the new tree layout.
-function displayTree(jsonString) { 
+function displayTree(jsonString) {
+	
 	
 	svg.selectAll("g.node").remove();
 
@@ -471,12 +520,17 @@ function clone (dlist) {
 }
 
 function handleFileSelect(fileinput) {
+	
     var mime = require('mime');
 		
     var files = fileinput.get(0).files;
 
     // If only one JSON file was loaded (for testing)
     if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
+    	// remove old xml docs
+    	xmlDocs = [];
+    	$('#xmlFileList').empty();
+
         var reader = new FileReader();
 
         // Closure to capture the file information.
@@ -499,20 +553,48 @@ function handleFileSelect(fileinput) {
     		}
     	});
 
+    	// remove old xml docs
+    	xmlDocs = [];
+    	$('#xmlFileList').empty();
+
     	// create json tree structure from xml files read in
     	generateTreeJson(files);
     }
 
 };
 
-function toggleHtml () { 
-	if ($('#htmlView').css('display') == 'none') { 
-		$('#htmlView').css('display','block');
-		$('#treeView').height($(window).height() - $('#htmlView').height());
-		$('#toggleHtml').text("Hide HTML");
-	} else { 
-		$('#htmlView').css('display','none');
-		$('#treeView').height($(window).height());
-		$('#toggleHtml').text("Show HTML");
-	}
+
+function addXmlDoc (f,xml) { 
+	
+	var i = xmlDocs.length;
+	xmlDocs.push({name:f,xml:xml});
+	$('#htmlView').empty();
+
+	$('#xmlFileList').append('<li><a id="xmlFile-'+i+'" href="#">'+f+'</a></li>');
+    $('#xmlFile-'+i).on("click", function () { 
+    	layout.open("south");
+
+    	xml = xmlDocs[$(this).attr("id").split("-")[1]].xml;
+    	xslFileName = "public/xslt/stix_to_html.xsl";
+    	
+    	xslt = Saxon.requestXML(xslFileName);
+    	processor = Saxon.newXSLT20Processor(xslt);
+    	processor.setSuccess(function (proc) { 
+    		resultDocument = proc.getResultDocument();
+        	wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
+        	$('#htmlView').append(wrapperHtml);
+
+        	runtimeCopyObjects();
+    	});
+    	
+    	processor.transformToDocument(xml);
+
+    });
+}
+
+
+
+
+function toggleHtml () {
+	layout.toggle("south");
 }

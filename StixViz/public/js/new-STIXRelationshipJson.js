@@ -370,6 +370,7 @@ function generateTreeJson(inputFiles) {
                 reader.onload = (function(theFile) {
                         return function(e) {
                             xml = new DOMParser().parseFromString(this.result, "text/xml"); 
+                            addXmlDoc(f.name,xml);
                             doc = xml;
                             $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
                             $.merge(coaObjs, xpFind('//stix:Courses_Of_Action/stix:Course_Of_Action', xml));
