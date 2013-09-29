@@ -60,7 +60,7 @@ function createTreeJson(jsonObj, campaignNodes, incidentNodes, indiNodes, taNode
 }
 
 //TODO add associated campaigns
-function processCampaignObjs(caObjs, ttpBottomUpInfo) {
+function processCampaignObjs(caObjs, taBottomUpInfo, ttpBottomUpInfo) {
     var campaignNodes = [];
     var caJson = null;
     var caChildren = null;
@@ -74,14 +74,20 @@ function processCampaignObjs(caObjs, ttpBottomUpInfo) {
             caChildren = [];
             var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
             $(relatedTTPs).each(function (index, ttp) {
-            		if (caId != "") {
-            			addToTTPBottomInfo(ttpBottomUpInfo, ttp, 'campaigns', caId);
-            		}
+            	if (caId != "") {
+            		addToTTPBottomInfo(ttpBottomUpInfo, ttp, 'campaigns', caId);
+            	}
             });
             $.merge(caChildren, processChildTTPs(relatedTTPs));
             $.merge(caChildren, processChildIncidents(xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca)));
             $.merge(caChildren, processChildIndicators(xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca)));
-            $.merge(caChildren, processChildThreatActors(xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca)));
+            var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
+            $(attributedActors).each(function (index, actor) {
+            	if (caId != "") {
+            		addToThreatActorBottomUpInfo(taBottomUpInfo, actor, 'campaigns', caId);
+            	}
+            });
+            $.merge(caChildren, processChildThreatActors(attributedActors));
             if (caChildren.length > 0) {
                 caJson["children"] = caChildren;
             }
@@ -90,36 +96,27 @@ function processCampaignObjs(caObjs, ttpBottomUpInfo) {
     return campaignNodes;
 }
 
-function addToTTPBottomInfo(ttpBottomUpInfo, ttpParent, parentType, parentId) {
+function addToThreatActorBottomUpInfo(taBottomUpInfo, taParent, parentType, parentId) {
 	var parentTypeMap = null;
-	var ttp = $(xpFindSingle('.//stixCommon:TTP', ttpParent));
-	var ttpId = "";
-	if (ttp != null) {
-		ttpId = getObjIdRefStr(ttp);
+	var taId = "";
+	var ta = $(xpFindSingle('.//stixCommon:Threat_Actor', taParent));
+	if (ta != null) {
+		taId = getObjIdRefStr(ta);
 	}
-	if (ttpId != "") {  // track child info for this ttp
-		if (typeof(ttpBottomUpInfo[ttpId]) == 'undefined') {
+	if (taId != "") {
+		if (typeof(taBottomUpInfo[taId]) == 'undefined') {  // first time seeing taId
 			parentTypeMap = {};
-			parentTypeMap[parentType] = [parentId];
-			ttpBottomUpInfo[ttpId] = parentTypeMap;
 		}
 		else {
-			parentTypeMap = ttpBottomUpInfo[ttpId];
-			if (typeof(parentTypeMap) == 'undefined') {
-				parentTypeMap = {};
-				parentTypeMap[parentType] = [parentId];
-				ttpBottomUpInfo[ttpId] = parentTypeMap;
-			}
-			else {
-				(parentTypeMap[parentType]).push(parentId);
-			}
-			(ttpBottomUpInfo[ttpId]) = parentTypeMap;
+			parentTypeMap = taBottomUpInfo[taId];
 		}
+		parentTypeMap = addToParentTypeMap(parentTypeMap, parentType, parentId);
+		taBottomUpInfo[taId] = parentTypeMap;
 	}
 }
 
 //TODO add <Campaigns>
-function processIncidentObjs(incidentObjs) {
+function processIncidentObjs(incidentObjs, ttpBottomUpInfo) {
     var incidentNodes = [];
     var incidentJson = null;
     var incidentChildren = null;
@@ -129,12 +126,12 @@ function processIncidentObjs(incidentObjs) {
             incidentJson["name"] = getBestIncidentName(incident);
             // children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
             incidentChildren = [];
-            $.merge(incidentChildren, processChildIndicator(xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident)));
+            $.merge(incidentChildren, processChildIndicators(xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident)));
             $.merge(incidentChildren, processChildObservables(xpFind('.//incident:Related_Observables//incident:Related_Observable', incident)));
             $.merge(incidentChildren, processChildTTPs(xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident)));
             $.merge(incidentChildren, processChildThreatActors(xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident)));
             if (incidentChildren.length > 0) {
-                incidentJson["childre"] = incidentChildren;
+                incidentJson["children"] = incidentChildren;
             }
             incidentNodes.push(incidentJson);
         });
@@ -211,71 +208,55 @@ function processIndicatorObjs(indiObjs, ttpBottomUpInfo) {
 }
 
 // TODO - add associated actors
-function processThreatActorObjs(taObjs) {
+// TODO - if a threat actor is specified via Attribution in a campaign, and 
+//     the campaign is specified as an associated_campaign in the threat actor,
+//     the campaign node will appear twice in the tree under the threat actor
+function processThreatActorObjs(taObjs, taBottomUpInfo, ttpBottomUpInfo) {
     var taNodes = [];
     var taJson = null;
     var taChildren = null;
+    var taId = null;
     $(taObjs).each(function (index, ta) {
             taJson = {"type":"threatActor"};
-            taJson["nodeId"] = getObjIdStr(ta);
+            taId = getObjIdStr(ta);
+            taJson["nodeId"] = taId;
             taJson["name"] = getBestThreatActorName(ta);
             // children are observed_ttps, associated_campaigns, <Incidents>
             taChildren = [];
-            $.merge(taChildren, processChildTTPs(xpFind('.//threat-actor:Observed_TTP', ta)));
+            var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
+            $(relatedTTPs).each(function (index, ttp) {
+        		if (taId != "") {
+        			addToTTPBottomInfo(ttpBottomUpInfo, ttp, 'threatActors', taId);
+        		}
+            });
+            $.merge(taChildren, processChildTTPs(relatedTTPs));
             $.merge(taChildren, processChildCampaigns(xpFind('.//threat-actor:Associated_Campaign', ta)));
             //TODO add <Incidents>
             if (taChildren.length > 0) {
                 taJson["children"] = taChildren;
             }
+    		taJson = addThreatActorBottomUpInfo(taJson, taBottomUpInfo);
             taNodes.push(taJson);
         });
     return taNodes;
 }
 
-function createSingleTTPJson(ttp) {
-    var ttpJson = {"type":"ObservedTTP"};
-    ttpJson["nodeId"] = getObjIdStr(ttp);
-    ttpJson["name"] = getBestTTPName(ttp);
-    // children can be INDICATORS (from indicator file), RESOURCES, 
-    // BEHAVIORS, or Victim_Targeting
-    var ttpChildren = [];
-    $.merge(ttpChildren, processTTPBehaviors(ttp));
-    $.merge(ttpChildren, processTTPResources(ttp));
-    $.merge(ttpChildren, processTTPVictimTargeting(ttp));
-    $.merge(ttpChildren, processTTPExploitTargets(ttp));
-    if (ttpChildren.length > 0) {
-        ttpJson["children"] = ttpChildren;
-    }
-    return ttpJson;
-}
 
-function addTTPBottomUpInfo(ttpJson, bottomUpInfo) {
-	var nodeId = ttpJson.nodeId;
+function addThreatActorBottomUpInfo(taJson, bottomUpInfo) {
+	var nodeId = taJson.nodeId;
 	var info = bottomUpInfo[nodeId];
-	if (typeof(ttpJson["children"]) == 'undefined') {
-		ttpJson["children"] = [];
+	if (typeof(taJson["children"]) == 'undefined') {
+		taJson["children"] = [];
 	}
 	if (typeof(info) != 'undefined') {
-		var indiTypeMap = info.indicators;
-		if (typeof(indiTypeMap) != 'undefined') {
-			$.map(indiTypeMap, function(indiList, subType) {
-				var subTypeNode = {"type":"Indicator", "name":subType};
-				var children = [];
-				$(indiList).each(function (index, indiId) {
-					children.push({"type":"Indicator", "nodeIdRef":indiId});
-				});
-				subTypeNode["children"] = children;
-				(ttpJson.children).push(subTypeNode);
-			});
-		}
 		var cas = info.campaigns;
 		if (typeof(cas) != 'undefined') {
 			$(cas).each(function (index, caId) {
-				(ttpJson.children).push({"type":"campaign", "nodeIdRef":caId});		
+				(taJson.children).push({"type":"campaign", "nodeIdRef":caId});		
 			});
 		}
 	}
-	return ttpJson;
+	return taJson;
 }
 
 //  TODO add <Incidents>, <ThreatActors>
@@ -290,107 +271,14 @@ function processTTPObjs(ttpObjs, ttpBottomUpInfo) {
     return ttpNodes;
 }
 
-// TODO - NOT looking for idRefs
-function processTTPVictimTargeting(ttp) {
-	var nameStr = "";
-    var targets = [];
-    // Victim_Targeting
-    var victimTarget = xpFindSingle('.//ttp:Victim_Targeting', ttp);
-    if (victimTarget != null) {
-		var nameElts = xpFind('.//xal:NameElement', victimTarget);
-		$(nameElts).each(function (index, thisElt) {
-			nameStr = nameStr + $(thisElt).text();
-			if (index < nameElts.length-1) {
-			    nameStr = nameStr + "\n";
-			}
-		    });
-		targets.push({"type":"VictimTargeting", "name":nameStr});
-    }
-    return targets;
-}
 
-// TODO - Implement!
-function processTTPExploitTargets(ttp) {
-    var targets = [];
-    return targets;
-}
-
-// RESOURCES (cybox observables (URI, ip addresses, ttp:Tool), 
-// TODO - NOT looking for idRefs
-// TODO - need to add more child types
-function processTTPResources(ttp) {
-    var id="";
-    var resources = [];
-    resourceObj = xpFindSingle('.//ttp:Resources', ttp);
-    if (resourceObj != null) {
-    	var resourceName = $(xpFindSingle('.//ttp:Type', resourceObj)).text();
-		if (typeof(name) == 'undefined') {
-		    resourceName = "";
-		}
-		// see if there are Observables
-		var observable = xpFind('.//cybox:Observable', resourceObj);
-		if (observable.length > 0) {   // found at least one
-		    // don't go to next level right now
-		    // call this for an observable such as a URI or Address_Value (IPRange)
-		    //resources.push(getCyboxObservableJson($(observable).get(0)));
-		    resources.push({"type":"Observable", "name":resourceName});
-		}
-		else {
-		    var tools = xpFind('.//ttp:Tool', resourceObj);
-		    var toolString = "";
-		    $(tools).each(function (index, tool) {
-			    var toolName = $(xpFindSingle('.//cyboxCommon:Name', tool)).text();
-			    if (typeof(toolName) != 'undefined') {
-				if (toolString.length > 0) {
-				    toolString = toolString + "\n" + toolName;
-				}
-				else {
-				    toolString = toolName;
-				}
-			    }
-			});
-		    if (toolString.length>0) {
-			resources.push({"type":"Tools", "nodeId":id, "name":toolString});
-		    }
-		}
-    }
-    return resources;
-}
-
-// BEHAVIORS (malware, attack pattern, exploit)
-// TODO - NOT looking for idRefs
-// TODO - need to add more child types
-function processTTPBehaviors(ttp) {
-    var behaviors = [];
-    var malware = xpFindSingle('.//ttp:Behavior//ttp:Malware', ttp);
-    var mName = "";
-    if (malware != null) {
-		malware = $(malware).get(0);
-		//var instance = $(malware).children('ttp\\:Malware_Instance, Malware_Instance');
-		var instance = xpFindSingle('.//ttp:Malware_Instance', malware);
-		if (instance != null) {
-		    //mName = $(instance).children('ttp\\:Name, Name').text();
-			mName = $(xpFindSingle('.//ttp:Name', instance)).text();
-		}
-		behaviors.push({"type":'MalwareBehavior', "name":mName});
-    }
-    var attackPats = xpFind('.//ttp:Behavior//ttp:Attack_Pattern', ttp);
-    $(attackPats).each(function (index, pat) {
-            behaviors.push({"type":'AttackPattern', "name":""});
-        });
-    var exploits = xpFind('.//ttp:Behavior//ttp:Exploits', ttp);
-    $(exploits).each(function (index, exploit) {
-            behaviors.push({"type":'Exploit', "name":""});
-        });
-    return behaviors;
-}
 
 // TODO first just handle idRefs, need to add inline ttp processing
 function processChildTTPs(ttps) {
     var ttpNodes = [];
     $(ttps).each(function (index, ttp) {
-	    var idRef = $(xpFindSingle('.//stixCommon:TTP', ttp)).attr('idref');
-            if (typeof(idRef) != 'undefined') {
+	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:TTP', ttp)));
+            if (idRef != "") {
                 ttpNodes.push({"type":"ObservedTTP", "nodeIdRef":idRef});
             }
             else {  // inline TTP
@@ -404,9 +292,9 @@ function processChildTTPs(ttps) {
 function processChildCampaigns(cas) {
     var caNodes = [];
     $(cas).each(function (index, ca) {
-	    var idRef = $(xpFindSingle('.//stixCommon:Campaign', ca)).attr('idref');
-            if (typeof(idRef) != 'undefined') {
-                ttpNodes.push({"type":"campaign", "nodeIdRef":idRef});
+	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Campaign', ca)));
+            if (idRef != "") {
+                caNodes.push({"type":"campaign", "nodeIdRef":idRef});
             }
 	});
     return caNodes;
@@ -416,9 +304,9 @@ function processChildCampaigns(cas) {
 function processChildThreatActors(actors) {
     var actorNodes = [];
     $(actors).each(function (index, actor) {
-	    var idRef = $(xpFindSingle('.//stixCommon:Threat_Actor', actor)).attr('idref');
-	    if (typeof(idRef) != 'undefined') {
-                actorNodes.push({"type":"threatActor", "nodeIdRef":idRef});
+	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Threat_Actor', actor)));
+	    if (idRef != "") {
+	    	actorNodes.push({"type":"threatActor", "nodeIdRef":idRef});
 	    }
 	});
     return actorNodes;
@@ -513,6 +401,7 @@ function generateTreeJson(inputFiles) {
 	var taNodes = [];
 	var ttpNodes = [];
 	
+	var taBottomUpInfo = {};
 	var ttpBottomUpInfo = {};
 	
 	var numFiles = 0;
@@ -535,10 +424,10 @@ function generateTreeJson(inputFiles) {
                             
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
-                                campaignNodes = processCampaignObjs(campaignObjs, ttpBottomUpInfo);
-                                incidentNodes = processIncidentObjs(incidentObjs);
+                                campaignNodes = processCampaignObjs(campaignObjs, taBottomUpInfo, ttpBottomUpInfo);
+                                incidentNodes = processIncidentObjs(incidentObjs, ttpBottomUpInfo);
                                 indiNodes = processIndicatorObjs(indiObjs, ttpBottomUpInfo);
-                                taNodes = processThreatActorObjs(taObjs);
+                                taNodes = processThreatActorObjs(taObjs, taBottomUpInfo, ttpBottomUpInfo);
                                 ttpNodes = processTTPObjs(ttpObjs, ttpBottomUpInfo);
 
                                 //obsMap = processStixObservables(obsObjs);

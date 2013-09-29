@@ -65,3 +65,24 @@ function getObjIdStr(obj) {
 		return "";
 	}
 }
+
+function addToParentTypeMap(parentTypeMap, parentType, parentId) {
+	if (typeof(parentTypeMap[parentType]) == 'undefined') {
+		parentTypeMap[parentType] = [parentId];
+	}
+	else {
+		(parentTypeMap[parentType]).push(parentId);
+	}
+	return parentTypeMap;
+}
+
+function concatenateNames(names) {
+    var nameStr = "";
+    $(names).each(function (index, name) {
+            nameStr = nameStr + $(name).text();
+            if (index < names.length - 1) {
+                nameStr = nameStr + "\n";
+            }
+        });
+    return nameStr;
+}
