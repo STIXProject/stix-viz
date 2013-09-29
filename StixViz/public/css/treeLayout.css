@@ -2,6 +2,10 @@ body,html,#treeView {
 	height: 100%;
 }
 
+svg { 
+	height: 99%;
+}
+
 body {
   cursor:default;
   margin: 0;
@@ -20,10 +24,25 @@ width: 100%;
 height: 30%;
 padding: 0;
 overflow-y: auto;
+border-top:4px ridge lightgray;
 }
 
-#treeButtons { 
-  padding: 10px;	 
+nav.navbar { 
+	margin-bottom:0;
+}
+
+#menubar { 
+	overflow:visible;
+	padding: 0;
+	color: lightsteelblue;
+}
+
+.ui-layout-pane-north { 
+	border:none;
+}
+
+.ui-layout-pane-center { 
+	border-top: none; 
 }
 
 .NodeTypeLabel {

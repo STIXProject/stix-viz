@@ -1,5 +1,5 @@
 {
-    "name":"StixViz",
+    "name":"stix_viz",
     "main":"index.html",
     "description":"stix visualization app",
     "version":"0.0.1",

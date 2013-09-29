@@ -4,28 +4,27 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">  
   <title> STIX Tree View </title>
-  <style type="text/css">
-		body {
-		  padding: 10px;
-		  font: 13px Helvetica, Arial, sans-serif;
-		}
-
-
-</style>
-
-  <link rel="stylesheet" type="text/css"  href="./public/css/treeLayout.css" />
-  <link rel="stylesheet" type="text/css"  href="./public/css/stixHtml.css" />
-  <link rel="stylesheet" type="text/css"  href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.css" />
   
+  <link rel="stylesheet" type="text/css" href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.css" />
+  <link rel="stylesheet" type="text/css" href="./public/css/jquery-ui/plugin/layout-default-latest.css"/>
+  <link rel="stylesheet" type="text/css" href="./public/css/bootstrap/bootstrap.css"/>
+  <link rel="stylesheet" type="text/css" href="./public/css/stixHtml.css" />
+  <link rel="stylesheet" type="text/css" href="./public/css/treeLayout.css" />
+  
+  <script type="text/javascript" src="./public/js/Saxonce/Saxonce.nocache.js"></script>
   <script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
   <script type="text/javascript" src="./public/js/jquery/jquery-1.10.2.js"></script>
   <script type="text/javascript" src="./public/js/jquery-ui/jquery-ui-1.10.3.custom.js"></script>
-  <script type="text/javascript" src="./public/js/STIXUtilities.js"></script>
-  <script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
+  <script type="text/javascript" src="./public/js/jquery-ui/jquery.ui.draggable.js"></script>
+  <script type="text/javascript" src="./public/js/jquery-ui/plugin/jquery.layout-latest.js"></script>
+  <script type="text/javascript" src="./public/js/bootstrap/bootstrap.js"></script>
+
+  
+  <script type="text/javascript" src="./public/js/STIXUtilities.js"></script><script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
   <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
   <script type="text/javascript" src="./public/js/STIXrelationshipJson.js"></script>
    <script type="text/javascript" src="./public/js/TTPProcessing.js"></script>
-  
+
   <script type="text/javascript" src="./public/js/classList.js"></script>
   <script type="text/javascript" src="./public/js/stixHtml.js"></script>
     
@@ -33,6 +32,7 @@
 </head>
 <body onload="runtimeCopyObjects();">
 
+<<<<<<< HEAD
 	<div id="treeView">
 	  <div id="treeButtons">
 			<input type="file" id="files" name="file" accept="application/xml"
@@ -1097,5 +1097,6 @@
          </div>
       </div>
     </div>
+
 </body>
 </html>
