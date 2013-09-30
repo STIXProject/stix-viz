@@ -30,13 +30,27 @@ function getBestCampaignName(ca) {
 // Objective.Description (truncate)
 // @id
 function getBestCourseOfActionName(coa) {
+	var nameStr = "";
 	var titleNode = xpFindSingle('.//coa:Title', coa);
 	if (titleNode != null) {
-		return $(titleNode).text();
+		nameStr = $(titleNode).text();
 	}
-	else { // TODO - implement backup titles
-		return "";
+	else { 
+		var desc = xpFindSingle('./coa:Description', coa);
+		if (desc != null) {
+			nameStr = $(desc).text();
+		}
+		if (nameStr == "") {
+			var desc = xpFindSingle('./coa:Objective/coa:Description', coa);
+			if (desc != null) {
+				nameStr = $(desc).text();
+			}
+		}
+		if (nameStr == "") {
+			nameStr = getObjIdStr(coa);
+		}
 	}
+	return nameStr;
 }
 
 // title

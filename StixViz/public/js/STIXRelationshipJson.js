@@ -138,7 +138,7 @@ function processIncidentObjs(incidentObjs, ttpBottomUpInfo) {
     return incidentNodes;
 }
 
-// TODO - add <Campaigns>, <Incidents>
+// TODO - add <Campaigns>, <COAs>, <Incidents>
 function processIndicatorObjs(indiObjs, ttpBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = "not specified";
@@ -205,6 +205,20 @@ function processIndicatorObjs(indiObjs, ttpBottomUpInfo) {
 	    indiNodes.push(indiJson);
 	});
     return indiNodes;
+}
+
+function processCoaObjs(coaObjs) {
+	var coaNodes = [];
+	var coaJson = null;
+	var coaId = null;
+	$(coaObjs).each(function (index, coa) {
+		coaJson = {"type":"CourseOfAction"};
+		coaId = getObjIdStr(coa);
+		coaJson["nodeId"] = coaId;
+		coaJson["name"] = getBestCourseOfActionName(coa);
+		coaNodes.push(coaJson);
+	});
+	return coaNodes;
 }
 
 // TODO - add associated actors
@@ -395,6 +409,7 @@ function generateTreeJson(inputFiles) {
 	var ttpObjs = [];
 
 	var campaignNodes = [];
+	var coaNodes = [];
 	var etNodes = [];
 	var incidentNodes = [];
 	var indiNodes = [];
@@ -425,6 +440,7 @@ function generateTreeJson(inputFiles) {
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
                                 campaignNodes = processCampaignObjs(campaignObjs, taBottomUpInfo, ttpBottomUpInfo);
+                                coaNodes = processCoaObjs(coaObjs);
                                 incidentNodes = processIncidentObjs(incidentObjs, ttpBottomUpInfo);
                                 indiNodes = processIndicatorObjs(indiObjs, ttpBottomUpInfo);
                                 taNodes = processThreatActorObjs(taObjs, taBottomUpInfo, ttpBottomUpInfo);
@@ -432,9 +448,9 @@ function generateTreeJson(inputFiles) {
 
                                 //obsMap = processStixObservables(obsObjs);
                                 jsonObj = createTreeJson(jsonObj, campaignNodes, incidentNodes, indiNodes, taNodes, ttpNodes);
-                                // displays to web page
-                                
+                                // displays Json to web page for debugging
                                 //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                                // displays tree
                                 displayTree(JSON.stringify(jsonObj, null, 2));
                             }
                         };
