@@ -56,27 +56,46 @@ function getBestCourseOfActionName(coa) {
 // title
 // Vulnerability.CVE_ID, Weakness.CWE_ID, Configuration.CCE_ID (Join)
 // @id
-function getBestExploitTargetName(exploitTarget) {
-	var titleNode = xpFindSingle('.//et:Title', exploitTarget);
+function getBestExploitTargetName(et) {
+	var nameStr = "";
+	var titleNode = xpFindSingle('.//et:Title', et);
 	if (titleNode != null) {
-		return $(titleNode).text();
+		nameStr = $(titleNode).text();
 	}
-	else { // TODO - implement backup titles
-		return "";
+	else { 
+		var ids = xpFind('./et:Vulnerability/et:CVE_ID', et);
+		$.merge(ids, xpFind('./et:Weakness/et:CWE_ID', et));
+		$.merge(ids, xpFind('./et:Configuration/et:CCE_ID', et));
+		nameStr = concatenateNames(ids);
 	}
+	if (nameStr == "") {
+		nameStr = getObjIdStr(et);
+	}
+	return nameStr;
 }
 
 // Title
 // Description (truncate) – probably won’t be used w/o Title but you never know
 // Categories.Category (join) + @id
 function getBestIncidentName(incident) {
+	var nameStr = "";
 	var titleNode = xpFindSingle('.//incident:Title', incident);
 	if (titleNode != null) {
-		return $(titleNode).text();
+		nameStr = $(titleNode).text();
 	}
-	else { // TODO - implement backup titles
-		return "";
+	else { 
+		var desc = xpFindSingle('.//incident:Description', incident);
+		if (desc != null) {
+			nameStr = $(desc).text();
+		}
+		else {
+			var id = getObjIdStr(incident);
+			var categories = xpFind('.//incident:Categories/incident:Category', incident);
+			nameStr = concatenateNames(categories);
+			nameStr = nameStr + id;
+		}
 	}
+	return nameStr;
 }
 
 // Title
@@ -247,11 +266,19 @@ function getBestThreatActorName(actor) {
 // This is a little complicated, but maybe say which of the following elements are there plus the ID: Behavior, Resources, Victim_Targeting. 
 //    For example, if the TTP has Behavior and Resource but no Victim Targeting, say “Behavior, Resources: ttp-234”
 function getBestTTPName(ttp) {
+	var nameStr = "";
 	var titleNode = xpFindSingle('.//ttp:Title', ttp);
 	if (titleNode != null) {
-		return $(titleNode).text();
+		nameStr = $(titleNode).text();
 	}
-	else { // TODO - implement backup titles
-		return "";
+	else { 
+		var desc = xpFindSingle('.//ttp:Description', ttp);
+		if (ttp != null) {
+			nameStr = $(desc).text();
+		}
 	}
+	if (nameStr == "") {
+		nameStr = getObjIdStr(ttp);
+	}
+	return nameStr;
 }
