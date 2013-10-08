@@ -2,6 +2,10 @@ body,html,#treeView {
 	height: 100%;
 }
 
+body.loading { 
+	cursor:wait !important;
+}
+
 svg { 
 	height: 99%;
 }
@@ -25,6 +29,10 @@ height: 30%;
 padding: 0;
 overflow-y: auto;
 border-top:4px ridge lightgray;
+}
+
+.loading { 
+	background: lightgray;
 }
 
 nav.navbar { 

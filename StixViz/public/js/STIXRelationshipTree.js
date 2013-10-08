@@ -99,30 +99,7 @@ $(function() {
 		} 			
 	});
 	
-	// 98% fits the div vertically in the window including the upper and lower padding
-//	$('#treeView').height($(window).height()-$('nav').outerHeight());
-//	$('#htmlView').css('display','none');
-//	$('#htmlView').resizable({
-//		handles:"n",
-//		resize: function (event, ui) {
-//			ui.element.css("top","0");
-//
-//			$('#treeView').height($(window).height() - $('nav').outerHeight() - $('#htmlView').outerHeight());
-//			$('#treeView').width($(window).width());
-//			
-//			
-//			// Even though the width shouldn't be changing here, it is necessary to do this 
-//			// to reverse the effect of the resize event propagating up to the window
-//			// For some reason the window width gets set to the width minus the scrollbar when 
-//			// resizing the html panel upward, but then gets reset back to the correct value here. 
-//			tree.size([$(window).width()-margin.left-margin.right,height]);
-//
-//			if (stixroot) { 
-//				update(stixroot);
-//			}
-//		}
-//	});
-
+	$('#loadingDiv').hide();
 	
 	svg = d3.select("#treeView").append("svg")
     .append("g")
@@ -568,26 +545,32 @@ function addXmlDoc (f,xml) {
 	
 	var i = xmlDocs.length;
 	xmlDocs.push({name:f,xml:xml});
-	$('#htmlView').empty();
-
 	$('#xmlFileList').append('<li><a id="xmlFile-'+i+'" href="#">'+f+'</a></li>');
-    $('#xmlFile-'+i).on("click", function () { 
+
+	$('#xmlFile-'+i).on("click", function () { 
+    	$('#htmlView').empty();
     	layout.open("south");
+    	$('#htmlView').addClass("loading");
+    	$('body').addClass("loading");
+    	
 
     	xml = xmlDocs[$(this).attr("id").split("-")[1]].xml;
     	xslFileName = "public/xslt/stix_to_html.xsl";
     	
     	xslt = Saxon.requestXML(xslFileName);
     	processor = Saxon.newXSLT20Processor(xslt);
-    	processor.setSuccess(function (proc) { 
+    	processor.setSuccess(function (proc) {
+
     		resultDocument = proc.getResultDocument();
         	wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
+        	$('#htmlView').removeClass("loading");
+        	$('body').removeClass("loading");
         	$('#htmlView').append(wrapperHtml);
-
+        	
         	runtimeCopyObjects();
     	});
     	
-    	processor.transformToDocument(xml);
+    	setTimeout(function () { processor.transformToDocument(xml); }, 100);
 
     });
 }

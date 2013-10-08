@@ -1,3 +1,15 @@
+#loadingDiv {
+    position:relative;
+    top: 50px;
+    left: 50%;
+    width:60px;
+    height:60px;
+    margin-top: -30px; 
+    margin-left: -30px; 
+}
+
+
+
 body
 {
   font-family: Arial,Helvetica,sans-serif;
@@ -14,6 +26,8 @@ td, th
   margin: 5px;
   color: #BD9C8C;
 }
+
+
 
 /* define table skin */
 table.grid {
