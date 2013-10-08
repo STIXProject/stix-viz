@@ -1,64 +1,9 @@
-// Collect child relationships for TTP from nodes that show it as a child
-function addToTTPBottomInfo(ttpBottomUpInfo, ttpParent, parentType, parentId) {
-	var parentTypeMap = null;
-	var ttpId = "";
-	var ttp = $(xpFindSingle('.//stixCommon:TTP', ttpParent));
-	if (ttp != null) {
-		ttpId = getObjIdRefStr(ttp);
-	}
-	if (ttpId != "") {  // track child info for this ttp
-		if (typeof(ttpBottomUpInfo[ttpId]) == 'undefined') {  // first time seeing ttpId
-			parentTypeMap = {};
-		}
-		else {
-			parentTypeMap = ttpBottomUpInfo[ttpId];
-		}
-		parentTypeMap = addToParentTypeMap(parentTypeMap, parentType, parentId);
-		ttpBottomUpInfo[ttpId] = parentTypeMap;
-	}
-}
-
-// Add children to ttpJson from bottomUp relationships
-function addTTPBottomUpInfo(ttpJson, bottomUpInfo) {
-	var nodeId = ttpJson.nodeId;
-	var info = bottomUpInfo[nodeId];
-	if (typeof(ttpJson["children"]) == 'undefined') {
-		ttpJson["children"] = [];
-	}
-	if (typeof(info) != 'undefined') {
-		var indiTypeMap = info.indicators;
-		if (typeof(indiTypeMap) != 'undefined') {
-			$.map(indiTypeMap, function(indiList, subType) {
-				var subTypeNode = {"type":"Indicator", "name":subType};
-				var children = [];
-				$(indiList).each(function (index, indiId) {
-					children.push({"type":"Indicator", "nodeIdRef":indiId});
-				});
-				subTypeNode["children"] = children;
-				(ttpJson.children).push(subTypeNode);
-			});
-		}
-		var cas = info.campaigns;
-		if (typeof(cas) != 'undefined') {
-			$(cas).each(function (index, caId) {
-				(ttpJson.children).push({"type":"campaign", "nodeIdRef":caId});		
-			});
-		}
-		var tas = info.threatActors;
-		if (typeof(tas) != 'undefined') {
-			$(tas).each(function (index, actorId) {
-				(ttpJson.children).push({"type":"threatActor", "nodeIdRef":actorId});
-			});
-		}
-	}
-	return ttpJson;
-}
-
 // Create basic Json node for a TTP
 function createSingleTTPJson(ttp) {
     var ttpJson = {"type":"ObservedTTP"};
     ttpJson["nodeId"] = getObjIdStr(ttp);
     ttpJson["name"] = getBestTTPName(ttp);
+    ttpJson["linkType"] = "topDown";
     // children can be INDICATORS (from indicator file), RESOURCES, 
     // BEHAVIORS, or Victim_Targeting
     var ttpChildren = [];
@@ -83,7 +28,7 @@ function processTTPVictimTargeting(ttp) {
     	if (identity != null) {
     		nameStr = getBestIdentityName(identity);
     	}
-		targets.push({"type":"VictimTargeting", "name":nameStr});
+		targets.push({"type":"VictimTargeting", "name":nameStr, "linkType":"topDown"});
     }
     return targets;
 }
@@ -112,7 +57,7 @@ function processTTPResources(ttp) {
 		    // don't go to next level right now
 		    // call this for an observable such as a URI or Address_Value (IPRange)
 		    //resources.push(getCyboxObservableJson($(observable).get(0)));
-		    resources.push({"type":"Observable", "name":resourceName});
+		    resources.push({"type":"Observable", "name":resourceName, "linkType":"topDown"});
 		}
 		else {
 		    var tools = xpFind('.//ttp:Tool', resourceObj);
@@ -129,7 +74,7 @@ function processTTPResources(ttp) {
 			    }
 			});
 		    if (toolString.length>0) {
-		    	resources.push({"type":"Tools", "nodeId":id, "name":"Tool: " + toolString});
+		    	resources.push({"type":"Tools", "nodeId":id, "name":"Tool: " + toolString, "linkType":"topDown"});
 		    }
 		}
     }
@@ -151,15 +96,15 @@ function processTTPBehaviors(ttp) {
 		    //mName = $(instance).children('ttp\\:Name, Name').text();
 			mName = concatenateNames($(xpFind('.//ttp:Name', instance)));
 		}
-		behaviors.push({"type":'MalwareBehavior', "name":"Malware Behavior: " + mName});
+		behaviors.push({"type":'MalwareBehavior', "name":"Malware Behavior: " + mName, "linkType":"topDown"});
     }
     var attackPats = xpFind('.//ttp:Behavior//ttp:Attack_Pattern', ttp);
     $(attackPats).each(function (index, pat) {
-            behaviors.push({"type":'AttackPattern', "name":"Attack Pattern"});
+            behaviors.push({"type":'AttackPattern', "name":"Attack Pattern", "linkType":"topDown"});
         });
     var exploits = xpFind('.//ttp:Behavior//ttp:Exploits', ttp);
     $(exploits).each(function (index, exploit) {
-            behaviors.push({"type":'Exploit', "name":""});
+            behaviors.push({"type":'Exploit', "name":"", "linkType":"topDown"});
         });
     return behaviors;
 }

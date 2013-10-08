@@ -27,6 +27,16 @@ function nsResolver(prefix) {
     return nsMap[prefix] || null;
 }
 
+var STIXType = {
+		'ca' : 'campaign', 
+		'coa' : 'CourseOfAction',
+		'exploit' : 'ExploitTarget',
+		'incident' : 'Incident',
+		'indi': 'Indicator',
+		'ta' : 'threatActor',
+		'ttp' : 'ObservedTTP'
+};
+
 // use xpath to deal with default namespaces
 function xpFind(path, startNode) {
     var newNodes = [];
@@ -64,6 +74,65 @@ function getObjIdStr(obj) {
 	else {
 		return "";
 	}
+}
+
+function addToBottomUpInfo(bottomUpInfo, aNode, parentType, parentId) {
+	var parentTypeMap = null;
+	var id = "";
+	if (aNode != null) {
+		id = getObjIdRefStr(aNode);
+	}
+	if (id != "") {
+		if (typeof(bottomUpInfo[id]) == 'undefined') {  // first time seeing id
+			parentTypeMap = {};
+		}
+		else {
+			parentTypeMap = bottomUpInfo[id];
+		}
+		parentTypeMap = addToParentTypeMap(parentTypeMap, parentType, parentId);
+		bottomUpInfo[id] = parentTypeMap;
+	}
+}
+
+function addBottomUpInfoToChildren(json, bottomUpInfo) {
+	var nodeId = json.nodeId;
+	var info = bottomUpInfo[nodeId];
+	if (typeof(json["children"]) == 'undefined') {
+		json["children"] = [];
+	}
+	if (typeof(info) != 'undefined') {
+		var cas = info.campaigns;
+		if (typeof(cas) != 'undefined') {
+			$(cas).each(function (index, caId) {
+				(json.children).push({"type":STIXType.ca, "nodeIdRef":caId, "linkType":"bottomUp"});		
+			});
+		}
+		var tas = info.threatActors;
+		if (typeof(tas) != "undefined") {
+			$(tas).each(function (index, taId) {
+				(json.children).push({"type":STIXType.ta, "nodeIdRef":taId, "linkType":"bottomUp"});
+			});
+		}
+		var indiTypeMap = info.indicators;
+		if (typeof(indiTypeMap) != 'undefined') {
+			$.map(indiTypeMap, function(indiList, subType) {
+				var subTypeNode = {"type":STIXType.indi, "name":subType, "linkType":"bottomUp"};
+				var children = [];
+				$(indiList).each(function (index, indiId) {
+					children.push({"type":STIXType.indi, "nodeIdRef":indiId, "linkType":"bottomUp"});
+				});
+				subTypeNode["children"] = children;
+				(json.children).push(subTypeNode);
+			});
+		}
+	}
+	return json;
+}
+
+function addBottomUpInfoForNodes(nodes, bottomUpInfo) {
+	$(nodes).each(function(index, node) {
+		addBottomUpInfoToChildren(node, bottomUpInfo);
+	});
 }
 
 function addToParentTypeMap(parentTypeMap, parentType, parentId) {

@@ -42,6 +42,8 @@ var findBaseNode;
 var typeIconMap = {
 	"ThreatActors" : "ThreatActor",
 	"TTPs" : "TTP",
+	"CourseOfAction" : "Course of Action",
+	"CoursesOfAction" : "Course of Action",
 	"AttackPattern" : "TTP",
 	"Indicator" : "Indicator",
 	"MalwareBehavior" : "TTP",

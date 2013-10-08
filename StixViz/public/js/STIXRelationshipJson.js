@@ -21,7 +21,7 @@ function createStixChildren(objNodes, parentName) {
 	    allObjJson.push(objJson);
 	});
     if (allObjJson.length > 0) {
-    	topChildJson = {"type":parentName, "children":allObjJson};
+    	topChildJson = {"type":parentName, "children":allObjJson, "linkType":"topDown"};
     }
     return topChildJson;
 }
@@ -29,11 +29,19 @@ function createStixChildren(objNodes, parentName) {
 // top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action,
 //   Observable is not at top level because it has no outgoing relationships - it will appear under
 //   other branches since it has incoming relationships.
-function createTreeJson(jsonObj, campaignNodes, incidentNodes, indiNodes, taNodes, ttpNodes) {
+function createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, taNodes, ttpNodes) {
     var reportChildren = [];
     var topLevelChild = null;
 
     topLevelChild = createStixChildren(campaignNodes, 'Campaigns');
+    if (topLevelChild != null) {
+        reportChildren.push(topLevelChild);
+    }
+    topLevelChild = createStixChildren(coaNodes, 'CoursesOfAction');
+    if (topLevelChild != null) {
+        reportChildren.push(topLevelChild);
+    }
+    topLevelChild = createStixChildren(etNodes, 'ExploitTargets');
     if (topLevelChild != null) {
         reportChildren.push(topLevelChild);
     }
@@ -54,39 +62,52 @@ function createTreeJson(jsonObj, campaignNodes, incidentNodes, indiNodes, taNode
         reportChildren.push(topLevelChild);
     }
 
-    // TODO - add other top level nodes
+    // TODO - add observables?
     jsonObj['children'] = reportChildren;
     return jsonObj;
 }
 
 //TODO add associated campaigns
-function processCampaignObjs(caObjs, taBottomUpInfo, ttpBottomUpInfo) {
+function processCampaignObjs(caObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
     var campaignNodes = [];
     var caJson = null;
     var caChildren = null;
     var caId = "";
     $(caObjs).each(function (index, ca) {
-            caJson = {"type":"campaign"};
+            caJson = {"type":STIXType.ca};
             caId = getObjIdStr(ca);
             caJson["nodeId"] = caId;
             caJson["name"] = getBestCampaignName(ca);
+            caJson["linkType"] = "topDown";
             // children are related_ttps, related_incidents, related_indicators, attribution(threat actors)
             caChildren = [];
             var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
-            $(relatedTTPs).each(function (index, ttp) {
-            	if (caId != "") {
-            		addToTTPBottomInfo(ttpBottomUpInfo, ttp, 'campaigns', caId);
-            	}
-            });
+        	if (caId != "") {
+	            $(relatedTTPs).each(function (index, ttp) {
+	            	addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle('.//stixCommon:TTP', ttp)), 'campaigns', caId);
+	            });
+        	}
             $.merge(caChildren, processChildTTPs(relatedTTPs));
-            $.merge(caChildren, processChildIncidents(xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca)));
-            $.merge(caChildren, processChildIndicators(xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca)));
+            var incidents = xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca);
+        	if (caId != "") {
+	            $(incidents).each(function (index, incident) {
+	            	addToBottomUpInfo(incidentBottomUpInfo, $(xpFindSingle('.//stixCommon:Incident', incident)), 'campaigns', caId);
+	            });
+        	}
+            $.merge(caChildren, processChildIncidents(incidents));
+            var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
+        	if (caId != "") {
+	            $(indicators).each(function (index, indi) {
+	            	addToBottomUpInfo(indiBottomUpInfo, $(xpFindSingle('.//stixCommon:Indicator', indi)), 'campaigns', caId);
+	            });
+        	}
+            $.merge(caChildren, processChildIndicators(indicators));
             var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
-            $(attributedActors).each(function (index, actor) {
-            	if (caId != "") {
-            		addToThreatActorBottomUpInfo(taBottomUpInfo, actor, 'campaigns', caId);
-            	}
-            });
+        	if (caId != "") {
+	            $(attributedActors).each(function (index, actor) {
+	            	addToBottomUpInfo(taBottomUpInfo, $(xpFindSingle('.//stixCommon:Threat_Actor', actor)), 'campaigns', caId);
+	            });
+        	}
             $.merge(caChildren, processChildThreatActors(attributedActors));
             if (caChildren.length > 0) {
                 caJson["children"] = caChildren;
@@ -96,23 +117,39 @@ function processCampaignObjs(caObjs, taBottomUpInfo, ttpBottomUpInfo) {
     return campaignNodes;
 }
 
-function addToThreatActorBottomUpInfo(taBottomUpInfo, taParent, parentType, parentId) {
-	var parentTypeMap = null;
-	var taId = "";
-	var ta = $(xpFindSingle('.//stixCommon:Threat_Actor', taParent));
-	if (ta != null) {
-		taId = getObjIdRefStr(ta);
-	}
-	if (taId != "") {
-		if (typeof(taBottomUpInfo[taId]) == 'undefined') {  // first time seeing taId
-			parentTypeMap = {};
+function processCoaObjs(coaObjs) {
+	var coaNodes = [];
+	var coaJson = null;
+	var coaId = null;
+	$(coaObjs).each(function (index, coa) {
+		coaJson = {"type":STIXType.coa};
+		coaId = getObjIdStr(coa);
+		coaJson["nodeId"] = coaId;
+		coaJson["name"] = getBestCourseOfActionName(coa);
+        coaJson["linkType"] = "topDown";
+		coaNodes.push(coaJson);
+	});
+	return coaNodes;
+}
+
+function processETObjs(etObjs) {
+	var etNodes = [];
+	var etJson = null;
+	var etId = null;
+	var etChildren = null;
+	$(etObjs).each(function (index, et) {
+		etJson = {"type": STIXType.et};
+		etId = getObjIdStr(et);
+		etJson["nodeId"] = etId;
+		etJson["name"] = getBestExploitTargetName(et);
+        etJson["linkType"] = "topDown";
+		etChildren = processChildCoas(xpFind('.//et:Potential_COA', et));
+		if (etChildren.length > 0) {
+			etJson["children"] = etChildren;
 		}
-		else {
-			parentTypeMap = taBottomUpInfo[taId];
-		}
-		parentTypeMap = addToParentTypeMap(parentTypeMap, parentType, parentId);
-		taBottomUpInfo[taId] = parentTypeMap;
-	}
+		etNodes.push(etJson);
+	});
+	return etNodes;
 }
 
 //TODO add <Campaigns>
@@ -121,9 +158,10 @@ function processIncidentObjs(incidentObjs, ttpBottomUpInfo) {
     var incidentJson = null;
     var incidentChildren = null;
     $(incidentObjs).each(function (index, incident) {
-            incidentJson = {"type":"Incident"};
+            incidentJson = {"type":STIXType.incident};
             incidentJson["nodeId"] = getObjIdStr(incident);
             incidentJson["name"] = getBestIncidentName(incident);
+            incidentJson["linkType"] = "topDown";
             // children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
             incidentChildren = [];
             $.merge(incidentChildren, processChildIndicators(xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident)));
@@ -139,27 +177,29 @@ function processIncidentObjs(incidentObjs, ttpBottomUpInfo) {
 }
 
 // TODO - add <Campaigns>, <COAs>, <Incidents>
-function processIndicatorObjs(indiObjs, ttpBottomUpInfo) {
+function processIndicatorObjs(indiObjs, indiBottomUpInfo, ttpBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = "not specified";
 	var indiNodes = [];
 	var indiJson = null;
-	var indiChildren = null;
+	var indiChildren = [];
 	// first, group indicators by indicator type
 	$(indiObjs).each(function (index, indi) {	
-	    var childNode = {"type":"Indicator"};
+	    var childJson = {"type": STIXType.indi};
 	    var indiId = getObjIdStr(indi);
-    	childNode["nodeId"] = indiId;
-    	childNode["name"] = getBestIndicatorName(indi);
+    	childJson["nodeId"] = indiId;
+    	childJson["name"] = getBestIndicatorName(indi);
+        childJson["linkType"] = "topDown";
 	    var typeNode = xpFindSingle('.//indicator:Type', indi);
 	    if (typeNode != null) {
 	    	subType = $(typeNode).text();
 	    }
-
+	    addBottomUpInfoToChildren(childJson, indiBottomUpInfo);
+		indiChildren = childJson["children"];
+		$.merge(indiChildren, processChildCoas(xpFind('.//indicator:Suggested_COA', indi)));
 		// children are Indicated_TTP, Observables
 	    var indicatedTTP = xpFindSingle('.//indicator:Indicated_TTP', indi);
 	    var indiTypeMap = null;
-		indiChildren = [];
 		if (indicatedTTP != null) {
 				var ttpId = "";
 				$.merge(indiChildren, processChildTTPs([indicatedTTP]));
@@ -190,87 +230,61 @@ function processIndicatorObjs(indiObjs, ttpBottomUpInfo) {
 		}
 		$.merge(indiChildren, processChildObservables(xpFind('.//indicator:Observable', indi)));
 		if (indiChildren.length > 0) {
-			childNode["children"] = indiChildren;
+			childJson["children"] = indiChildren;
 		}
 	    if (typeof(subTypeMap[subType]) == 'undefined') {
-	    	subTypeMap[subType] = [childNode];
+	    	subTypeMap[subType] = [childJson];
 	    }
 	    else {
-	    	subTypeMap[subType].push(childNode);
+	    	subTypeMap[subType].push(childJson);
 	    }
 	});
     // for each subtype add a child indicator node
     $.map(subTypeMap, function(children, subType) {
-	    indiJson = {"type":"Indicator", "subtype":subType, "children":children};
+	    indiJson = {"type": STIXType.indi, "subtype":subType, "children":children, "linkType":"topDown"};
 	    indiNodes.push(indiJson);
 	});
     return indiNodes;
-}
-
-function processCoaObjs(coaObjs) {
-	var coaNodes = [];
-	var coaJson = null;
-	var coaId = null;
-	$(coaObjs).each(function (index, coa) {
-		coaJson = {"type":"CourseOfAction"};
-		coaId = getObjIdStr(coa);
-		coaJson["nodeId"] = coaId;
-		coaJson["name"] = getBestCourseOfActionName(coa);
-		coaNodes.push(coaJson);
-	});
-	return coaNodes;
 }
 
 // TODO - add associated actors
 // TODO - if a threat actor is specified via Attribution in a campaign, and 
 //     the campaign is specified as an associated_campaign in the threat actor,
 //     the campaign node will appear twice in the tree under the threat actor
-function processThreatActorObjs(taObjs, taBottomUpInfo, ttpBottomUpInfo) {
+function processThreatActorObjs(taObjs, campaignBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
     var taNodes = [];
     var taJson = null;
     var taChildren = null;
     var taId = null;
     $(taObjs).each(function (index, ta) {
-            taJson = {"type":"threatActor"};
+            taJson = {"type": STIXType.ta};
             taId = getObjIdStr(ta);
             taJson["nodeId"] = taId;
             taJson["name"] = getBestThreatActorName(ta);
+            taJson["linkType"] = "topDown";
             // children are observed_ttps, associated_campaigns, <Incidents>
             taChildren = [];
             var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
-            $(relatedTTPs).each(function (index, ttp) {
-        		if (taId != "") {
-        			addToTTPBottomInfo(ttpBottomUpInfo, ttp, 'threatActors', taId);
-        		}
-            });
+    		if (taId != "") {
+	            $(relatedTTPs).each(function (index, ttp) {
+	            	addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle('.//stixCommon:TTP', ttp)), 'threatActors', taId);
+	            });
+    		}
             $.merge(taChildren, processChildTTPs(relatedTTPs));
-            $.merge(taChildren, processChildCampaigns(xpFind('.//threat-actor:Associated_Campaign', ta)));
+            var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
+            if (taId != null) {
+	            $(campaigns).each(function (index, ca) {
+	            	addToBottomUpInfo(campaignBottomUpInfo, ca, 'threatActors', taId);
+	            });
+            }
+            $.merge(taChildren, processChildCampaigns(campaigns));
             //TODO add <Incidents>
             if (taChildren.length > 0) {
                 taJson["children"] = taChildren;
             }
-    		taJson = addThreatActorBottomUpInfo(taJson, taBottomUpInfo);
             taNodes.push(taJson);
         });
     return taNodes;
-}
-
-
-function addThreatActorBottomUpInfo(taJson, bottomUpInfo) {
-	var nodeId = taJson.nodeId;
-	var info = bottomUpInfo[nodeId];
-	if (typeof(taJson["children"]) == 'undefined') {
-		taJson["children"] = [];
-	}
-	if (typeof(info) != 'undefined') {
-		var cas = info.campaigns;
-		if (typeof(cas) != 'undefined') {
-			$(cas).each(function (index, caId) {
-				(taJson.children).push({"type":"campaign", "nodeIdRef":caId});		
-			});
-		}
-	}
-	return taJson;
 }
 
 //  TODO add <Incidents>, <ThreatActors>
@@ -279,13 +293,10 @@ function processTTPObjs(ttpObjs, ttpBottomUpInfo) {
     var ttpJson = null;
     $(ttpObjs).each(function (index, ttp) {
     		ttpJson = createSingleTTPJson(ttp);
-    		ttpJson = addTTPBottomUpInfo(ttpJson, ttpBottomUpInfo);
             ttpNodes.push(ttpJson);
         });
     return ttpNodes;
 }
-
-
 
 // TODO first just handle idRefs, need to add inline ttp processing
 function processChildTTPs(ttps) {
@@ -293,7 +304,7 @@ function processChildTTPs(ttps) {
     $(ttps).each(function (index, ttp) {
 	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:TTP', ttp)));
             if (idRef != "") {
-                ttpNodes.push({"type":"ObservedTTP", "nodeIdRef":idRef});
+                ttpNodes.push({"type": STIXType.ttp, "nodeIdRef":idRef, "linkType":"topDown"});
             }
             else {  // inline TTP
             	ttpNodes.push(createSingleTTPJson(ttp));
@@ -308,10 +319,32 @@ function processChildCampaigns(cas) {
     $(cas).each(function (index, ca) {
 	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Campaign', ca)));
             if (idRef != "") {
-                caNodes.push({"type":"campaign", "nodeIdRef":idRef});
+                caNodes.push({"type": STIXType.ca, "nodeIdRef":idRef, "linkType":"topDown"});
             }
 	});
     return caNodes;
+}
+
+function processChildCoas(coas) {
+	var coaNodes = [];
+	var coa = null;
+	var coaJson = null;
+	$(coas).each(function(index, coaObj) {
+		coa = $(xpFindSingle('.//stixCommon:Course_Of_Action', coaObj));
+		if (coa != null) {
+			coaJson = {"type": STIXType.coa};
+		    var idRef = getObjIdRefStr(coa);
+	        if (idRef != "") {
+	        	coaJson["nodeIdRef"] = idRef;
+	        }	
+	        else {
+	        	coaJson["name"] = getBestCourseOfActionName(coa[0]);
+	        }
+	        coaJson["linkType"] = "topDown";
+	        coaNodes.push(coaJson);
+		}
+	});
+	return coaNodes;
 }
 
 // TODO first just handle idRefs, need to add inline ttp processing
@@ -320,7 +353,7 @@ function processChildThreatActors(actors) {
     $(actors).each(function (index, actor) {
 	    var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Threat_Actor', actor)));
 	    if (idRef != "") {
-	    	actorNodes.push({"type":"threatActor", "nodeIdRef":idRef});
+	    	actorNodes.push({"type": STIXType.ta, "nodeIdRef":idRef, "linkType":"topDown"});
 	    }
 	});
     return actorNodes;
@@ -331,7 +364,7 @@ function processChildIncidents(incidents) {
     $(incidents).each(function (index, incident) {
     	var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Incident', incident)));
 		if (idRef != "") {
-			incidentNodes.push({"type":"Indicator", "nodeIdRef":idRef});
+			incidentNodes.push({"type": STIXType.incident, "nodeIdRef":idRef, "linkType":"topDown"});
 		}
     });
     return incidentNodes;
@@ -342,7 +375,7 @@ function processChildIndicators(indis) {
 	$(indis).each(function (index, indi) {
 		var idRef = getObjIdRefStr($(xpFindSingle('.//stixCommon:Indicator', indi)));
 		if (idRef != "") {
-			indiNodes.push({"type":"Indicator", "nodeIdRef":idRef});
+			indiNodes.push({"type": STIXType.indi, "nodeIdRef":idRef, "linkType":"topDown"});
 		}
 	});
     return indiNodes;
@@ -416,6 +449,9 @@ function generateTreeJson(inputFiles) {
 	var taNodes = [];
 	var ttpNodes = [];
 	
+	var campaignBottomUpInfo = {};
+	var incidentBottomUpInfo = {};
+	var indiBottomUpInfo = {};
 	var taBottomUpInfo = {};
 	var ttpBottomUpInfo = {};
 	
@@ -440,17 +476,22 @@ function generateTreeJson(inputFiles) {
                             
                             numFiles++;
                             if (numFiles == inputFiles.length) {  // finished last file
-                                campaignNodes = processCampaignObjs(campaignObjs, taBottomUpInfo, ttpBottomUpInfo);
+                                campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
                                 coaNodes = processCoaObjs(coaObjs);
+                                etNodes = processETObjs(etObjs);
                                 incidentNodes = processIncidentObjs(incidentObjs, ttpBottomUpInfo);
-                                indiNodes = processIndicatorObjs(indiObjs, ttpBottomUpInfo);
-                                taNodes = processThreatActorObjs(taObjs, taBottomUpInfo, ttpBottomUpInfo);
+                                indiNodes = processIndicatorObjs(indiObjs, indiBottomUpInfo, ttpBottomUpInfo);
+                                taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
                                 ttpNodes = processTTPObjs(ttpObjs, ttpBottomUpInfo);
 
+                                addBottomUpInfoForNodes(campaignNodes, campaignBottomUpInfo);
+                                addBottomUpInfoForNodes(incidentNodes, incidentBottomUpInfo);
+                                addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
+                                addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
                                 //obsMap = processStixObservables(obsObjs);
-                                jsonObj = createTreeJson(jsonObj, campaignNodes, incidentNodes, indiNodes, taNodes, ttpNodes);
+                                jsonObj = createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, taNodes, ttpNodes);
                                 // displays Json to web page for debugging
-                                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                                $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 // displays tree
                                 displayTree(JSON.stringify(jsonObj, null, 2));
                             }
