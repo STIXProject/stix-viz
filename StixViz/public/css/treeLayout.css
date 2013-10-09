@@ -95,39 +95,7 @@ user-select: none;
   stroke-width: 1.5px;
 }
 
-/* .Campaigns,.campaign { */
-/*   fill: green; */
-/* } */
-
-/* .TTPs,.ObservedTTP,.AttackPattern,.MalwareBehavior { */
-/*   fill: purple; */
-/* } */
-
-/* .Indicators,.Indicator,.Indicator-Utility,.Indicator-Composite,.Indicator-Backdoor,.Indicator-Downloader { */
-/*   fill: #B8860B; */
-/* } */
-
-
-/* .Observable,.Observable-ElectronicAddress,.Observable-Email,.Observable-IPRange,.Observable-MD5,.Observable-URI { */
-/*   fill: #007aa5; */
-/* } */
-
-/* .ThreatActors,.threatActor { */
-/*   fill:red; */
-/* 	} */
-
-/* .top { */
-/*   fill: blue; */
-/* } */
-
-/* .Tools, .UsesTool { */
-/*   fill: purple; */
-/* } */
-
-/* .VictimTargeting { */
-/*   fill: #eb4c42; */
-/* } */
-
-
-
+marker.arrow { 
+	fill: #bbb;
+}
 

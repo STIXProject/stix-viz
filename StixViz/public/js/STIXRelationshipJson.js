@@ -491,7 +491,7 @@ function generateTreeJson(inputFiles) {
                                 //obsMap = processStixObservables(obsObjs);
                                 jsonObj = createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, taNodes, ttpNodes);
                                 // displays Json to web page for debugging
-                                $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                               // $('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 // displays tree
                                 displayTree(JSON.stringify(jsonObj, null, 2));
                             }

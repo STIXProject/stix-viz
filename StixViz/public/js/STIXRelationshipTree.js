@@ -28,10 +28,8 @@ var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([treeWidth(
 var diagonal = d3.svg.diagonal()
 .source(function (d) { 
 	return {x:d.source.x, y:d.source.y+nodeHeight};
-})
-.projection(function(d) {
-        return [ d.x, d.y ];
-    });
+});
+
 
 	
 
@@ -113,6 +111,8 @@ $(function() {
 	.append("feColorMatrix")
 		.attr("type","matrix")
 		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+	
+	
 
 
 	$(window).resize(function (e) { 
@@ -190,6 +190,8 @@ function update(source) {
                 return d.id || (d.id = ++i);
             });
 		
+    
+
     // Compute y position of nodes
     var zigzag = [];
     var level = 0;
@@ -305,6 +307,37 @@ function update(source) {
         .style("fill-opacity", 1e-6);
 		
 
+    
+    var marker = svg.select("defs")
+		.selectAll("marker")
+	    .data(links, function (d) { return d.target.id; });
+    
+    
+    // Add new markers
+    marker.enter().append("svg:marker")
+		.attr("id",function (d) { return "arrow" + d.target.id; })
+		.attr("viewBox", "0 -5 10 10")
+		.attr("refX", 30)
+		.attr("markerWidth",10)
+		.attr("markerHeight",10)
+		.classed("arrow",true)
+		.append("svg:path")
+		.attr("d",function (d) {
+			if (d.target.linkType == "topDown") { 
+				return "M0,-5L10,0L0,5";
+			} else { 
+				return "M10,-5L0,0L10,5";
+			}
+		});
+    
+    
+    //Reset position of all markers 
+    marker.attr("refY", function (d) { return .1*(90-computeAngle(d));})
+		.attr("orient",computeAngle);
+
+
+    marker.exit().remove();
+    
 
     // Update the links…
     var link = svg.selectAll("path.link")
@@ -324,7 +357,11 @@ function update(source) {
                           source : o,
                               target : o
                               });
-              });
+              })
+    .attr("marker-end",function(d){ 
+    	return "url(#arrow"+d.target.id+")"; 
+    	});
+
 
     // Transition links to their new position.
     link.transition()
@@ -489,11 +526,11 @@ function getName (d) {
 function clone (dlist) {
 	var clist = [];
 	$.each(dlist, function (i,d) { 
-		if (!hasDirectChildren(d)) { 
-			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef});
-		} else { 
-			clist.push({name:d.name,type:d.type,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef,_children:clone(d.children ? d.children : d._children)});
-		}	
+		var data = {name:d.name,type:d.type,linkType:d.linkType,nodeIdRef:d.nodeId ? d.nodeId : d.nodeIdRef};
+		if (hasDirectChildren(d)) { 
+			data._children = clone(d.children ? d.children : d._children);
+		}
+		clist.push(data);
 	});
 	return clist;
 }
@@ -542,6 +579,13 @@ function handleFileSelect(fileinput) {
 
 };
 
+
+// Compute the angle of a link from source to target without bezier
+function computeAngle (d) { 
+	dy = d.target.y - d.source.y;
+	dx = d.target.x - d.source.x;
+	return (Math.atan(-dx/dy) * 200/Math.PI)+90;
+}
 
 function addXmlDoc (f,xml) { 
 	
