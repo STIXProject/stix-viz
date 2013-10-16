@@ -113,7 +113,7 @@ $(function() {
 	.attr("id","lighten")
 	.append("feColorMatrix")
 		.attr("type","matrix")
-		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+		.attr("values","1 .6 .6 0 0  .6 1 .6 0 0  .6 .6 1 0 0  0 0 0 1 0");
 	
 	
 
