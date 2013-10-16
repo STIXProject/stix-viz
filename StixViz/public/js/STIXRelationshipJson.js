@@ -79,36 +79,30 @@ function processCampaignObjs(caObjs, incidentBottomUpInfo, indiBottomUpInfo, taB
             // children are related_ttps, related_incidents, related_indicators, attribution(threat actors)
             caChildren = [];
             var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
-        	if (caId != "") {
-	            $(relatedTTPs).each(function (index, ttp) {
-	            	addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ca, caId);
-	            });
-        	}
             $.merge(caChildren, processChildTTPs(relatedTTPs));
             var incidents = xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca);
-        	if (caId != "") {
-	            $(incidents).each(function (index, incident) {
-	            	addToBottomUpInfo(incidentBottomUpInfo, $(xpFindSingle(STIXPattern.incident, incident)), STIXGroupings.ca, caId);
-	            });
-        	}
             $.merge(caChildren, processChildIncidents(incidents));
             var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
-        	if (caId != "") {
-	            $(indicators).each(function (index, indi) {
-	            	addToBottomUpInfo(indiBottomUpInfo, $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.ca, caId);
-	            });
-        	}
             $.merge(caChildren, processChildIndicators(indicators));
             var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
-        	if (caId != "") {
-	            $(attributedActors).each(function (index, actor) {
-	            	addToBottomUpInfo(taBottomUpInfo, $(xpFindSingle(STIXPattern.ta, actor)), STIXGroupings.ca, caId);
-	            });
-        	}
             $.merge(caChildren, processChildThreatActors(attributedActors));
             if (caChildren.length > 0) {
                 caJson["children"] = caChildren;
             }
+        	if (caId != "") {
+	            $(relatedTTPs).each(function (index, ttp) {
+	            	addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ca, caId);
+	            });
+	            $(incidents).each(function (index, incident) {
+	            	addToBottomUpInfo(incidentBottomUpInfo, $(xpFindSingle(STIXPattern.incident, incident)), STIXGroupings.ca, caId);
+	            });
+	            $(indicators).each(function (index, indi) {
+	            	addToBottomUpInfo(indiBottomUpInfo, $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.ca, caId);
+	            });
+	            $(attributedActors).each(function (index, actor) {
+	            	addToBottomUpInfo(taBottomUpInfo, $(xpFindSingle(STIXPattern.ta, actor)), STIXGroupings.ca, caId);
+	            });
+        	}
             campaignNodes.push(caJson);
         });
     return campaignNodes;
@@ -135,22 +129,21 @@ function processETObjs(etObjs, coaBottomUpInfo) {
 		etId = getObjIdStr(et);
 		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et));
         var coas = xpFind('.//et:Potential_COA', et);
+		etChildren = processChildCoas(coas);
+		if (etChildren.length > 0) {
+			etJson["children"] = etChildren;
+		}
         if (etId != "") {
         	$(coas).each(function(index, coa) {
         		addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), STIXGroupings.et, etId);
         	});
         }
-		etChildren = processChildCoas(coas);
-		if (etChildren.length > 0) {
-			etJson["children"] = etChildren;
-		}
 		etNodes.push(etJson);
 	});
 	return etNodes;
 }
 
-//TODO add <Campaigns>
-function processIncidentObjs(incidentObjs, coaBottomUpInfo, ttpBottomUpInfo) {
+function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
     var incidentNodes = [];
     var incidentJson = null;
     var incidentChildren = null;
@@ -160,27 +153,37 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, ttpBottomUpInfo) {
     	incidentJson = createTopDownNode(incidentId, STIXType.incident, getBestIncidentName(incident));
     	// children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
     	incidentChildren = [];
-    	$.merge(incidentChildren, processChildIndicators(xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident)));
+    	var indicators = xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident);
+    	$.merge(incidentChildren, processChildIndicators(indicators));
     	$.merge(incidentChildren, processChildObservables(xpFind('.//incident:Related_Observables//incident:Related_Observable', incident)));
-    	$.merge(incidentChildren, processChildTTPs(xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident)));
-    	$.merge(incidentChildren, processChildThreatActors(xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident)));
-    	var coas = xpFind('./incident:COA_Requested', incident);
-		if (incidentId != "") {
-			$(coas).each(function (index, coa) {
-				addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle('./incident:Course_Of_Action', coa)), STIXGroupings.incident, incidentId);
-			});
-		}   	
+    	var ttps = xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident);
+    	$.merge(incidentChildren, processChildTTPs(ttps));
+    	var tas = xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident);
+    	$.merge(incidentChildren, processChildThreatActors(tas));
+    	var coas = xpFind('./incident:COA_Requested', incident);	
     	$.merge(incidentChildren, processChildCoas(coas));
-    	coas = xpFind('./incident:COA_Taken', incident);
-		if (incidentId != "") {
-			$(coas).each(function (index, coa) {
-				addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle('./incident:Course_Of_Action', coa)), incidentId);
-			});
-		}       	
+    	coas = xpFind('./incident:COA_Taken', incident);    	
     	$.merge(incidentChildren, processChildCoas(coas));
     	if (incidentChildren.length > 0) {
     		incidentJson["children"] = incidentChildren;
     	}
+		if (incidentId != "") {
+			$(indicators).each(function (index, indi) {
+				addToBottomUpInfo(indiBottomUpInfo, $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.incident, incidentId);
+			});
+			$(ttps).each(function (index, ttp) {
+				addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.incident, incidentId);
+			});
+			$(tas).each(function (index, ta) {
+				addToBottomUpInfo(taBottomUpInfo, $(xpFindSingle(STIXPattern.ta, ta)), STIXGroupings.incident, incidentId);
+			});
+			$(coas).each(function (index, coa) {
+				addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle('./incident:Course_Of_Action', coa)), STIXGroupings.incident, incidentId);
+			});
+			$(coas).each(function (index, coa) {
+				addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle('./incident:Course_Of_Action', coa)), incidentId);
+			});
+		} 
     	incidentNodes.push(incidentJson);
 		});
     return incidentNodes;
@@ -240,7 +243,7 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBo
 // TODO - if a threat actor is specified via Attribution in a campaign, and 
 //     the campaign is specified as an associated_campaign in the threat actor,
 //     the campaign node will appear twice in the tree under the threat actor
-function processThreatActorObjs(taObjs, campaignBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
+function processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo) {
     var taNodes = [];
     var taJson = null;
     var taChildren = null;
@@ -274,11 +277,11 @@ function processThreatActorObjs(taObjs, campaignBottomUpInfo, taBottomUpInfo, tt
 }
 
 //  TODO add <Incidents>, 
-function processTTPObjs(ttpObjs, ttpBottomUpInfo) {
+function processTTPObjs(ttpObjs, etBottomUpInfo) {
     var ttpNodes = [];
     var ttpJson = null;
     $(ttpObjs).each(function (index, ttp) {
-    		ttpJson = createSingleTTPJson(ttp);
+    		ttpJson = createSingleTTPJson(ttp, etBottomUpInfo);
             ttpNodes.push(ttpJson);
         });
     return ttpNodes;
@@ -447,6 +450,7 @@ function generateTreeJson(inputFiles) {
 	
 	var campaignBottomUpInfo = {};
 	var coaBottomUpInfo = {};
+	var etBottomUpInfo = {};
 	var incidentBottomUpInfo = {};
 	var indiBottomUpInfo = {};
 	var taBottomUpInfo = {};
@@ -476,13 +480,14 @@ function generateTreeJson(inputFiles) {
                                 campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
                                 coaNodes = processCoaObjs(coaObjs);
                                 etNodes = processETObjs(etObjs, coaBottomUpInfo);
-                                incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, ttpBottomUpInfo);
+                                incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
                                 indiNodes = processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBottomUpInfo);
-                                taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
-                                ttpNodes = processTTPObjs(ttpObjs, ttpBottomUpInfo);
+                                taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo);
+                                ttpNodes = processTTPObjs(ttpObjs, etBottomUpInfo);
 
                                 addBottomUpInfoForNodes(campaignNodes, campaignBottomUpInfo);
                                 addBottomUpInfoForNodes(coaNodes, coaBottomUpInfo);
+                                addBottomUpInfoForNodes(etNodes, etBottomUpInfo);
                                 addBottomUpInfoForNodes(incidentNodes, incidentBottomUpInfo);
                                 addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
                                 addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
