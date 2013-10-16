@@ -189,7 +189,6 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, ta
     return incidentNodes;
 }
 
-// TODO - add <Campaigns>, <COAs>, <Incidents>
 function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = "not specified";
@@ -240,7 +239,7 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBo
 }
 
 // TODO - add associated actors
-// TODO - if a threat actor is specified via Attribution in a campaign, and 
+// Note: if a threat actor is specified via Attribution in a campaign, and 
 //     the campaign is specified as an associated_campaign in the threat actor,
 //     the campaign node will appear twice in the tree under the threat actor
 function processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo) {
@@ -254,29 +253,25 @@ function processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo) {
             // children are observed_ttps, associated_campaigns, <Incidents>
             taChildren = [];
             var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
+            $.merge(taChildren, processChildTTPs(relatedTTPs));
+            var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
+            $.merge(taChildren, processChildCampaigns(campaigns));
+            if (taChildren.length > 0) {
+                taJson["children"] = taChildren;
+            }
     		if (taId != "") {
 	            $(relatedTTPs).each(function (index, ttp) {
 	            	addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ta, taId);
 	            });
-    		}
-            $.merge(taChildren, processChildTTPs(relatedTTPs));
-            var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
-            if (taId != null) {
 	            $(campaigns).each(function (index, ca) {
 	            	addToBottomUpInfo(campaignBottomUpInfo, ca, STIXGroupings.ta, taId);
 	            });
-            }
-            $.merge(taChildren, processChildCampaigns(campaigns));
-            //TODO add <Incidents>
-            if (taChildren.length > 0) {
-                taJson["children"] = taChildren;
-            }
+    		}
             taNodes.push(taJson);
         });
     return taNodes;
 }
 
-//  TODO add <Incidents>, 
 function processTTPObjs(ttpObjs, etBottomUpInfo) {
     var ttpNodes = [];
     var ttpJson = null;
