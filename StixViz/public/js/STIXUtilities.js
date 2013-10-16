@@ -174,6 +174,15 @@ function addToBottomUpInfo(bottomUpInfo, aNode, parentType, parentId) {
 	}
 }
 
+function createBottomUpChildren(type, refs) {
+	children = [];
+	if (typeof(refs) != 'undefined') {
+		$(refs).each(function (index, refId) {
+			children.push(createBottomUpIdRef(type, refId));
+		});
+	}
+	return children;
+}
 function addBottomUpInfoToChildren(json, bottomUpInfo) {
 	var nodeId = json.nodeId;
 	var info = bottomUpInfo[nodeId];
@@ -182,23 +191,17 @@ function addBottomUpInfoToChildren(json, bottomUpInfo) {
 	}
 	if (typeof(info) != 'undefined') {
 		var cas = info[STIXGroupings.ca];
-		if (typeof(cas) != 'undefined') {
-			$(cas).each(function (index, caId) {
-				(json.children).push(createBottomUpIdRef(STIXType.ca, caId));		
-			});
-		}
+		$.merge(json.children, createBottomUpChildren(STIXType.ca, cas));
 		var coas = info[STIXGroupings.coa];
-		if (typeof(coas) != 'undefined') {
-			$(coas).each(function (index, coaId) {
-				(json.children).push(createBottomUpIdRef(STIXType.coa, coaId));
-			});
-		}
+		$.merge(json.children, createBottomUpChildren(STIXType.coa, coas));
+		var ets = info[STIXGroupings.et];
+		$.merge(json.children, createBottomUpChildren(STIXType.et, ets));
+		var incidents = info[STIXGroupings.incident];
+		$.merge(json.children, createBottomUpChildren(STIXType.incident, incidents));
 		var tas = info[STIXGroupings.ta];
-		if (typeof(tas) != "undefined") {
-			$(tas).each(function (index, taId) {
-				(json.children).push(createBottomUpIdRef(STIXType.ta, taId));
-			});
-		}
+		$.merge(json.children, createBottomUpChildren(STIXType.ta, tas));
+		
+		// indicators get handled differently because they are grouped under type nodes
 		var indiTypeMap = info[STIXGroupings.indi];
 		if (typeof(indiTypeMap) != 'undefined') {
 			$.map(indiTypeMap, function(indiList, subType) {
@@ -215,6 +218,7 @@ function addBottomUpInfoToChildren(json, bottomUpInfo) {
 	return json;
 }
 
+// add children to each of a list of nodes
 function addBottomUpInfoForNodes(nodes, bottomUpInfo) {
 	$(nodes).each(function(index, node) {
 		addBottomUpInfoToChildren(node, bottomUpInfo);
