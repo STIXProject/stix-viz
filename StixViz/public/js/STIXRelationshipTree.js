@@ -7,7 +7,10 @@ var nodeCount = 0;
 // Root is the node that is currently at the top of the tree. Report is the root of the entire report
 var stixroot,report,svg,layout;
 
-var xmlDocs = [];
+// Id of the node that was last right-clicked
+var contextNode = null;
+
+var xmlDocs = {}, docIndex = 0;
 
 
 var margin = {
@@ -126,6 +129,15 @@ $(function() {
 		}
 	});
 	
+	$('#showHtml').on('click',function () {
+		$("#contextMenu").hide();
+		showHtmlById(contextNode);
+	});
+	
+	$(document).click(function () { 
+		$('#contextMenu').hide();
+	});
+	
 });
 
 
@@ -224,10 +236,27 @@ function update(source) {
     	.append("g")
         .attr("class", "node")
         .attr("transform", function(d) {
-                return "translate(" + (source.x0 + (nodeHeight/2)) + "," + (source.y0 + (nodeWidth/2)) + ")";
+                return "translate(" + (source.x0 + (nodeWidth/2)) + "," + (source.y0 + (nodeHeight/2)) + ")";
             })
         .on("click", click)
         .on("dblclick",doubleclick)
+        .on("contextmenu", function (data,index) {
+        	contextNode = data.nodeId ? data.nodeId : data.nodeIdRef ? data.nodeIdRef : null; 
+        	if (contextNode) { 
+        		$('#showHtml').removeClass('disabled');
+        	} else { 
+        		$('#showHtml').addClass('disabled');
+        	}
+        	position = d3.mouse(this);
+        	offset = $(this).offset();
+        	scrollTop = $('#treeView').scrollTop(); 
+        	d3.select("#contextMenu")
+        	.style('position','absolute')
+        	.style('left',(position[0]+offset.left+(nodeWidth/2))+'px')
+        	.style('top',(position[1]+offset.top-nodeHeight+scrollTop)+'px')
+        	.style('display','block');
+        	d3.event.preventDefault();
+        })
         .classed("parent",function(d) { 
                 return d.children || d._children;
             });
@@ -550,7 +579,8 @@ function handleFileSelect(fileinput) {
     // If only one JSON file was loaded (for testing)
     if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
     	// remove old xml docs
-    	xmlDocs = [];
+    	xmlDocs = {};
+    	docIndex = 0;
     	$('#xmlFileList').empty();
 
         var reader = new FileReader();
@@ -576,7 +606,8 @@ function handleFileSelect(fileinput) {
     	});
 
     	// remove old xml docs
-    	xmlDocs = [];
+    	xmlDocs = {};
+    	docIndex = 0;
     	$('#xmlFileList').empty();
 
     	// create json tree structure from xml files read in
@@ -594,43 +625,76 @@ function computeAngle (d) {
 	return (rad * 200/Math.PI)+90;
 }
 
+var working = {};
+
+
+// The processing of xslt transforms takes some time. Show the cursor as busy during that time
 function addXmlDoc (f,xml) { 
+	working[f] = true;
+	$('body').addClass('loading');
 	
-	var num = xmlDocs.length;
-	xmlDocs.push({name:f,xml:xml});
+	var num = docIndex++;
+	
+	xslFileName = "public/xslt/stix_to_html.xsl";
+	
+	xslt = Saxon.requestXML(xslFileName);
+	var processor = Saxon.newXSLT20Processor(xslt);
+	processor.setSuccess((function (filename,xmlString,index) { 
+		return function (proc) {
+			resultDocument = proc.getResultDocument();
+			//wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
+			xmlDocs[index] = {name:filename,xml:xmlString,html:resultDocument};
+			delete working[filename];
+			if (Object.keys(working).length == 0) { 
+				$('body').removeClass('loading');
+			}
+		};
+	})(f,xml,num));
+	
+	setTimeout(function () { processor.transformToDocument(xml); }, 200);
+
+	
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
 
-	$('#xmlFile-'+num).on("click", function () { 
-    	$('#htmlView').empty();
-    	layout.open("south");
-    	$('#htmlView').addClass("loading");
-    	$('body').addClass("loading");
-    	
-
-    	xml = xmlDocs[$(this).attr("id").split("-")[1]].xml;
-    	xslFileName = "public/xslt/stix_to_html.xsl";
-    	
-    	xslt = Saxon.requestXML(xslFileName);
-    	processor = Saxon.newXSLT20Processor(xslt);
-    	processor.setSuccess(function (proc) {
-
-    		resultDocument = proc.getResultDocument();
-        	wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
-        	$('#htmlView').removeClass("loading");
-        	$('body').removeClass("loading");
-        	$('#htmlView').append(wrapperHtml);
-        	
-        	runtimeCopyObjects();
-    	});
-    	
-    	setTimeout(function () { processor.transformToDocument(xml); }, 100);
-
+	$('#xmlFile-'+num).on("click", function () {
+		html = xmlDocs[$(this).attr("id").split("-")[1]].html;
+		showHtml(new XMLSerializer().serializeToString($(html).find('#wrapper').get(0)));
+		$('#htmlView').scrollTop(0);
     });
+	
+	
+}
+
+function showHtmlById (nodeid) {
+	var waitForXslt = setInterval(function () {
+		if (Object.keys(working).length == 0) { 
+			clearInterval(waitForXslt);
+			if (nodeid) { 
+				$.each(xmlDocs, function (i,entry) {
+					if ($(entry.html).find(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0) != undefined) {
+						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
+						$(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0).scrollIntoView();
+						return false;
+					} else { 
+						return true;
+					}
+				});
+			}
+		}
+	}, 200);
+}
+
+function showHtml (html) { 
+	$('#htmlView').empty();
+	layout.open("south");
+	$('#htmlView').addClass("loading");
+	$('body').addClass("loading");
+	
+	$('#htmlView').append(html);
+
+	$('#htmlView').removeClass("loading");
+	$('body').removeClass("loading");
+
 }
 
 
-
-
-function toggleHtml () {
-	layout.toggle("south");
-}
