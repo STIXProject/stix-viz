@@ -18,7 +18,7 @@ function nsResolver(prefix) {
     		'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
     		'campaign': 'http://stix.mitre.org/Campaign-1', 
     		'coa': 'http://stix.mitre.org/CourseOfAction-1',
-    		'et': '"http://stix.mitre.org/ExploitTarget-1',
+    		'et': 'http://stix.mitre.org/ExploitTarget-1',
     		'incident': 'http://stix.mitre.org/Incident-1',
     		'indicator': 'http://stix.mitre.org/Indicator-2', 
     		'threat-actor': 'http://stix.mitre.org/ThreatActor-1',
@@ -30,11 +30,31 @@ function nsResolver(prefix) {
 var STIXType = {
 		'ca' : 'campaign', 
 		'coa' : 'CourseOfAction',
-		'exploit' : 'ExploitTarget',
+		'et' : 'ExploitTarget',
 		'incident' : 'Incident',
 		'indi': 'Indicator',
 		'ta' : 'threatActor',
 		'ttp' : 'ObservedTTP'
+};
+
+var STIXGroupings = {
+	'ca' : 'Campaigns',
+	'coa' : 'CoursesOfAction',
+	'et' : 'ExploitTargets',
+	'incident' : 'Incidents',
+	'indi' : 'Indicators',
+	'ta' : 'ThreatActors',
+	'ttp' : 'TTPs'
+};
+
+var STIXPattern = {
+		'ca' : './/stixCommon:Campaign', 
+		'coa' : './/stixCommon:Course_Of_Action',
+		'et' : './/stixCommon:Exploit_Target',
+		'incident' : './/stixCommon:Incident',
+		'indi': './/stixCommon:Indicator',
+		'ta' : './/stixCommon:Threat_Actor',
+		'ttp' : './/stixCommon:TTP'	
 };
 
 // use xpath to deal with default namespaces
@@ -76,6 +96,66 @@ function getObjIdStr(obj) {
 	}
 }
 
+function createNode(id, type, name, direction) {
+	var json = {"type": type};
+	if (id != null) {
+		json["nodeId"] = id;
+	}
+	json["name"] = name;
+	json["linkType"] = direction;	
+	return json;	
+}
+
+function createTopDownNode(id, type, name) {
+	return createNode(id, type, name, "topDown");	
+}
+
+function createBottomUpNode(id, type, name) {
+	return createNode(id, type, name, "bottomUp");
+}
+
+function createTopDownIdRef(type, idRef) {
+	return {"type": type, "nodeIdRef":idRef, "linkType":"topDown"};
+}
+
+function createBottomUpIdRef(type, idRef) {
+	return {"type": type, "nodeIdRef":idRef, "linkType":"bottomUp"};
+}
+
+// gather bottom up info from indicators
+// handled differently from other bottom up info because indicators are grouped 
+// under types
+function addIndicatorToBottomUpInfo(bottomUpInfo, aNode, subType, indiId) {
+	var indiTypeMap = {};
+	var indiGroup = STIXGroupings.indi;
+	var nodeId = "";
+	if (aNode != null) {
+		nodeId = getObjIdRefStr(aNode);
+	}
+	if (nodeId != "") {  // track indicator child info for this ttp
+		if (typeof(bottomUpInfo[nodeId]) == 'undefined') {
+			indiTypeMap[subType] = [indiId];
+			bottomUpInfo[nodeId] = {};
+			(bottomUpInfo[nodeId])[indiGroup] =	indiTypeMap;
+		}
+		else {
+			//indiTypeMap = (bottomUpInfo[nodeId]).indicators;
+			indiTypeMap = (bottomUpInfo[nodeId])[indiGroup];
+			if (typeof(indiTypeMap) == 'undefined') {
+				indiTypeMap = {};
+			}
+			if (typeof(indiTypeMap[subType]) == 'undefined') {
+				indiTypeMap[subType] = [indiId];
+			}
+			else {
+				(indiTypeMap[subType]).push(indiId);
+			}
+			(bottomUpInfo[nodeId])[indiGroup] = indiTypeMap;
+		}
+	}
+}
+
+// gather all kinds of bottom up info except indicators
 function addToBottomUpInfo(bottomUpInfo, aNode, parentType, parentId) {
 	var parentTypeMap = null;
 	var id = "";
@@ -101,25 +181,31 @@ function addBottomUpInfoToChildren(json, bottomUpInfo) {
 		json["children"] = [];
 	}
 	if (typeof(info) != 'undefined') {
-		var cas = info.campaigns;
+		var cas = info[STIXGroupings.ca];
 		if (typeof(cas) != 'undefined') {
 			$(cas).each(function (index, caId) {
-				(json.children).push({"type":STIXType.ca, "nodeIdRef":caId, "linkType":"bottomUp"});		
+				(json.children).push(createBottomUpIdRef(STIXType.ca, caId));		
 			});
 		}
-		var tas = info.threatActors;
+		var coas = info[STIXGroupings.coa];
+		if (typeof(coas) != 'undefined') {
+			$(coas).each(function (index, coaId) {
+				(json.children).push(createBottomUpIdRef(STIXType.coa, coaId));
+			});
+		}
+		var tas = info[STIXGroupings.ta];
 		if (typeof(tas) != "undefined") {
 			$(tas).each(function (index, taId) {
-				(json.children).push({"type":STIXType.ta, "nodeIdRef":taId, "linkType":"bottomUp"});
+				(json.children).push(createBottomUpIdRef(STIXType.ta, taId));
 			});
 		}
-		var indiTypeMap = info.indicators;
+		var indiTypeMap = info[STIXGroupings.indi];
 		if (typeof(indiTypeMap) != 'undefined') {
 			$.map(indiTypeMap, function(indiList, subType) {
-				var subTypeNode = {"type":STIXType.indi, "name":subType, "linkType":"bottomUp"};
+				var subTypeNode = createBottomUpNode(null, STIXType.indi, subType);
 				var children = [];
 				$(indiList).each(function (index, indiId) {
-					children.push({"type":STIXType.indi, "nodeIdRef":indiId, "linkType":"bottomUp"});
+					children.push(createBottomUpIdRef(STIXType.indi, indiId));
 				});
 				subTypeNode["children"] = children;
 				(json.children).push(subTypeNode);
