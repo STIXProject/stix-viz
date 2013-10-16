@@ -1,8 +1,8 @@
 var nodeWidth = 60,
  nodeHeight = 60,
- nodeSep = 160;
-var i = 0;
-
+ nodeSep = 160,
+ markerSize = 6;
+var nodeCount = 0;
 
 // Root is the node that is currently at the top of the tree. Report is the root of the entire report
 var stixroot,report,svg,layout;
@@ -187,7 +187,7 @@ function update(source) {
     // Update the nodes…
     node = svg.selectAll("g.node")
         .data(nodes, function(d) {
-                return d.id || (d.id = ++i);
+                return d.id || (d.id = ++nodeCount);
             });
 		
     
@@ -318,8 +318,8 @@ function update(source) {
 		.attr("id",function (d) { return "arrow" + d.target.id; })
 		.attr("viewBox", "0 -5 10 10")
 		.attr("refX", 30)
-		.attr("markerWidth",10)
-		.attr("markerHeight",10)
+		.attr("markerWidth",1e-6)
+		.attr("markerHeight",1e-6)
 		.classed("arrow",true)
 		.append("svg:path")
 		.attr("d",function (d) {
@@ -332,7 +332,7 @@ function update(source) {
     
     
     //Reset position of all markers 
-    marker.attr("refY", function (d) { return .1*(90-computeAngle(d));})
+    marker.attr("refY", function (d) { return (1/markerSize)*(90-computeAngle(d));})
 		.attr("orient",computeAngle);
 
 
@@ -368,6 +368,12 @@ function update(source) {
         .duration(duration)
         .attr("d", diagonal);
 
+    // After the links have moved to their position, show the arrows
+    marker.transition()
+    .duration(duration)
+	.attr("markerWidth",markerSize)
+	.attr("markerHeight",markerSize);
+	
     // Transition exiting nodes to the parent's new position.
     link.exit()
         .transition()
@@ -584,16 +590,17 @@ function handleFileSelect(fileinput) {
 function computeAngle (d) { 
 	dy = d.target.y - d.source.y;
 	dx = d.target.x - d.source.x;
-	return (Math.atan(-dx/dy) * 200/Math.PI)+90;
+	rad = Math.atan(-dx/dy);
+	return (rad * 200/Math.PI)+90;
 }
 
 function addXmlDoc (f,xml) { 
 	
-	var i = xmlDocs.length;
+	var num = xmlDocs.length;
 	xmlDocs.push({name:f,xml:xml});
-	$('#xmlFileList').append('<li><a id="xmlFile-'+i+'" href="#">'+f+'</a></li>');
+	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
 
-	$('#xmlFile-'+i).on("click", function () { 
+	$('#xmlFile-'+num).on("click", function () { 
     	$('#htmlView').empty();
     	layout.open("south");
     	$('#htmlView').addClass("loading");
