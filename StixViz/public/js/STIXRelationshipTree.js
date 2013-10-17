@@ -69,6 +69,7 @@ var typeIconMap = {
 	"Incident" : "Incident",
 	"Incidents" : "Incident",
 	"ExploitTarget" : "ExplotTarget",
+	"ExploitTargets" :  "ExplotTarget",
 	"top" : "Report"
 };
 

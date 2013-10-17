@@ -200,6 +200,8 @@ function addBottomUpInfoToChildren(json, bottomUpInfo) {
 		$.merge(json.children, createBottomUpChildren(STIXType.incident, incidents));
 		var tas = info[STIXGroupings.ta];
 		$.merge(json.children, createBottomUpChildren(STIXType.ta, tas));
+		var ttps = info[STIXGroupings.ttp];
+		$.merge(json.children, createBottomUpChildren(STIXType.ttp, ttps));
 		
 		// indicators get handled differently because they are grouped under type nodes
 		var indiTypeMap = info[STIXGroupings.indi];

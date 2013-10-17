@@ -1,5 +1,5 @@
 // Create basic Json node for a TTP
-function createSingleTTPJson(ttp) {
+function createSingleTTPJson(ttp, etBottomUpInfo) {
 	var ttpId = getObjIdStr(ttp);
     var ttpJson = createTopDownNode(ttpId, STIXType.ttp, getBestTTPName(ttp));
     // children can be INDICATORS (from indicator file), RESOURCES, 
@@ -8,7 +8,7 @@ function createSingleTTPJson(ttp) {
     $.merge(ttpChildren, processTTPBehaviors(ttp));
     $.merge(ttpChildren, processTTPResources(ttp));
     $.merge(ttpChildren, processTTPVictimTargeting(ttp));
-    $.merge(ttpChildren, processChildExploitTargets(ttp));
+    $.merge(ttpChildren, processChildExploitTargets(ttp, etBottomUpInfo));
     if (ttpChildren.length > 0) {
         ttpJson["children"] = ttpChildren;
     }
@@ -31,11 +31,18 @@ function processTTPVictimTargeting(ttp) {
     return targets;
 }
 
-function processChildExploitTargets(ttp) {
+function processChildExploitTargets(ttp, etBottomUpInfo) {
 	var etNodes = [];
     var etSection = xpFindSingle('.//ttp:Exploit_Targets', ttp);
     if (etSection != null) {
     var targets = xpFind(STIXPattern.et, etSection);
+    var ttpId = getObjIdStr(ttp);
+    if (ttpId != null) {
+        $(targets).each(function (index, et) {
+        	addToBottomUpInfo(etBottomUpInfo, et, STIXGroupings.ttp, ttpId);
+        });
+    }
+    
 	    $(targets).each(function (index, target) {
 	    	var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.et, target)));
 	    	if (idRef != "") {  // target is specified via an idRef
@@ -59,7 +66,6 @@ function processChildExploitTargets(ttp) {
 // TODO - NOT looking for idRefs
 // TODO - need to add more child types as we see them
 function processTTPResources(ttp) {
-    var id="";
     var resources = [];
     resourceObj = xpFindSingle('.//ttp:Resources', ttp);
     if (resourceObj != null) {
