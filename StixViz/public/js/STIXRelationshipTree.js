@@ -40,6 +40,18 @@ var duration = 750;
 
 var findBaseNode;
 
+var htmlSectionMap = { 
+	"ThreatActors":"Threat Actors",
+	"TTPs":"TTPs",
+	"Indicators":"Indicators",
+	"Campaigns":"Campaigns",
+	"CoursesOfAction":"Courses of Action",
+	"Incidents":"Incidents",
+	"ExploitTargets":"Exploit Targets",
+	"Observables":"Observables"
+};
+
+
 var typeIconMap = {
 	"ThreatActors" : "ThreatActor",
 	"TTPs" : "TTP",
@@ -131,7 +143,7 @@ $(function() {
 	
 	$('#showHtml').on('click',function () {
 		$("#contextMenu").hide();
-		showHtmlById(contextNode);
+		showHtmlByContext(contextNode);
 	});
 	
 	$(document).click(function () { 
@@ -241,8 +253,8 @@ function update(source) {
         .on("click", click)
         .on("dblclick",doubleclick)
         .on("contextmenu", function (data,index) {
-        	contextNode = data.nodeId ? data.nodeId : data.nodeIdRef ? data.nodeIdRef : null; 
-        	if (contextNode) { 
+        	contextNode = data;
+        	if (getId(data) || htmlSectionMap[data.type]) { 
         		$('#showHtml').removeClass('disabled');
         	} else { 
         		$('#showHtml').addClass('disabled');
@@ -264,7 +276,8 @@ function update(source) {
     	
 
     nodeEnter.append("title")
-    .text(getName);
+    .text(function (d) { 
+    	return (getId(d) + '\n' + getName(d)).trim(); });
 		
     nodeEnter.append("svg:image")
         .attr("height", 1e-6)
@@ -569,6 +582,11 @@ function getName (d) {
 	return d.name ? d.name : d.nodeIdRef ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
 }
 
+function getId (d) { 
+	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : "";
+}
+
+
 function clone (dlist) {
 	var clist = [];
 	$.each(dlist, function (i,d) { 
@@ -676,15 +694,28 @@ function addXmlDoc (f,xml) {
 	
 }
 
-function showHtmlById (nodeid) {
+// If the node has an id, find the DOM element with that id, otherwise find the DOM element that matches the type section header. 
+function showHtmlByContext (data) {
 	var waitForXslt = setInterval(function () {
 		if (Object.keys(working).length == 0) { 
 			clearInterval(waitForXslt);
-			if (nodeid) { 
+			var nodeid = getId(data);
+			if (nodeid) {
 				$.each(xmlDocs, function (i,entry) {
 					if ($(entry.html).find(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						$(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0).scrollIntoView();
+						return false;
+					} else { 
+						return true;
+					}
+				});
+			} else { 
+				var section = htmlSectionMap[data.type];
+				$.each(xmlDocs, function (i,entry) {
+					if ($(entry.html).find("h2 > a:contains('"+section+"')").get(0) != undefined) {
+						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
+						$("h2 > a:contains('"+section+"')").get(0).scrollIntoView();
 						return false;
 					} else { 
 						return true;
