@@ -90,15 +90,14 @@ $(function() {
 			togglerLength_closed:	-1,			// "100%" OR -1 = full width of pane
 			resizable: 				false,
 			slidable:				false,		//	override default effect
-			fxName:					"none",
+			fxName:					"none"
 		},
 		center: { 
-			minSize:400,
+			minSize:400
 		},
 		south: {
 			initClosed:true,
-			size:200,
-			maxSize:300,
+			size:200
 		} 			
 	});
 	
@@ -113,7 +112,7 @@ $(function() {
 	.attr("id","lighten")
 	.append("feColorMatrix")
 		.attr("type","matrix")
-		.attr("values","1 .6 .6 0 0  .6 1 .6 0 0  .6 .6 1 0 0  0 0 0 1 0");
+		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 	
 	
 
@@ -258,8 +257,10 @@ function update(source) {
         	d3.event.preventDefault();
         })
         .classed("parent",function(d) { 
-                return d.children || d._children;
+                return hasChildren(d);
             });
+        
+    	
 
     nodeEnter.append("title")
     .text(getName);
@@ -307,6 +308,7 @@ function update(source) {
     	svg.selectAll("rect.nodeborder").remove();
     });
 
+
     // wrap text description
     svg.selectAll('text').each(wraptext);
 
@@ -322,6 +324,14 @@ function update(source) {
 
     nodeUpdate.select("text").style("fill-opacity", 1);
 
+    d3.selectAll('.node.parent')
+    .append('circle')
+    .attr("cx","0")
+    .attr("cy","62")
+    .attr("r","2")
+    .attr("fill","black");
+    
+    
     // Transition exiting nodes to the parent's new position.
     var nodeExit = node.exit().transition().duration(duration).attr(
     		"transform", function(d) {
