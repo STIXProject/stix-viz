@@ -415,7 +415,7 @@ function processStixObservables(observables) {
 var doc = null;
 
 var jsonObj = {"type": "top",
-	       "name": "APT1",
+	       "name": "",
 	       "children": []};
 
 // hack for development, switch to selecting from web page instead
@@ -463,7 +463,8 @@ function generateTreeJson(inputFiles) {
                             doc = xml;
                             $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
                             $.merge(coaObjs, xpFind('//stix:Courses_Of_Action/stix:Course_Of_Action', xml));
-                            $.merge(etObjs, xpFind('//stix:Exploit_Targets/stix:Exploit_Target', xml));
+                            // ets are in stixCommon, while the other top level objs are in stix
+                            $.merge(etObjs, xpFind('//stix:Exploit_Targets/stixCommon:Exploit_Target', xml));
                             $.merge(incidentObjs, xpFind('//stix:Incidents/stix:Incident', xml));
                             $.merge(indiObjs, xpFind('//stix:Indicators/stix:Indicator', xml));
                             // $.merge(obsObjs, xpFind('//stix:Observables/stix:Observable', xml));

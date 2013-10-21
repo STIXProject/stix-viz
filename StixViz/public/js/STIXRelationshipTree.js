@@ -80,6 +80,7 @@ var typeIconMap = {
 	"Indicator-Downloader" : "Indicator",
 	"Incident" : "Incident",
 	"Incidents" : "Incident",
+	"Exploit" : "ExplotTarget",
 	"ExploitTarget" : "ExplotTarget",
 	"ExploitTargets" :  "ExplotTarget",
 	"top" : "Report"

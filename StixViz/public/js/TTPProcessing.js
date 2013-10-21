@@ -44,7 +44,7 @@ function processChildExploitTargets(ttp, etBottomUpInfo) {
     }
     
 	    $(targets).each(function (index, target) {
-	    	var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.et, target)));
+	    	var idRef = getObjIdRefStr(target);
 	    	if (idRef != "") {  // target is specified via an idRef
 	    		etNodes.push(createTopDownIdRef(STIXType.et, idRef));
 	    	}
