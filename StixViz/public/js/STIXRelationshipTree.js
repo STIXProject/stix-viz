@@ -621,7 +621,7 @@ function hasDirectChildren (d) {
 }
 
 function getName (d) { 
-	return d.name ? d.name : d.nodeIdRef ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
+	return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
 }
 
 function getId (d) { 
