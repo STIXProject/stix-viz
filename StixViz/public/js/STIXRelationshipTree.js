@@ -38,7 +38,6 @@ var diagonal = d3.svg.diagonal()
 
 var duration = 750;
 
-var findBaseNode;
 
 var htmlSectionMap = { 
 	"ThreatActors":"Threat Actors",
@@ -160,7 +159,7 @@ $(function() {
 function displayTree(jsonString) {
 	
 	
-	svg.selectAll("g.node").remove();
+
 
     report = $.parseJSON(jsonString);
     stixroot = report;
@@ -293,6 +292,13 @@ function update(source) {
             return !hasChildren(d);             
             });
 	      
+    nodeEnter.filter(".parent").append('rect')
+	.attr("height", String(1e-6)+"px")
+	.attr("width", String(1e-6)+"px")
+	.attr("rx","10")
+	.attr("ry","10")
+	.attr("class","parentborder")
+	.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + "-2" + ")");
 	      
     nodeEnter.append("text")
         .attr("y", function(d) { return nodeHeight + 12; })
@@ -301,26 +307,17 @@ function update(source) {
         .style("fill-opacity", 1e-6);
 		
 
-    $(".node").on("mouseenter", function () { 
+    $(".node").on("mouseenter", function () {
     	var d = d3.select(this).datum();  
     	var nodeId = d.nodeId ? d.nodeId : d.nodeIdRef;
-    	if (!nodeId) return;
-    	var matches = d3.selectAll(".node").filter(function (d) { 
-    		return d.nodeId == nodeId || d.nodeIdRef == nodeId;
-    	});
-    	if (matches.size() > 1) { 
-    		matches.append("rect")
-    		.attr("height", String(nodeHeight+10)+"px")
-    		.attr("width", String(nodeWidth+10)+"px")
-    		.attr("rx","10")
-    		.attr("ry","10")
-    		.attr("class","nodeborder")
-    		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
-    	}
+
+    	highlightDuplicateNodes(nodeId);
+    	highlightHtml(nodeId);
     });
     
     $(".node").on("mouseleave", function () { 
-    	svg.selectAll("rect.nodeborder").remove();
+    	removeHighlightedNodes();
+    	$(".objectReference").removeClass("infocus");
     });
 
 
@@ -339,13 +336,20 @@ function update(source) {
 
     nodeUpdate.select("text").style("fill-opacity", 1);
 
-    d3.selectAll('.node.parent')
-    .append('circle')
-    .attr("cx","0")
-    .attr("cy","62")
-    .attr("r","2")
-    .attr("fill","black");
+    nodeUpdate.select('rect')
+    	    .attr("height",String(nodeHeight+4)+"px")
+    	    .attr("width",String(nodeWidth+4)+"px");
+
+//    var dot = d3.selectAll('.node.parent')
+//    .append('circle')
+//    .attr("cx","0")
+//    .attr("cy","63")
+//    .attr("r","1e-6")
+//    .attr("stroke","gray")
+//    .attr("fill","white");
     
+
+
     
     // Transition exiting nodes to the parent's new position.
     var nodeExit = node.exit().transition().duration(duration).attr(
@@ -360,6 +364,9 @@ function update(source) {
     nodeExit.select("text")
         .style("fill-opacity", 1e-6);
 		
+    nodeExit.select("rect")
+    	.attr("height", String(1e-6)+"px")
+    	.attr("width", String(1e-6)+"px");
 
     
     var marker = svg.select("defs")
@@ -421,13 +428,20 @@ function update(source) {
     link.transition()
         .duration(duration)
         .attr("d", diagonal);
-
-    // After the links have moved to their position, show the arrows
+    
+    
+    // After the links have moved to their position, show the arrows and the dots on the nodes
     marker.transition()
     .duration(duration)
 	.attr("markerWidth",markerSize)
 	.attr("markerHeight",markerSize);
 	
+//    dot.transition()
+//    .duration(duration)
+//    .attr("r",4);
+    
+   
+
     // Transition exiting nodes to the parent's new position.
     link.exit()
         .transition()
@@ -548,6 +562,31 @@ function wraptext (d) {
 	el.selectAll('tspan').filter(function (d,i) { return i > 2; }).remove();
 }
 
+// Highlight all nodes in the tree that match the given nodeId. If the highlight command is coming
+// from a hover over the html, highlight all matches. If it is coming from the tree itself, only 
+// highlight if there is more than one match (don't just highlight the singleton node)
+function highlightDuplicateNodes (nodeId) { 
+	if (!nodeId) return;
+	var matches = d3.selectAll(".node").filter(function (d) { 
+		return d.nodeId == nodeId || d.nodeIdRef == nodeId;
+	});
+	matches.append("rect")
+	.attr("height", String(nodeHeight+10)+"px")
+	.attr("width", String(nodeWidth+10)+"px")
+	.attr("rx","10")
+	.attr("ry","10")
+	.attr("class","nodeborder")
+	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+}
+
+function removeHighlightedNodes () { 
+	svg.selectAll("rect.nodeborder").remove();
+}
+
+function highlightHtml (nodeId) { 
+	if (!nodeId) return;
+	$(".topLevelCategoryTable .objectReference:contains('"+nodeId+"')").addClass("infocus");
+}
 
 function findBaseNode (nodeId) { 
 	var queue = [report];
@@ -609,9 +648,7 @@ function handleFileSelect(fileinput) {
     // If only one JSON file was loaded (for testing)
     if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
     	// remove old xml docs
-    	xmlDocs = {};
-    	docIndex = 0;
-    	$('#xmlFileList').empty();
+    	reset();
 
         var reader = new FileReader();
 
@@ -626,6 +663,9 @@ function handleFileSelect(fileinput) {
         reader.readAsText(files[0]);
 
     } else { 
+    	// remove old xml docs
+    	reset();
+    	
     	$(files).each(function (index, f) {
     		var mimetype = mime.lookup(f.name);
 
@@ -635,16 +675,20 @@ function handleFileSelect(fileinput) {
     		}
     	});
 
-    	// remove old xml docs
-    	xmlDocs = {};
-    	docIndex = 0;
-    	$('#xmlFileList').empty();
 
     	// create json tree structure from xml files read in
     	generateTreeJson(files);
     }
 
 };
+
+function reset () { 
+	xmlDocs = {};
+	docIndex = 0;
+	$('#xmlFileList').empty();
+	svg.selectAll("g.node").remove();
+	$('#htmlView').empty();
+}
 
 
 // Compute the angle of a link from source to target without bezier
@@ -706,6 +750,7 @@ function showHtmlByContext (data) {
 					if ($(entry.html).find(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						$(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0).scrollIntoView();
+						$(".objectReference:contains('"+nodeid+"')").addClass("infocus");
 						return false;
 					} else { 
 						return true;
@@ -734,7 +779,17 @@ function showHtml (html) {
 	$('body').addClass("loading");
 	
 	$('#htmlView').append(html);
+	
+	$(".objectReference").on("mouseenter", function () { 
+		$(this).addClass("infocus");
+		highlightDuplicateNodes($(this).text());
+	});
 
+	$(".objectReference").on("mouseleave", function () {
+		$(this).removeClass("infocus");
+		removeHighlightedNodes();
+	});
+	
 	$('#htmlView').removeClass("loading");
 	$('body').removeClass("loading");
 
