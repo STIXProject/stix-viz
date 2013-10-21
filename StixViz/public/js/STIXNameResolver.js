@@ -261,6 +261,27 @@ function getBestThreatActorName(actor) {
     return nameStr;
 }
 
+// title
+// Description
+// id
+function getBestObservableName(obs) {
+	var nameStr = "";
+    var titleNode = xpFindSingle('.//cybox:Title', obs);
+    if (titleNode != null) {
+		nameStr = $(titleNode).text();
+	}	
+    else {
+    	var desc = xpFindSingle('.//cybox:Description', obs);
+    	if (desc != null) {
+    		nameStr = $(desc).text();
+    	}
+    }
+    if (nameStr == "") {
+    	nameStr = getObjIdStr(obs);
+    }
+    return nameStr;
+}
+
 // Title
 // Description (truncate) – probably won’t be used w/o Title but you never know
 // This is a little complicated, but maybe say which of the following elements are there plus the ID: Behavior, Resources, Victim_Targeting. 
@@ -273,7 +294,7 @@ function getBestTTPName(ttp) {
 	}
 	else { 
 		var desc = xpFindSingle('.//ttp:Description', ttp);
-		if (ttp != null) {
+		if (desc != null) {
 			nameStr = $(desc).text();
 		}
 	}

@@ -33,6 +33,7 @@ var STIXType = {
 		'et' : 'ExploitTarget',
 		'incident' : 'Incident',
 		'indi': 'Indicator',
+		'obs' : 'Observable',
 		'ta' : 'threatActor',
 		'ttp' : 'ObservedTTP'
 };
@@ -43,6 +44,7 @@ var STIXGroupings = {
 	'et' : 'ExploitTargets',
 	'incident' : 'Incidents',
 	'indi' : 'Indicators',
+	'obs' : 'Observables',
 	'ta' : 'ThreatActors',
 	'ttp' : 'TTPs'
 };
@@ -53,6 +55,7 @@ var STIXPattern = {
 		'et' : './/stixCommon:Exploit_Target',
 		'incident' : './/stixCommon:Incident',
 		'indi': './/stixCommon:Indicator',
+		'obs': './/stixCommon:Observable',
 		'ta' : './/stixCommon:Threat_Actor',
 		'ttp' : './/stixCommon:TTP'	
 };

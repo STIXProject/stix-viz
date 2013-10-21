@@ -66,6 +66,8 @@ var typeIconMap = {
 	"Indicators" : "Indicator",
 	"Campaigns" : "Campaign",
 	"campaign" : "Campaign",
+	"Observable" : "Observable",
+	"Observables" : "Observable",
 	"Observable-MD5" : "Observable",
 	"Observable-URI" : "Observable",
 	"ObservedTTP" : "TTP",
