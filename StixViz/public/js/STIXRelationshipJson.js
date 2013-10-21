@@ -56,7 +56,11 @@ function createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes
     topLevelChild = createStixChildren(obsNodes, STIXGroupings.obs);
     if (topLevelChild != null) {
         reportChildren.push(topLevelChild);
-    }    topLevelChild = createStixChildren(obsNodes, STIXGroupings.obs);
+    }    
+    topLevelChild = createStixChildren(taNodes, STIXGroupings.ta);
+    if (topLevelChild != null) {
+        reportChildren.push(topLevelChild);
+    }
     topLevelChild = createStixChildren(ttpNodes, STIXGroupings.ttp);
     if (topLevelChild != null) {
         reportChildren.push(topLevelChild);
