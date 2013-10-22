@@ -194,6 +194,7 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, ob
     return incidentNodes;
 }
 
+// TODO add related_indicators
 function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, ttpBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = null;
@@ -294,12 +295,13 @@ function processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo) {
     return taNodes;
 }
 
+// createSingleTTPJson used here, and for processing inline TTPs found as children of other objs
 function processTTPObjs(ttpObjs, etBottomUpInfo) {
     var ttpNodes = [];
     var ttpJson = null;
     $(ttpObjs).each(function (index, ttp) {
-    		ttpJson = createSingleTTPJson(ttp, etBottomUpInfo);
-            ttpNodes.push(ttpJson);
+    	 ttpJson = createSingleTTPJson(ttp, etBottomUpInfo);
+         ttpNodes.push(ttpJson);
         });
     return ttpNodes;
 }
@@ -399,7 +401,6 @@ function processChildIndicators(indis) {
     return indiNodes;
 }
 
-//TODO first just handle idRefs, need to add inline processing
 function processChildObservables(observables) {
     var obsNodes = [];
     var obsId = null;
@@ -468,6 +469,7 @@ function generateTreeJson(inputFiles) {
                 var reader = new FileReader();
                 reader.onload = (function(theFile) {
                         return function(e) {
+                        	// top node name in tree is list of filenames
             				if (numFiles == 0) {
             					topNodeName = f.name;
             				}
@@ -476,7 +478,10 @@ function generateTreeJson(inputFiles) {
             				}
                             xml = new DOMParser().parseFromString(this.result, "text/xml"); 
                             addXmlDoc(theFile.name,xml);  // adds the new XML file to the drop down menu in the UI
+                            // global copy of xml to use for searching via xpFind
                             doc = xml;
+                            
+                            // first collect top level components from all files
                             // ets are in stixCommon, observables are in cybox, other top level objs are in stix
                             $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
                             $.merge(coaObjs, xpFind('//stix:Courses_Of_Action/stix:Course_Of_Action', xml));
@@ -486,8 +491,9 @@ function generateTreeJson(inputFiles) {
                             $.merge(obsObjs, xpFind('//stix:Observables/cybox:Observable', xml));
                             $.merge(taObjs, xpFind('//stix:Threat_Actors/stix:Threat_Actor', xml));
                             $.merge(ttpObjs, xpFind('//stix:TTPs/stix:TTP', xml));
-                            
                             numFiles++;
+                            
+                            // done collecting from files, start processing objects
                             if (numFiles == inputFiles.length) {  // finished last file
                             	jsonObj["name"] = topNodeName;
                                 campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
@@ -499,6 +505,7 @@ function generateTreeJson(inputFiles) {
                                 taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo);
                                 ttpNodes = processTTPObjs(ttpObjs, etBottomUpInfo);
 
+                                // after processing object, add children collected from idRefs
                                 addBottomUpInfoForNodes(campaignNodes, campaignBottomUpInfo);
                                 addBottomUpInfoForNodes(coaNodes, coaBottomUpInfo);
                                 addBottomUpInfoForNodes(etNodes, etBottomUpInfo);
@@ -506,11 +513,13 @@ function generateTreeJson(inputFiles) {
                                 addBottomUpInfoForNodes(obsNodes, obsBottomUpInfo);
                                 addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
                                 addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
-                                //obsMap = processStixObservables(obsObjs);
+                                
+                                // create the json for the tree
                                 jsonObj = createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, obsNodes, taNodes, ttpNodes);
                                 // displays Json to web page for debugging
                                 //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
-                                // displays tree
+                                
+                                // display the tree
                                 displayTree(JSON.stringify(jsonObj, null, 2));
                             }
                         };

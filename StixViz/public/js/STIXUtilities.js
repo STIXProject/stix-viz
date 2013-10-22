@@ -1,3 +1,4 @@
+// set up namespace resolver for xpath searches
 function nsResolver(prefix) {
     var nsMap =  {
     		'stix': 'http://stix.mitre.org/stix-1', 
@@ -28,6 +29,7 @@ function nsResolver(prefix) {
     return nsMap[prefix] || null;
 }
 
+// single node types
 var STIXType = {
 		'ca' : 'campaign', 
 		'coa' : 'CourseOfAction',
@@ -39,6 +41,7 @@ var STIXType = {
 		'ttp' : 'ObservedTTP'
 };
 
+// grouping node types
 var STIXGroupings = {
 	'ca' : 'Campaigns',
 	'coa' : 'CoursesOfAction',
@@ -61,7 +64,8 @@ var STIXPattern = {
 		'ttp' : './/stixCommon:TTP'	
 };
 
-// use xpath to deal with default namespaces
+// use xpath for searching to deal with default namespaces
+// returns a list of objects found, or an empty list
 function xpFind(path, startNode) {
     var newNodes = [];
     var xpathResult = doc.evaluate(path, startNode, nsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -71,6 +75,8 @@ function xpFind(path, startNode) {
     return newNodes;
 }
 
+// search for a single object
+// returns single object or null if not found
 function xpFindSingle(path, startNode) {
     var descendants = xpFind(path, startNode);
     var singleDescendant = null;
@@ -80,6 +86,7 @@ function xpFindSingle(path, startNode) {
     return singleDescendant;
 }
 
+// returns value of idRef attribute, or empty string if not found
 function getObjIdRefStr(obj) {
 	var idRef = $(obj).attr('idref');
 	if (typeof(idRef) != 'undefined') {
@@ -90,6 +97,7 @@ function getObjIdRefStr(obj) {
 	}
 }
 
+//returns value of id attribute, or empty string if not found
 function getObjIdStr(obj) {
 	var id = $(obj).attr('id');
 	if (typeof(id) != 'undefined') {
@@ -100,6 +108,7 @@ function getObjIdStr(obj) {
 	}
 }
 
+// basic json object
 function createNode(id, type, name, direction) {
 	var json = {"type": type};
 	if (id != null) {
@@ -110,18 +119,22 @@ function createNode(id, type, name, direction) {
 	return json;	
 }
 
+// json object with linkType topDown
 function createTopDownNode(id, type, name) {
 	return createNode(id, type, name, "topDown");	
 }
 
+// json object with linkType bottomUp
 function createBottomUpNode(id, type, name) {
 	return createNode(id, type, name, "bottomUp");
 }
 
+// json for topDown idRef
 function createTopDownIdRef(type, idRef) {
 	return {"type": type, "nodeIdRef":idRef, "linkType":"topDown"};
 }
 
+// json for bottomUp idRef
 function createBottomUpIdRef(type, idRef) {
 	return {"type": type, "nodeIdRef":idRef, "linkType":"bottomUp"};
 }
@@ -173,11 +186,17 @@ function addToBottomUpInfo(bottomUpInfo, aNode, parentType, parentId) {
 		else {
 			parentTypeMap = bottomUpInfo[id];
 		}
-		parentTypeMap = addToParentTypeMap(parentTypeMap, parentType, parentId);
+		if (typeof(parentTypeMap[parentType]) == 'undefined') {
+			parentTypeMap[parentType] = [parentId];
+		}
+		else {
+			(parentTypeMap[parentType]).push(parentId);
+		}
 		bottomUpInfo[id] = parentTypeMap;
 	}
 }
 
+// create list of json objs for bottomUp idRefs of a specific node type
 function createBottomUpChildren(type, refs) {
 	children = [];
 	if (typeof(refs) != 'undefined') {
@@ -187,6 +206,8 @@ function createBottomUpChildren(type, refs) {
 	}
 	return children;
 }
+
+// create list of json objs for bottomUp idRefs of all possible types to a particular node 
 function addBottomUpInfoToChildren(json, bottomUpInfo) {
 	var nodeId = json.nodeId;
 	var info = bottomUpInfo[nodeId];
@@ -224,23 +245,15 @@ function addBottomUpInfoToChildren(json, bottomUpInfo) {
 	return json;
 }
 
-// add children to each of a list of nodes
+// add bottom up info for each of a list of nodes
 function addBottomUpInfoForNodes(nodes, bottomUpInfo) {
 	$(nodes).each(function(index, node) {
 		addBottomUpInfoToChildren(node, bottomUpInfo);
 	});
 }
 
-function addToParentTypeMap(parentTypeMap, parentType, parentId) {
-	if (typeof(parentTypeMap[parentType]) == 'undefined') {
-		parentTypeMap[parentType] = [parentId];
-	}
-	else {
-		(parentTypeMap[parentType]).push(parentId);
-	}
-	return parentTypeMap;
-}
-
+// takes an array of name strings and merges them
+// into a single string separated by "\n"
 function concatenateNames(names) {
     var nameStr = "";
     $(names).each(function (index, name) {
