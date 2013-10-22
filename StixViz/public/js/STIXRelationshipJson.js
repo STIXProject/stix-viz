@@ -26,9 +26,7 @@ function createStixChildren(objNodes, parentName) {
     return topChildJson;
 }
 
-// top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action,
-//   Observable is not at top level because it has no outgoing relationships - it will appear under
-//   other branches since it has incoming relationships.
+// top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action, Observable
 function createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, obsNodes, taNodes, ttpNodes) {
     var reportChildren = [];
     var topLevelChild = null;
@@ -66,7 +64,6 @@ function createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes
         reportChildren.push(topLevelChild);
     }
 
-    // TODO - add observables?
     jsonObj['children'] = reportChildren;
     return jsonObj;
 }
@@ -147,7 +144,7 @@ function processETObjs(etObjs, coaBottomUpInfo) {
 	return etNodes;
 }
 
-function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
+function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo) {
     var incidentNodes = [];
     var incidentJson = null;
     var incidentChildren = null;
@@ -159,7 +156,8 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, ta
     	incidentChildren = [];
     	var indicators = xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident);
     	$.merge(incidentChildren, processChildIndicators(indicators));
-    	$.merge(incidentChildren, processChildObservables(xpFind('.//incident:Related_Observables//incident:Related_Observable', incident)));
+    	var observables = xpFind('.//incident:Related_Observables//incident:Related_Observable', incident);
+    	$.merge(incidentChildren, processChildObservables(observables));
     	var ttps = xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident);
     	$.merge(incidentChildren, processChildTTPs(ttps));
     	var tas = xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident);
@@ -174,6 +172,9 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, ta
 		if (incidentId != "") {
 			$(indicators).each(function (index, indi) {
 				addToBottomUpInfo(indiBottomUpInfo, $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.incident, incidentId);
+			});
+			$(observables).each(function (index, obs) {
+				addToBottomUpInfo(obsBottomUpInfo, $(xpFindSingle(STIXPattern.obs, obs)), STIXGroupings.incident, incidentId);
 			});
 			$(ttps).each(function (index, ttp) {
 				addToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.incident, incidentId);
@@ -193,7 +194,7 @@ function processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, ta
     return incidentNodes;
 }
 
-function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBottomUpInfo) {
+function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, ttpBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = null;
 	var indiNodes = [];
@@ -212,11 +213,6 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBo
 	    addBottomUpInfoToChildren(childJson, indiBottomUpInfo);
 		indiChildren = childJson["children"];
 		var coas = xpFind('.//indicator:Suggested_COA', indi);
-		if (indiId != "") {
-			$(coas).each(function (index, coa) {
-				addIndicatorToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
-			});
-		}
 		$.merge(indiChildren, processChildCoas(coas));
 		// children are Indicated_TTP, Observables
 	    var indicatedTTP = xpFindSingle('.//indicator:Indicated_TTP', indi);
@@ -224,7 +220,16 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBo
 			$.merge(indiChildren, processChildTTPs([indicatedTTP]));
 			addIndicatorToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, indicatedTTP)), subType, indiId);
 		}
-		$.merge(indiChildren, processChildObservables(xpFind('.//indicator:Observable', indi)));
+		var observables = xpFind('.//indicator:Observable', indi);
+		$.merge(indiChildren, processChildObservables(observables));
+		if (indiId != "") {
+			$(coas).each(function (index, coa) {
+				addIndicatorToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
+			});
+			$(observables).each(function (index, obs) {
+				addIndicatorToBottomUpInfo(obsBottomUpInfo, obs, subType, indiId);
+			});
+		}
 		if (indiChildren.length > 0) {
 			childJson["children"] = indiChildren;
 		}
@@ -488,8 +493,8 @@ function generateTreeJson(inputFiles) {
                                 campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
                                 coaNodes = processCoaObjs(coaObjs);
                                 etNodes = processETObjs(etObjs, coaBottomUpInfo);
-                                incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
-                                indiNodes = processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, ttpBottomUpInfo);
+                                incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
+                                indiNodes = processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, ttpBottomUpInfo);
                                 obsNodes = processObservableObjs(obsObjs);
                                 taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo);
                                 ttpNodes = processTTPObjs(ttpObjs, etBottomUpInfo);
@@ -498,6 +503,7 @@ function generateTreeJson(inputFiles) {
                                 addBottomUpInfoForNodes(coaNodes, coaBottomUpInfo);
                                 addBottomUpInfoForNodes(etNodes, etBottomUpInfo);
                                 addBottomUpInfoForNodes(incidentNodes, incidentBottomUpInfo);
+                                addBottomUpInfoForNodes(obsNodes, obsBottomUpInfo);
                                 addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
                                 addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
                                 //obsMap = processStixObservables(obsObjs);
