@@ -279,6 +279,24 @@ function getBestObservableName(obs) {
     if (nameStr == "") {
     	nameStr = getObjIdStr(obs);
     }
+    if (nameStr == "") {
+    	var uri = xpFindSingle('.//URIObject:Value', obs);
+    	if (uri != null) {
+    		nameStr = $(uri).first().text();
+    	}
+    	else {
+    		var address = xpFindSingle('.//AddressObject:Address_Value', obs);
+    		if (address != null) {
+    		    nameStr = $(address).text();
+    		}
+    		else {
+    			var fname = xpFindSingle('.//FileObject:File_Name', obs);
+    			if (fname != null) {
+    				nameStr = $(fname).text();
+    			}
+    		}
+    	}
+    }
     return nameStr;
 }
 

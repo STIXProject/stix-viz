@@ -74,11 +74,11 @@ function processTTPResources(ttp) {
 		    resourceName = "";
 		}
 		// see if there are Observables
-		var observable = xpFind('.//cybox:Observable', resourceObj);
-		if (observable.length > 0) {   // found at least one
-		    // don't go to next level right now
-		    // call this for an observable such as a URI or Address_Value (IPRange)
-		    //resources.push(getCyboxObservableJson($(observable).get(0)));
+		var observable = xpFindSingle('.//cybox:Observable', resourceObj);
+		if (observable != null) {   // found at least one
+			if (resourceName == "") {
+				resourceName = getBestObservableName(observable);
+			}
 		    resources.push(createTopDownNode(null, "Observable", resourceName));
 		}
 		else {

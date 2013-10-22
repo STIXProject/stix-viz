@@ -8,6 +8,7 @@ function nsResolver(prefix) {
     		'cyboxCommon': 'http://cybox.mitre.org/common-2', 
     		'cyboxVocabs': 'http://cybox.mitre.org/default_vocabularies-2', 
     		'AddressObject': 'http://cybox.mitre.org/objects#AddressObject-2',
+    		'FileObject': 'http://cybox.mitre.org/objects#FileObject-2',
     		'LinkObject': 'http://cybox.mitre.org/objects#LinkObject-1', 
     		'URIObject': 'http://cybox.mitre.org/objects#URIObject-2', 
     		'marking': 'http://data-marking.mitre.org/Marking-1',

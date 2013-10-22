@@ -395,39 +395,24 @@ function processChildIndicators(indis) {
 }
 
 //TODO first just handle idRefs, need to add inline processing
-function processChildObservables(obs) {
+function processChildObservables(observables) {
     var obsNodes = [];
-    $(obs).each(function (index, anObs) {
-    	var idRef = getObjIdRefStr(anObs);  // indicators have idRef on them
+    var obsId = null;
+    $(observables).each(function (index, obs) {
+    	var idRef = getObjIdRefStr(obs);  // indicators have idRef on them
     	if (idRef == "") {   // other refs are on Observable
-    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.obs, anObs)));
+    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.obs, obs)));
     	}
     	if (idRef != "") {
     		obsNodes.push(createTopDownIdRef(STIXType.obs, idRef));
     	}
+    	else {
+    		obsId = getObjIdStr(obs);
+    		obsNodes.push(createTopDownNode(obsId, STIXType.obs,getBestObservableName(obs)));
+    	}
     });
     return obsNodes;
 }
-
-			    /* don't do this for now
-function getCyboxObservableJson(obs) {
-    var obsName = "";
-    var subType = "";
-    var uri = $(obs).nsFind('URIObject:Value');
-    if (uri.length > 0) {
-        obsName = $(uri).first().text();
-	subType = 'URI';
-    }
-    else {
-	var address = $(obs).nsFind('AddressObject:Address_Value');
-	if (address.length > 0) {
-	    obsName = $(address).text();
-	    subType = 'IPRange';
-	}
-    }
-    return {"type":"Observable", "subType":subType, "name":obsName};
-}
-			    */
 
 var doc = null;
 
