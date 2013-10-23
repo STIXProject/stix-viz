@@ -319,7 +319,7 @@ function update(source) {
     
     $(".node").on("mouseleave", function () { 
     	removeHighlightedNodes();
-    	$(".objectReference").removeClass("infocus");
+    	$(".expandableContainer tr").removeClass("infocus");
     });
 
 
@@ -587,7 +587,7 @@ function removeHighlightedNodes () {
 
 function highlightHtml (nodeId) { 
 	if (!nodeId) return;
-	$(".topLevelCategoryTable .objectReference:contains('"+nodeId+"')").addClass("infocus");
+	$(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeId+"'] tr").eq(0).addClass("infocus");
 }
 
 function findBaseNode (nodeId) { 
@@ -749,10 +749,12 @@ function showHtmlByContext (data) {
 			var nodeid = getId(data);
 			if (nodeid) {
 				$.each(xmlDocs, function (i,entry) {
-					if ($(entry.html).find(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0) != undefined) {
+					if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
-						$(".topLevelCategoryTable .objectReference:contains('"+nodeid+"')").get(0).scrollIntoView();
-						$(".objectReference:contains('"+nodeid+"')").addClass("infocus");
+						var objRef = $(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']"); 
+						objRef.find('tr').eq(0).addClass("infocus");
+						objRef.get(0).scrollIntoView();
+						recursiveExpand(objRef.find('.expandableToggle'));
 						return false;
 					} else { 
 						return true;
@@ -782,12 +784,12 @@ function showHtml (html) {
 	
 	$('#htmlView').append(html);
 	
-	$(".objectReference").on("mouseenter", function () { 
+	$(".topLevelCategory .expandableContainer[data-stix-content-id] tr:has(.expandableToggle)").on("mouseenter", function () { 
 		$(this).addClass("infocus");
-		highlightDuplicateNodes($(this).text());
+		highlightDuplicateNodes($(this).parents(".expandableContainer").data("stix-content-id"));
 	});
 
-	$(".objectReference").on("mouseleave", function () {
+	$(".topLevelCategory .expandableContainer[data-stix-content-id] tr:has(.expandableToggle)").on("mouseleave", function () {
 		$(this).removeClass("infocus");
 		removeHighlightedNodes();
 	});
@@ -797,4 +799,16 @@ function showHtml (html) {
 
 }
 
+
+function recursiveExpand (node) { 
+	node.click();
+	var siblings = null;
+	if (node.parent("td").size() > 0) { 
+		siblings = node.parents("tr").siblings()
+	} else if (node.parent(".expandableContainer").size() > 0) { 
+		siblings = node.siblings(".expandableContents");
+	}
+	siblings.find(".objectReference")
+	.each(function (i,n) { recursiveExpand($(n)); });
+}
 

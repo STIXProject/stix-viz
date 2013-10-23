@@ -32,7 +32,7 @@
     xmlns:cyboxCommon="http://cybox.mitre.org/common-2"
     xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2"
     xmlns:simpleMarking="http://data-marking.mitre.org/extensions/MarkingStructure#Simple-1"
-    
+
     xmlns:ttp='http://stix.mitre.org/TTP-1'
     >
     
@@ -48,20 +48,18 @@
     <xsl:template name="processHeader">
         <xsl:for-each select="//stix:STIX_Package/stix:STIX_Header">        
             <div class="stixHeader">
-                <table class="grid tablesorter" cellspacing="0">
+              <table class="grid topLevelCategory tablesorter" cellspacing="0">
                     <colgroup>
                         <col width="30%"/>
                         <col width="70%"/>
                     </colgroup>
                     <thead>
-                        <tr>
-                            <th class="header">
-                                Field
-                            </th>
-                            <th class="header">
-                                Value
-                            </th>
-                        </tr>
+<!--
+                      <tr>
+                            <th class="header"></th>
+                            <th class="header"></th>
+                      </tr>
+-->
                     </thead>
                     <tbody>
                         <xsl:variable name="evenOrOdd" select="if(position() mod 2 = 0) then 'even' else 'odd'" />
@@ -98,15 +96,35 @@
                             <xsl:attribute name="onclick">toggle(this);</xsl:attribute>
                         </xsl:if>
                         <!--
-                          for now, just show the text of simpleMarking:Statement
-                          TODO: do something with the entire contents of stix:Handling
+                          for now, just show the text of simpleMarking:Statement & TLP
+                          
+                          <marking:Marking_Structure color="GREEN" xsi:type="tlpMarking:TLPMarkingStructureType"/>
+                          
+                          TODO: customization toggle whether to show simpleMarking
                         -->
                         <xsl:choose>
                           <xsl:when test="self::stix:Handling">
-                            <xsl:value-of select=".//simpleMarking:Statement/text()"/>
+                            <xsl:variable name="isSimple" select="'simpleMarking:SimpleMarkingStructureType'"/>
+                            <xsl:variable name="isTLP" select="'tlpMarking:TLPMarkingStructureType'"/>
+                            <xsl:choose>
+                              <xsl:when test=".//marking:Marking_Structure/@xsi:type = $isSimple">
+                                <xsl:value-of select=".//simpleMarking:Statement/text()"/>
+                              </xsl:when>
+                              <xsl:when test=".//marking:Marking_Structure/@xsi:type = $isTLP">
+                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='red'"><xsl:attribute name="class" select="'tlpred'"/></xsl:if>
+                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='amber'"><xsl:attribute name="class" select="'tlpamber'"/></xsl:if>
+                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='green'"><xsl:attribute name="class" select="'tlpgreen'"/></xsl:if>
+                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='white'"><xsl:attribute name="class" select="'tlpwhite'"/></xsl:if>
+                                Traffic Light Protocol (TLP): <xsl:value-of select=".//marking:Marking_Structure/@color"/>
+                              </xsl:when>
+                            </xsl:choose>
                           </xsl:when>
                           <xsl:when test="self::stix:Information_Source">
                             <xsl:apply-templates mode="cyboxProperties" />
+                          </xsl:when>
+                          <xsl:when test="self::*[@structuring_format='HTML5']">
+                            <xsl:variable name="content" select="./text()" />
+                            <div class="htmlContainer" data-stix-content="{$content}" />
                           </xsl:when>
                           <xsl:otherwise>
                             <xsl:value-of select="self::node()[text()]"/>
@@ -130,9 +148,11 @@
     <div>
       <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
             
+      <!--
       <xsl:attribute name="class">
         <xsl:if test="@id">container baseobj</xsl:if>
       </xsl:attribute>
+      -->
       
       <xsl:if test="campaign:Title">
         <xsl:copy-of select="stix:printNameValueTable('Title', campaign:Title)" />
@@ -189,12 +209,17 @@
     <div>
       <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
       
+      <!--
       <xsl:attribute name="class">
         <xsl:if test="@id">container baseobj</xsl:if>
       </xsl:attribute>
+      -->
       
       <xsl:if test="incident:Description">
-        <xsl:copy-of select="stix:printNameValueTable('Description', incident:Description)" />
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="incident:Description" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
       </xsl:if>              
       <xsl:if test="incident:Status">
         <xsl:copy-of select="stix:printNameValueTable('Status', incident:Status)" />
@@ -237,9 +262,11 @@
     <div>
       <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
       
+      <!--
       <xsl:attribute name="class">
         <xsl:if test="@id">container baseobj</xsl:if>
       </xsl:attribute>
+      -->
       
       <xsl:if test="ta:Title">
         <xsl:copy-of select="stix:printNameValueTable('Title', ta:Title)" />
@@ -285,9 +312,11 @@
     <div>
       <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
       
+      <!--
       <xsl:attribute name="class">
         <xsl:if test="@id">container baseobj</xsl:if>
       </xsl:attribute>
+      -->
       
       <xsl:if test="et:Title">
         <xsl:copy-of select="stix:printNameValueTable('Title', et:Title)" />
@@ -316,16 +345,21 @@
       
       <!-- <span style="color: red; background-color: yellow;">INDICATOR CONTENTS HERE</span> -->
       
+        <!--
         <xsl:attribute name="class">
           <xsl:if test="not(indicator:Composite_Indicator_Expression)">baseindicator </xsl:if>
           <xsl:if test="@id">container baseobj</xsl:if>
         </xsl:attribute>
+        -->
         
         <xsl:if test="indicator:Title">
           <xsl:copy-of select="stix:printNameValueTable('Title', indicator:Title)" />
         </xsl:if>              
         <xsl:if test="indicator:Description">
-          <xsl:copy-of select="stix:printNameValueTable('Description', indicator:Description)" />
+          <xsl:variable name="contents">
+            <xsl:apply-templates select="indicator:Description" />
+          </xsl:variable>
+          <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
         </xsl:if>              
         <xsl:if test="indicator:Valid_Time_Position">
           <xsl:copy-of select="stix:printNameValueTable('Valid Time Position', fn:concat('(', indicator:Valid_Time_Position/indicator:Start_Time/text(), ' to ', indicator:Valid_Time_Position/indicator:End_Time/text(), ')'))" />
@@ -459,7 +493,7 @@
             </xsl:when>
         </xsl:choose>
     </xsl:template>
-    
+  
     <xsl:template match="indicator:Indicated_TTP">
         <div>
         <!-- <div>(indicator Indicated TTP)</div> -->
@@ -501,12 +535,17 @@
           
           <!-- <span style="color: red; background-color: yellow;">INDICATOR CONTENTS HERE</span> -->
           
+          <!--
           <xsl:attribute name="class">
-            <!-- <xsl:if test="not(indicator:Composite_Indicator_Expression)">baseindicator </xsl:if> -->
+            <!- - <xsl:if test="not(indicator:Composite_Indicator_Expression)">baseindicator </xsl:if> - ->
             <xsl:if test="@id">container baseobj</xsl:if>
           </xsl:attribute>
+          -->
           <xsl:if test="ttp:Description">
-            <xsl:copy-of select="stix:printNameValueTable('Description', ttp:Description)" />
+            <xsl:variable name="contents">
+              <xsl:apply-templates select="ttp:Description" />
+            </xsl:variable>
+            <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
           </xsl:if>  
 
           <xsl:if test="ttp:Intended_Effect">
@@ -704,5 +743,4 @@
   <xsl:template match="indicator:Suggested_COA">
     <xsl:apply-templates />
   </xsl:template>
-    
 </xsl:stylesheet>

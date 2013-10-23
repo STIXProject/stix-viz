@@ -1,5 +1,5 @@
 // set up namespace resolver for xpath searches
-function nsResolver(prefix) {
+function nsResolverViz(prefix) {
     var nsMap =  {
     		'stix': 'http://stix.mitre.org/stix-1', 
     		'stixVocabs': 'http://stix.mitre.org/default_vocabularies-1', 
@@ -68,7 +68,7 @@ var STIXPattern = {
 // returns a list of objects found, or an empty list
 function xpFind(path, startNode) {
     var newNodes = [];
-    var xpathResult = doc.evaluate(path, startNode, nsResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    var xpathResult = doc.evaluate(path, startNode, nsResolverViz, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
     for (var i=0; i< xpathResult.snapshotLength; i++) {
         newNodes.push(xpathResult.snapshotItem(i));
     }	
