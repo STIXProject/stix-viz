@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains utilities used to extract relationships from the xml files
+ * being processed, and to create the Json tree representation.
+ * 
+ */
+
 // set up namespace resolver for xpath searches
 function vizNSResolver(prefix) {
     var nsMap =  {

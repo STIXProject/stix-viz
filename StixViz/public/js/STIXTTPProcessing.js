@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains functionality for creating a Json node for a TTP
+ * 
+ */
+
 // Create basic Json node for a TTP
 // used by processTTPObjs and processChildTTPs
 function createSingleTTPJson(ttp, etBottomUpInfo) {

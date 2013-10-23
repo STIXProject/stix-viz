@@ -1,19 +1,16 @@
-// for each xml file 
-//  gather TTPs from stix:TTPs
-//    threat actors from stix:Threat_Actor
-//    indicators from stix:Indicators - map<ttpId, [indictorObj]
-//    observables from stix:Observables - map<id, obsJson>
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the functionality for determining relationships specified in the xml
+ * files loaded.  The top level function is generateTreeJson(inputXMLFiles)
+ * 
+ * Json is created representing the nodes and links in the tree.   This is passed to 
+ * displayTree(json) for display in STIXViz.
+ * 
+ */
 
-
-// generate ttpMap => <id, ttpJson> using indicators
-// add child Json to TTPs (including indicators), indicators can have observables
-
-// generate threat actors from stix:Threat_Actors  taMap <id, taJson> using ttpMap
-// add idref'd TTPs to threat_actors
-//
-// create report node w/children: TTPs, Threat_Actors
-//   
-
+//  add top level 'grouping' nodes with nodes for each entity of that type as children 
 function createStixChildren(objNodes, parentName) {
     var allObjJson = [];
     var topChildJson = null;
@@ -26,6 +23,7 @@ function createStixChildren(objNodes, parentName) {
     return topChildJson;
 }
 
+// main report JSON creation - add grouping node and children for each top level entity type
 // top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action, Observable
 function createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, obsNodes, taNodes, ttpNodes) {
     var reportChildren = [];
@@ -426,13 +424,13 @@ var jsonObj = {"type": "top",
 	       "name": "",
 	       "children": []};
 
-// hack for development, switch to selecting from web page instead
-//var inputFiles = ["http://ape.mitre.org:8080/stixdev/data/apt1-indicators-no-observables.xml", 
-//		  "http://ape.mitre.org:8080/stixdev/data/APT1 with campaign - STIX 1.0.xml"];
-    
-// jsonObj will contain the whole tree structure
-// indicatorMap is a map from ttp idref to json for the indicator
-// ttpMap is a map from ttp id to the json for the ttp
+ 
+// main function for creating JSON to be displayed in the tree
+//  top level entities are gathered from each xml file
+//  then json nodes are created for each entity
+//  next bottom up references are added to the nodes
+//  all nodes are placed into a top level jsonObj
+//   and it is displayed
 function generateTreeJson(inputFiles) {
 	var campaignObjs = [];
 	var coaObjs = [];
