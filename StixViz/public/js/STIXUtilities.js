@@ -1,5 +1,14 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains utilities used to extract relationships from the xml files
+ * being processed, and to create the Json tree representation.
+ * 
+ */
+
 // set up namespace resolver for xpath searches
-function nsResolverViz(prefix) {
+function vizNSResolver(prefix) {
     var nsMap =  {
     		'stix': 'http://stix.mitre.org/stix-1', 
     		'stixVocabs': 'http://stix.mitre.org/default_vocabularies-1', 
@@ -68,7 +77,7 @@ var STIXPattern = {
 // returns a list of objects found, or an empty list
 function xpFind(path, startNode) {
     var newNodes = [];
-    var xpathResult = doc.evaluate(path, startNode, nsResolverViz, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    var xpathResult = doc.evaluate(path, startNode, vizNSResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
     for (var i=0; i< xpathResult.snapshotLength; i++) {
         newNodes.push(xpathResult.snapshotItem(i));
     }	
