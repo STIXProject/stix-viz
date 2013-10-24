@@ -1,0 +1,169 @@
+****************************************************
+
+      STIX Viz v1alpha1
+
+ Copyright (c) 2013 - The MITRE Corporation
+ All rights reserved. See LICENSE.txt for complete terms.
+
+****************************************************
+
+BY USING THE STIX VIZ APPLICATION, YOU SIGNIFY YOUR ACCEPTANCE OF THE 
+TERMS AND CONDITIONS OF USE.  IF YOU DO NOT AGREE TO THESE TERMS, DO NOT USE 
+THE STIX XML to HTML TRANSFORM.
+
+For more information, please refer to the terms.txt file.
+
+#################################################################
+StixViz v1.0 alpha1
+Compatible with STIX v1.0
+
+This is an application to visualize a set of STIX documents as a node-link tree 
+with the root at the top of the XML structure.
+
+StixViz is implemented in Javascript as a standalone application using the node-webkit
+application runtime which is based on the Chromium rendering engine and node.js.
+
+To use STIXViz, first select a set of related XML files using the
+'Choose Files' menu.  STIXViz displays a tree containing nodes for top
+level STIX entities:  campaign, course of action, exploit target,
+incident, indicator, observable, threat actor, and TTP. When the tree
+first displays, there is a top level node shown for each component type
+included in the xml files processed.  Nodes with a black and white
+border can be expanded with a single click.
+
+A down arrow on a link indicates that the child node is specified as
+part of the parent node's XML.  For instance, a campaign will contain
+links with down arrows to indicator nodes specified by
+campaign:Related_Indicators.
+
+An up arrow indicates that the parent node is specified via an idRef
+attribute in the child node.   For instance, a threat actor will contain
+links to it from incident nodes that specify it under
+incident:Threat_Actors.
+
+Long node names are truncated in the tree view.  Mousing over a named
+node will display the node's id if it has one, as well as the full
+version of the text used as it's name.
+
+A double click on a node will cause it to become the root node of the
+tree, hiding other branches from view.   Double click on the root node
+again to walk back up the tree.
+
+The 'Show HTML' menu at the top of the page can be used to display an
+XSLT transformed file at the bottom of the STIXViz window. Nodes that
+have an id specified in the XML file can be displayed in the HTML view
+as well.   To do this, click right on the node and select 'Show HTML'.
+
+
+
+Currently we support the following top level entities and sub-entities:
+- Observables
+  --All except for Events (this is true for any embedded Observables also)
+- Indicators
+  --Title
+  --Description
+  --Valid_Time_Position
+  --Suggested_COAs
+  --Observable
+  --Composite_Indicator_Expression
+  --Indicated_TTP
+  --Kill_Chain_Phases
+  --Confidence
+- TTPs
+  --Description
+  --Intended_Effect
+  --Behavior
+  --Resources
+  --Victim_Targeting
+  --Exploit_Targets
+  --Related_TTPs
+  --Kill_Chain_Phases
+- Exploit Targets
+  --Title
+  --Vulnerability
+- Incidents
+  --Description
+  --Status
+  --Related_Observables
+  --Leveraged_TTPs
+  --Observable
+- Courses of Action
+  --All
+- Campaigns
+  --Title
+  --Status
+  --Related_Incidents
+  --Related_TTPs
+  --Related_Indicators
+- Threat Actors
+  --Title
+  --Identity
+  --Type
+  --Motivation
+  --Observed_TTPs
+
+Each category of top level "items" is turned into a node in the tree. 
+The nodes themselves are expandable to show the structure of the relationships 
+between entities. 
+
+This is a work in progress.  Feedback is most welcome!
+
+requirements:
+ - node webkit framework including mime module from node.js (currently tested with node-webkit v0.6.2) 
+ - bootstrap.js (v3.0)
+ - d3.js (v3)
+ - jquery and jquery-ui (tested with jquery 1.10.2)
+ - Javascript XSLT 2.0 engine (this has been tested with SaxonCE 1.0)
+ - Stix HTML package (tested with v1beta2)
+ - one or more STIX 1.0 input xml documents
+
+v1.0alpha1
+2013-10-24
+
+STIX - http://stix.mitre.org
+#################################################################
+--------------------------------------------------------------------------------
+--Included Files----------------------------------------------------------------
+
+README: this file.
+index.html: The main html page for the application
+package.json: node-webkit config file for the StixViz app
+public
+ js
+  STIXRelationshipJson.js: Transforms STIX XML into Json data structure for tree layout
+  STIXNameResolver.js: Determine node names
+  STIXRelationshipTree.js: Displays the tree structure
+  STIXTTPProcessing.js: Process TTPs into Json
+  STIXUtilities.js: Utilities for XML to JSON conversion
+ css
+  treeLayout.css: Stylesheet for tree display
+
+
+--------------------------------------------------------------------------------
+--Usage Notes-------------------------------------------------------------------
+
+To run the StixViz app using node-webkit, execute the following command: 
+
+> nw.exe {path to StixViz main directory}
+
+To package the StixViz app to run standalone perform the following steps on Windows: 
+
+1. Create a zip file (NOT zipx) containing index.html, package.json, the public directory and the node_modules directory
+2. Name the zip file StixViz.nw
+3. At the command prompt run 
+> copy /b nw.exe+StixViz.nw StixViz.exe
+This will create an executable StixViz.exe 
+4. The executable requires the following files that come with the node-webkit distribution to be on the path:
+nw.pak 
+icudt.dll
+ffmpegsumo.dll
+libEGL.dll
+libGLESv2.dll
+
+On other platforms follow the instructions from https://github.com/rogerwang/node-webkit/wiki/How-to-package-and-distribute-your-apps 
+
+
+  
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+

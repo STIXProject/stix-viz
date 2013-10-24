@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * Copied from stix_to_html package v1.0beta2 
+ * 
+ */
+
 //Collapse functionality
 function toggleDiv(divid, spanID)
 {

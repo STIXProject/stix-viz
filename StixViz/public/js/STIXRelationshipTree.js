@@ -5,6 +5,12 @@
  * This file contains the top level invocation of STIXViz.   It is invoked when the file is loaded by
  * index.html.
  * 
+ * The main function to display the tree view is displayTree(jsonString)
+ * 
+ * created 2013
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
  */
 
 var nodeWidth = 60,
@@ -13,15 +19,15 @@ var nodeWidth = 60,
  markerSize = 6;
 var nodeCount = 0;
 
-// Root is the node that is currently at the top of the tree. Report is the root of the entire report
+/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
 var stixroot,report,svg,layout;
 
-// Id of the node that was last right-clicked
+/* Id of the node that was last right-clicked */
 var contextNode = null;
 
 var xmlDocs = {}, docIndex = 0;
 
-
+/* Layout of tree within its div */
 var margin = {
     top : 20,
     right : 20,
@@ -35,19 +41,28 @@ function treeWidth () {
 	return $(window).width() - nodeWidth;
 }
 
+/**
+ * Construct the tree layout object 
+ */
 var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([treeWidth(),height]);
 
+/**
+ * Diagonal for drawing links between nodes
+ */
 var diagonal = d3.svg.diagonal()
 .source(function (d) { 
 	return {x:d.source.x, y:d.source.y+nodeHeight};
 });
 
 
-	
-
+/**
+ * Duration of animated transitions
+ */
 var duration = 750;
 
-
+/**
+ * Mapping from node type to sections headings in the HTML rendering
+ */
 var htmlSectionMap = { 
 	"ThreatActors":"Threat Actors",
 	"TTPs":"TTPs",
@@ -59,7 +74,9 @@ var htmlSectionMap = {
 	"Observables":"Observables"
 };
 
-
+/**
+ * Mapping from node type to icon names to be used in the tree display
+ */
 var typeIconMap = {
 	"ThreatActors" : "ThreatActor",
 	"TTPs" : "TTP",
@@ -97,10 +114,17 @@ var typeIconMap = {
 };
 
 
-
 $(function() {
+
+	/**
+	 *  Add handler for file select input
+	 */
 	$('#files').on('change', function () { handleFileSelect($(this)); });
 	
+
+	/**
+	 *  Initialize the page layout. North section is nav menu, center is the tree view, south is the HTML view
+	 */
 	layout = $('body').layout({ 
 		defaults: { 
 			resizable:true,
@@ -125,12 +149,16 @@ $(function() {
 		} 			
 	});
 	
-	$('#loadingDiv').hide();
-	
+	/**
+	 *  Append svg container for tree
+	 */
 	svg = d3.select("#treeView").append("svg")
     .append("g")
     .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
+	/**
+	 *  define color filter for lightening non-expandable nodes
+	 */
 	svg.append("defs")
 	.append("filter")
 	.attr("id","lighten")
@@ -138,12 +166,11 @@ $(function() {
 		.attr("type","matrix")
 		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 	
-	
 
-
+	/**
+	 * When the window is resized, resize and update the tree 
+	 */
 	$(window).resize(function (e) { 
-		//$('#treeView').width($(window).width());
-		//$('#treeView').height($(window).height() - $('nav').outerHeight() - ($('#htmlView').css('display') == 'none' ? 0 : $('#htmlView').outerHeight()));
 
 		tree.size([treeWidth(),height]);
 
@@ -152,11 +179,17 @@ $(function() {
 		}
 	});
 	
+	/**
+	 * Handler for top level Show HTML button
+	 */
 	$('#showHtml').on('click',function () {
 		$("#contextMenu").hide();
 		showHtmlByContext(contextNode);
 	});
 	
+	/**
+	 * If there's a context menu open, you can hide it by clicking somewhere else in the document
+	 */
 	$(document).click(function () { 
 		$('#contextMenu').hide();
 	});
@@ -166,12 +199,11 @@ $(function() {
 
 	
 
-// Compute the new tree layout.
+/**
+ *  Compute the tree layout based on the JSON representation of the XML data
+ */
 function displayTree(jsonString) {
 	
-	
-
-
     report = $.parseJSON(jsonString);
     stixroot = report;
 	
@@ -182,11 +214,15 @@ function displayTree(jsonString) {
 		
     addParents(stixroot);
 
+    // This is where the tree actually gets displayed
     update(stixroot);
 
 }
 	
-
+/**
+ * Collapse node d by moving "children" to "_children"
+ * @param d
+ */
 function collapse(d) {
     if (d.children) {
         d._children = d.children;
@@ -195,6 +231,10 @@ function collapse(d) {
     }
 }
 
+/**
+ * Expand node d by moving "_children" to "children"
+ * @param d
+ */
 function expand (d) { 
 	if (d._children) { 
 		d.children = d._children; 
@@ -203,7 +243,9 @@ function expand (d) {
 }
 	
 
-// add parents to each node so that we can walk back up the tree after drilling down
+/**
+ * add parents to each node so that we can walk back up the tree after drilling down
+ */
 function addParents(parent) { 
     if (parent.children && parent.children.length > 0) { 
         parent.children.forEach(function (child) {
@@ -214,9 +256,14 @@ function addParents(parent) {
 			
 }
 	
+
+/** 
+ * Update the tree display starting at node "source"
+ * @param source The root node for the update
+ */
 function update(source) {
 
-    var nodes = tree.nodes(stixroot),//.reverse(),
+    var nodes = tree.nodes(stixroot),
         links = tree.links(nodes);
 
     // Update the nodes…
@@ -263,33 +310,18 @@ function update(source) {
             })
         .on("click", click)
         .on("dblclick",doubleclick)
-        .on("contextmenu", function (data,index) {
-        	contextNode = data;
-        	if (getId(data) || htmlSectionMap[data.type]) { 
-        		$('#showHtml').removeClass('disabled');
-        	} else { 
-        		$('#showHtml').addClass('disabled');
-        	}
-        	position = d3.mouse(this);
-        	offset = $(this).offset();
-        	scrollTop = $('#treeView').scrollTop(); 
-        	d3.select("#contextMenu")
-        	.style('position','absolute')
-        	.style('left',(position[0]+offset.left+(nodeWidth/2))+'px')
-        	.style('top',(position[1]+offset.top-nodeHeight+scrollTop)+'px')
-        	.style('display','block');
-        	d3.event.preventDefault();
-        })
+        .on("contextmenu", showContext)
         .classed("parent",function(d) { 
                 return hasChildren(d);
             });
         
     	
-
+    // Append title text to be shown as tooltip
     nodeEnter.append("title")
     .text(function (d) { 
     	return (getId(d) + '\n' + getName(d)).trim(); });
 		
+    // Append the image icon according to typeIconMap
     nodeEnter.append("svg:image")
         .attr("height", 1e-6)
         .attr("width", 1e-6)
@@ -297,12 +329,13 @@ function update(source) {
         .attr("transform","translate("+ -nodeWidth/2 + ")")
         .attr("class", function(d) { return d.type; })
         .attr("filter",function (d) { 
-            return !hasChildren(d) ? "url(#lighten)" : "none"; 
+            return !hasChildren(d) ? "url(#lighten)" : "none";   // lighten the color of leaf nodes
         })
         .classed("leaf",function (d) { 
             return !hasChildren(d);             
             });
 	      
+    // Add rounded rectangle "border" to all expandable parent nodes
     nodeEnter.filter(".parent").append('rect')
 	.attr("height", String(1e-6)+"px")
 	.attr("width", String(1e-6)+"px")
@@ -311,13 +344,14 @@ function update(source) {
 	.attr("class","parentborder")
 	.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + "-2" + ")");
 	      
+    // Append text label to each node
     nodeEnter.append("text")
         .attr("y", function(d) { return nodeHeight + 12; })
         .attr("text-anchor", "middle")
         .text(getName)
         .style("fill-opacity", 1e-6);
 		
-
+    // Add handler to highlight related nodes (in tree and HTML) on mouseover
     $(".node").on("mouseenter", function () {
     	var d = d3.select(this).datum();  
     	var nodeId = d.nodeId ? d.nodeId : d.nodeIdRef;
@@ -326,17 +360,18 @@ function update(source) {
     	highlightHtml(nodeId);
     });
     
+    // handler to remove highlighting when the mouse leaves the node
     $(".node").on("mouseleave", function () { 
     	removeHighlightedNodes();
     	$(".expandableContainer tr").removeClass("infocus");
     });
 
 
-    // wrap text description
+    // wrap text description 
     svg.selectAll('text').each(wraptext);
 
 
-    // Transition nodes to their new position.
+    // Transition nodes to their new position and make all attached elements visible
     var nodeUpdate = node.transition()
         .duration(duration)
         .attr("transform",function(d) {	return "translate(" + d.x + "," + d.y + ")";	});
@@ -350,16 +385,6 @@ function update(source) {
     nodeUpdate.select('rect')
     	    .attr("height",String(nodeHeight+4)+"px")
     	    .attr("width",String(nodeWidth+4)+"px");
-
-//    var dot = d3.selectAll('.node.parent')
-//    .append('circle')
-//    .attr("cx","0")
-//    .attr("cy","63")
-//    .attr("r","1e-6")
-//    .attr("stroke","gray")
-//    .attr("fill","white");
-    
-
 
     
     // Transition exiting nodes to the parent's new position.
@@ -380,12 +405,14 @@ function update(source) {
     	.attr("width", String(1e-6)+"px");
 
     
+
+    // Add markers (arrows) to all links
     var marker = svg.select("defs")
 		.selectAll("marker")
 	    .data(links, function (d) { return d.target.id; });
     
     
-    // Add new markers
+    // Create triangle path for each new marker 
     marker.enter().append("svg:marker")
 		.attr("id",function (d) { return "arrow" + d.target.id; })
 		.attr("viewBox", "0 -5 10 10")
@@ -403,11 +430,11 @@ function update(source) {
 		});
     
     
-    //Reset position of all markers 
+    //Reset position and orientation of all markers based on new position of the target node
     marker.attr("refY", function (d) { return (1/markerSize)*(90-computeAngle(d));})
 		.attr("orient",computeAngle);
 
-
+    // remove exiting markers
     marker.exit().remove();
     
 
@@ -441,19 +468,14 @@ function update(source) {
         .attr("d", diagonal);
     
     
-    // After the links have moved to their position, show the arrows and the dots on the nodes
+    // After the links have moved to their position, show the arrow markers
     marker.transition()
     .duration(duration)
 	.attr("markerWidth",markerSize)
 	.attr("markerHeight",markerSize);
 	
-//    dot.transition()
-//    .duration(duration)
-//    .attr("r",4);
-    
-   
 
-    // Transition exiting nodes to the parent's new position.
+    // Transition exiting links to the parent's new position.
     link.exit()
         .transition()
         .duration(duration)
@@ -487,7 +509,33 @@ function update(source) {
 			
 }
 
-// Toggle children on click.
+/** Show the context menu for showing the HTML view when right clicking a node
+ * 
+ * @param data The node that was clicked
+ */
+function showContext (data) {
+	contextNode = data;
+	if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
+		$('#showHtml').removeClass('disabled');
+	} else { 
+		$('#showHtml').addClass('disabled');
+	}
+	position = d3.mouse(this);
+	offset = $(this).offset();
+	scrollTop = $('#treeView').scrollTop(); 
+	d3.select("#contextMenu")  // Display the context menu in the right position
+	.style('position','absolute')
+	.style('left',(position[0]+offset.left+(nodeWidth/2))+'px')
+	.style('top',(position[1]+offset.top-nodeHeight+scrollTop)+'px')
+	.style('display','block');
+	d3.event.preventDefault();
+}
+
+
+/** 
+ * Toggle node expansion on click
+ * @param d The node that was clicked
+ */
 function click(d) {
     d3.event.stopPropagation();
     if (d.children) {
@@ -506,6 +554,11 @@ function click(d) {
     update(d);
 }
 	
+/**
+ * Reposition the node at the visible root of the tree on double click. If double click is on the visible root, 
+ * move that node down one level and put it's parent at the visible root position
+ * @param d The node that was doubleclicked
+ */
 function doubleclick (d) { 
     d3.event.stopPropagation();
 		
@@ -519,7 +572,12 @@ function doubleclick (d) {
     } 
 		
 }
-	
+
+
+/**
+ * Wrap the text of the node label so that it is no wider than the node
+ * @param d The node having its text wrapped
+ */
 function wraptext (d) { 
     var el = d3.select(this);
     // check if it was already wrapped
@@ -573,9 +631,11 @@ function wraptext (d) {
 	el.selectAll('tspan').filter(function (d,i) { return i > 2; }).remove();
 }
 
-// Highlight all nodes in the tree that match the given nodeId. If the highlight command is coming
-// from a hover over the html, highlight all matches. If it is coming from the tree itself, only 
-// highlight if there is more than one match (don't just highlight the singleton node)
+/**
+ * Highlight all nodes in the tree that match the given nodeId. 
+ * 
+ * @param nodeId The id of the node to highlight
+ */
 function highlightDuplicateNodes (nodeId) { 
 	if (!nodeId) return;
 	var matches = d3.selectAll(".node").filter(function (d) { 
@@ -590,15 +650,27 @@ function highlightDuplicateNodes (nodeId) {
 	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
 }
 
+/**
+ * Remove all node highlighting
+ */
 function removeHighlightedNodes () { 
 	svg.selectAll("rect.nodeborder").remove();
 }
 
+/**
+ * Highlight the div in the HTML view corresponding to the given nodeId
+ * @param nodeId
+ */
 function highlightHtml (nodeId) { 
 	if (!nodeId) return;
 	$(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeId+"'] tr").eq(0).addClass("infocus");
 }
 
+/**
+ * Given a nodeId, find the node in the tree that has that value for its nodeId attribute
+ * @param nodeId
+ * @returns
+ */
 function findBaseNode (nodeId) { 
 	var queue = [report];
 	var node;
@@ -617,6 +689,11 @@ function findBaseNode (nodeId) {
 	return null;
 };
 
+/**
+ * Returns true if the node has children or if the base node with the same nodeId has children
+ * @param d
+ * @returns
+ */
 function hasChildren (d) {
 	if (hasDirectChildren(d)) return true;
 	else if (d.nodeIdRef) { 
@@ -625,19 +702,37 @@ function hasChildren (d) {
 	}
 }
 
+/**
+ * Returns true only if the node has direct children (either d.children or d._children)
+ * @param d
+ * @returns {Boolean}
+ */
 function hasDirectChildren (d) { 
 	return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
 }
 
+/**
+ *  Get the name to display under the node. 
+ */
 function getName (d) { 
 	return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
 }
 
+/**
+ * Get the id of the node in the XML.
+ * @param d
+ * @returns
+ */
 function getId (d) { 
 	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : "";
 }
 
-
+/**
+ * Clone a list of nodes. Used to create the "infinite tree" when a copy of a node that is defined in 
+ * another part of the structure is clicked on 
+ * @param dlist
+ * @returns {Array}
+ */
 function clone (dlist) {
 	var clist = [];
 	$.each(dlist, function (i,d) { 
@@ -650,13 +745,18 @@ function clone (dlist) {
 	return clist;
 }
 
+
+/**
+ * Handle the selection of input file(s)
+ * @param fileinput
+ */
 function handleFileSelect(fileinput) {
 	
     var mime = require('mime');
 		
     var files = fileinput.get(0).files;
 
-    // If only one JSON file was loaded (for testing)
+    // If only one JSON file was loaded (for testing purposes only)
     if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
     	// remove old xml docs
     	reset();
@@ -673,9 +773,9 @@ function handleFileSelect(fileinput) {
         // Read in the JSON file as text
         reader.readAsText(files[0]);
 
-    } else { 
-    	// remove old xml docs
-    	reset();
+    } else { // When one or more XML files are selected
+
+    	reset();     	// remove old xml docs and reset display
     	
     	$(files).each(function (index, f) {
     		var mimetype = mime.lookup(f.name);
@@ -693,7 +793,9 @@ function handleFileSelect(fileinput) {
 
 };
 
-// Reset the display when new XML files are loaded
+/**
+ *  Reset the display when new XML files are loaded
+ */
 function reset () { 
 	xmlDocs = {};
 	docIndex = 0;
@@ -705,19 +807,32 @@ function reset () {
 }
 
 
-// Compute the angle of a link from source to target without bezier
+/**
+ *  Compute the angle of a link from source to target without bezier curve. Used to determine the orientation 
+ *  of arrow markers on links
+ */
 function computeAngle (d) { 
 	dy = d.target.y - d.source.y;
 	dx = d.target.x - d.source.x;
 	rad = Math.atan(-dx/dy);
-	return (rad * 200/Math.PI)+90;
+	return (rad * 200/Math.PI)+90; // use 200 rather than 180 because the bezier makes the angle slightly sharper at the point we are placing the arrow
 }
 
+
+/**
+ * List of files that are being processed by the XSLT processor
+ */
 var working = {};
 
 
-// The processing of xslt transforms takes some time. Show the cursor as busy during that time
+/**
+ * Add an XML document to the list of documents included in the tree display and process the XSLT transform
+ * for that document
+ * @param f
+ * @param xml
+ */
 function addXmlDoc (f,xml) { 
+	// The processing of xslt transforms takes some time. Show the cursor as busy during that time
 	working[f] = true;
 	$('body').addClass('loading');
 	
@@ -739,9 +854,11 @@ function addXmlDoc (f,xml) {
 		};
 	})(f,xml,num));
 	
+	// Delay processing slightly so that the tree can be fully rendered before the processing starts
 	setTimeout(function () { processor.transformToDocument(xml); }, duration+200);
 
 	
+	// Construct top level menu for displaying HTML view of XML files
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
 
 	$('#xmlFile-'+num).on("click", function () {
@@ -753,9 +870,14 @@ function addXmlDoc (f,xml) {
 	
 }
 
-// If the node has an id, find the DOM element with that id, otherwise find the DOM element that matches the type section header. 
+/**
+ * Show HTML view for a given node. 
+ *  If the node has an id, find and scroll to the DOM element with that id, otherwise find the DOM element that matches 
+ *  the type section header. 
+ * @param data The node selected to show HTML
+ */
 function showHtmlByContext (data) {
-	var waitForXslt = setInterval(function () {
+	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 		if (Object.keys(working).length == 0) { 
 			clearInterval(waitForXslt);
 			var nodeid = getId(data);
@@ -788,6 +910,11 @@ function showHtmlByContext (data) {
 	}, 200);
 }
 
+
+/**
+ * display the given HTML in the HTML view panel
+ * @param html
+ */
 function showHtml (html) { 
 	$('#htmlView').empty();
 	layout.open("south");
@@ -796,6 +923,7 @@ function showHtml (html) {
 	
 	$('#htmlView').append(html);
 	
+	// Handlers to highlight associated tree nodes on mouseenter/mouseleave
 	$(".topLevelCategory .expandableContainer[data-stix-content-id] tr:has(.expandableToggle)").on("mouseenter", function () { 
 		$(this).addClass("infocus");
 		highlightDuplicateNodes($(this).parents(".expandableContainer").data("stix-content-id"));
@@ -811,7 +939,11 @@ function showHtml (html) {
 
 }
 
-
+/**
+ * Expand a given node in the HTML and then expand all of the nested expandable nodes (uses stix_to_html function
+ * to expand nested expandables).
+ * @param node
+ */
 function expandSection (node) { 
 	node.find('.expandableToggle').click();
 	expandNestedExpandables(node.get(0));

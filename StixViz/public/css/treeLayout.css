@@ -1,4 +1,15 @@
-body,html,#treeView { 
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the CSS for the Stix tree display
+ * 
+ * created 2013
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+ body,html,#treeView { 
 	height: 100%;
 }
 
