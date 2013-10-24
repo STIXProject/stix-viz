@@ -121,7 +121,7 @@ $(function() {
 		},
 		south: {
 			initClosed:true,
-			size:200
+			size:300
 		} 			
 	});
 	
@@ -693,12 +693,15 @@ function handleFileSelect(fileinput) {
 
 };
 
+// Reset the display when new XML files are loaded
 function reset () { 
 	xmlDocs = {};
 	docIndex = 0;
 	$('#xmlFileList').empty();
 	svg.selectAll("g.node").remove();
+	svg.selectAll("path.link").remove();
 	$('#htmlView').empty();
+	layout.close("south");
 }
 
 
@@ -736,7 +739,7 @@ function addXmlDoc (f,xml) {
 		};
 	})(f,xml,num));
 	
-	setTimeout(function () { processor.transformToDocument(xml); }, 200);
+	setTimeout(function () { processor.transformToDocument(xml); }, duration+200);
 
 	
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
@@ -763,7 +766,7 @@ function showHtmlByContext (data) {
 						var objRef = $(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']"); 
 						objRef.find('tr').eq(0).addClass("infocus");
 						objRef.get(0).scrollIntoView();
-						recursiveExpand(objRef.find('.expandableToggle'));
+						expandSection(objRef);
 						return false;
 					} else { 
 						return true;
@@ -809,15 +812,8 @@ function showHtml (html) {
 }
 
 
-function recursiveExpand (node) { 
-	node.click();
-	var siblings = null;
-	if (node.parent("td").size() > 0) { 
-		siblings = node.parents("tr").siblings()
-	} else if (node.parent(".expandableContainer").size() > 0) { 
-		siblings = node.siblings(".expandableContents");
-	}
-	siblings.find(".objectReference")
-	.each(function (i,n) { recursiveExpand($(n)); });
+function expandSection (node) { 
+	node.find('.expandableToggle').click();
+	expandNestedExpandables(node.get(0));
 }
 

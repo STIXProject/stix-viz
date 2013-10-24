@@ -554,7 +554,7 @@ ikirillov@mitre.org
         <xsl:param name="id" select="if ($currentObject/@id) then (fn:data($currentObject/@id)) else (fn:data($currentObject/@idref))"/>
         
         <xsl:variable name="originalObservable" select="$currentObject" />
-        <xsl:variable name="actualObservable"  as="element()" select="if ($originalObservable/@id) then ($originalObservable) else (../*[@id = fn:data($originalObservable/@idref)])" />
+        <xsl:variable name="actualObservable"  as="element()?" select="if ($originalObservable/@id) then ($originalObservable) else (../*[@id = fn:data($originalObservable/@idref)])" />
         
         <xsl:variable name="relationshipOrAssociationType" select="$actualObservable/(cybox:Relationship|cybox:Association_Type)"/>
         
