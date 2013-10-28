@@ -110,6 +110,7 @@ This is a work in progress.  Feedback is most welcome!
 
 requirements:
  - node webkit framework including mime module from node.js (currently tested with node-webkit v0.6.2) 
+ - node.js (currently tested with version 0.10.13)
  - bootstrap.js (v3.0)
  - d3.js (v3)
  - jquery and jquery-ui (tested with jquery 1.10.2)
@@ -128,19 +129,64 @@ STIX - http://stix.mitre.org
 README: this file.
 index.html: The main html page for the application
 package.json: node-webkit config file for the StixViz app
-public
- js
-  STIXRelationshipJson.js: Transforms STIX XML into Json data structure for tree layout
-  STIXNameResolver.js: Determine node names
-  STIXRelationshipTree.js: Displays the tree structure
-  STIXTTPProcessing.js: Process TTPs into Json
-  STIXUtilities.js: Utilities for XML to JSON conversion
- css
+-public
+ -js
+    STIXRelationshipJson.js: Transforms STIX XML into Json data structure for tree layout
+    STIXNameResolver.js: Determine node names
+    STIXRelationshipTree.js: Displays the tree structure
+    STIXTTPProcessing.js: Process TTPs into Json
+    STIXUtilities.js: Utilities for XML to JSON conversion
+    -bootstrap
+      bootstrap.min.js
+    -d3
+      d3.v3.js
+    -jquery
+      jquery-1.10.2.min.js
+    -jquery-ui
+      jquery-ui-1.10.3.custom.min.js
+      jquery.ui.draggable.js
+      -plugin
+        jquery.layout-latest.min.js
+    -Saxonce
+      Saxon CE package files
+    -StixHtml
+      common.js
+      wgxpath.install.js
+  -xslt
+    -images
+      directory of icon images
+    cybox_common.xsl
+    icons.xsl
+    normalize.xsl
+    stix_common.xsl
+    stix_to_html.xsl
+ -css
   treeLayout.css: Stylesheet for tree display
-
+  -stixHtml
+    common.css
+    theme_default.css
+  -bootstrap
+    bootstrap.min.css
+  -jquery-ui
+    jquery-ui-1.10.3.custom.min.css
+    -plugin
+      layout-default.css
+  -icons
+    STIX PNG icon files
+-node_modules
+  mime
+    node.js mime package contents
+    
 
 --------------------------------------------------------------------------------
 --Usage Notes-------------------------------------------------------------------
+
+Building: 
+The StixViz app depends on the node.js "mime" module which is available from the npm package management system.
+The mime module is already included in the node_modules directory of this package. To 
+reinstall the mime module, be sure you have node.js installed, then cd to the root directory of the StixViz app 
+and execute the command: 
+> npm install mime
 
 To run the StixViz app using node-webkit, execute the following command: 
 
