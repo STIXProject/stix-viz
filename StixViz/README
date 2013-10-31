@@ -54,54 +54,6 @@ XSLT transformed file at the bottom of the STIXViz window. Nodes that
 have an id specified in the XML file can be displayed in the HTML view
 as well.   To do this, click right on the node and select 'Show HTML'.
 
-
-
-Currently we support the following top level entities and sub-entities:
-- Observables
-  --All except for Events (this is true for any embedded Observables also)
-- Indicators
-  --Title
-  --Description
-  --Valid_Time_Position
-  --Suggested_COAs
-  --Observable
-  --Composite_Indicator_Expression
-  --Indicated_TTP
-  --Kill_Chain_Phases
-  --Confidence
-- TTPs
-  --Description
-  --Intended_Effect
-  --Behavior
-  --Resources
-  --Victim_Targeting
-  --Exploit_Targets
-  --Related_TTPs
-  --Kill_Chain_Phases
-- Exploit Targets
-  --Title
-  --Vulnerability
-- Incidents
-  --Description
-  --Status
-  --Related_Observables
-  --Leveraged_TTPs
-  --Observable
-- Courses of Action
-  --All
-- Campaigns
-  --Title
-  --Status
-  --Related_Incidents
-  --Related_TTPs
-  --Related_Indicators
-- Threat Actors
-  --Title
-  --Identity
-  --Type
-  --Motivation
-  --Observed_TTPs
-
 Each category of top level "items" is turned into a node in the tree. 
 The nodes themselves are expandable to show the structure of the relationships 
 between entities. 
