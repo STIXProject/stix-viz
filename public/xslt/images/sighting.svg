@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="idSightingLayer"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%"
+	 viewBox="0 0 144 144" enable-background="new 0 0 144 144" xml:space="preserve">
+<switch>
+	<g>
+		<g>
+			<g>
+				<linearGradient id="idSightingBackgroundGradient" gradientUnits="userSpaceOnUse" x1="72.0005" y1="144" x2="72.0005" y2="4.882813e-004">
+					<stop  offset="0" style="stop-color:#000000"/>
+					<stop  offset="0.0492" style="stop-color:#0F1507"/>
+					<stop  offset="0.1707" style="stop-color:#304416"/>
+					<stop  offset="0.2965" style="stop-color:#4C6C22"/>
+					<stop  offset="0.4248" style="stop-color:#638C2D"/>
+					<stop  offset="0.5563" style="stop-color:#75A635"/>
+					<stop  offset="0.6925" style="stop-color:#82B83A"/>
+					<stop  offset="0.8362" style="stop-color:#8AC33E"/>
+					<stop  offset="1" style="stop-color:#8CC63F"/>
+				</linearGradient>
+				<path fill="url(#idSightingBackgroundGradient)" d="M126,0H18.001C8.097,0,0,8.097,0,17.997v108.004C0,135.905,8.097,144,18.001,144H126
+					c9.906,0,18-8.095,18-17.999V17.997C144,8.097,135.906,0,126,0z"/>
+			</g>
+			<defs>
+				<filter id="idSightingFilter" filterUnits="userSpaceOnUse" x="0" y="0" width="144" height="144">
+					
+						<feColorMatrix  type="matrix" values="-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0" color-interpolation-filters="sRGB" result="source"/>
+				</filter>
+			</defs>
+			<mask maskUnits="userSpaceOnUse" x="0" y="0" width="144" height="144" id="idSightingMask">
+				<g filter="url(#idSightingFilter)">
+					
+				</g>
+			</mask>
+			<g opacity="0.6" mask="url(#idSightingMask)">
+				<path d="M126,0H18.001C8.097,0,0,8.097,0,17.997v108.004C0,135.905,8.097,144,18.001,144H126c9.906,0,18-8.095,18-17.999V17.997
+					C144,8.097,135.906,0,126,0z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<text transform="matrix(1.0002 0 0 1 33.5225 127.5029)" fill="#FFFFFF" font-family="'Calibri-Bold'" font-size="20.6672">Sightings</text>
+			</g>
+		</g>
+		<linearGradient id="idSightingCurveOpacityGradient" gradientUnits="userSpaceOnUse" x1="72.0005" y1="123.8174" x2="72.0005" y2="2.9146">
+			<stop  offset="0" style="stop-color:#FFFFFF;stop-opacity:0.1"/>
+			<stop  offset="1" style="stop-color:#FFFFFF;stop-opacity:0.2"/>
+		</linearGradient>
+		<path fill="url(#idSightingCurveOpacityGradient)" d="M123.814,2.914H20.187c-9.504,0-17.273,7.768-17.273,17.271v103.633
+			C14.62,20.68,141.088,20.185,141.088,20.185C141.088,10.682,133.322,2.914,123.814,2.914z"/>
+		<g>
+			
+			<g>
+				<path fill="#FFFFFF" d="M106.773,105.689H37.235L59.588,65.21c3.046,2.036,7.244,3.292,11.878,3.292
+					c5.035,0,9.55-1.48,12.64-3.837L106.773,105.689z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<path fill="#FFFFFF" d="M109.459,55.022c-6.199,1.229-13.639,2.12-21.764,2.632c-1.176,0.075-2.371,0.142-3.578,0.206
+					c-0.762,0.033-1.523,0.076-2.286,0.098c-3.514,0.143-7.124,0.218-10.789,0.218c-3.014,0-5.994-0.054-8.908-0.151
+					c-1.109-0.033-2.22-0.077-3.307-0.131c-1.208-0.044-2.404-0.108-3.579-0.175c-8.452-0.511-16.196-1.424-22.624-2.696
+					c-4.71-0.936-8.473-2.022-11.215-3.219c0.576,4.382,15.598,8.047,35.971,9.188c0.642,0.686,1.381,1.327,2.208,1.903
+					c3.046,2.153,7.244,3.48,11.878,3.48c5.035,0,9.55-1.565,12.64-4.057c0.543-0.425,1.033-0.881,1.479-1.37
+					c19.928-1.207,34.523-4.828,35.102-9.146C117.943,53,114.17,54.087,109.459,55.022z M71.466,64.211
+					c-3.861,0-7.342-1.152-9.801-3.012c3.046,0.12,6.179,0.174,9.377,0.174c3.513,0,6.949-0.065,10.256-0.207
+					C78.84,63.037,75.338,64.211,71.466,64.211z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<path fill="#FFFFFF" d="M91.578,36.241c-0.152-8.189-9.519-14.79-21.06-14.79c-11.572,0-20.959,6.645-21.047,14.866
+					c-19.165,1.522-32.564,5.057-32.564,9.45c0,1.533,1.62,2.99,4.546,4.307c7.331,3.317,22.886,5.752,41.55,6.296
+					c2.621,0.077,5.309,0.12,8.039,0.12c3.393,0,6.711-0.064,9.93-0.174c4.667-0.175,9.126-0.468,13.292-0.859
+					c11.727-1.098,21.135-3.023,26.367-5.383c2.926-1.316,4.557-2.773,4.557-4.307C125.188,41.287,111.297,37.71,91.578,36.241z
+					 M72.761,40.602c-0.512,0.022-1.023,0.033-1.545,0.033c-0.229,0.011-0.457,0.011-0.697,0.011c-9.256,0-16.75-2.045-16.75-4.567
+					c0-6.591,7.494-11.93,16.75-11.93c9.268,0,16.763,5.339,16.763,11.93C87.281,38.395,80.962,40.309,72.761,40.602z"/>
+			</g>
+		</g>
+	</g>
+</switch>
+</svg>

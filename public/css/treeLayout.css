@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the CSS for the Stix tree display
+ * 
+ * created 2013
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+ body,html,#treeView { 
+	height: 100%;
+}
+
+body.loading { 
+	cursor:wait !important;
+}
+
+svg { 
+	height: 99%;
+}
+
+body {
+  cursor:default;
+  margin: 0;
+  padding: 0;
+}
+
+
+#treeView { 
+/* 	width: 100%; */
+	overflow: auto;
+}
+
+#htmlView {
+margin: 0;
+width: 100%;
+height: 30%;
+padding: 0;
+overflow-y: auto;
+border-top:4px ridge lightgray;
+}
+
+.loading { 
+	background: lightgray;
+}
+
+nav.navbar { 
+	margin-bottom:0;
+}
+
+#menubar { 
+	overflow:visible;
+	padding: 0;
+	color: lightsteelblue;
+}
+
+.ui-layout-pane-north { 
+	border:none;
+}
+
+.ui-layout-pane-center { 
+	border-top: none; 
+}
+
+.NodeTypeLabel {
+    font-size : 10px;
+    fill: white;
+}
+
+.nodeborder { 
+	stroke: yellow;
+	stroke-width: 5px;
+	fill:none;
+	z-index: 99;
+}
+
+.parentborder {
+  stroke: #333;
+  stroke-width: 2px;
+  fill:none;
+}
+
+.node.parent {
+  cursor: pointer;
+}
+
+.node image { 
+	opacity: 1;
+}
+
+.node text,h1,button { 
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: moz-none;
+-ms-user-select: none;
+user-select: none;
+}
+
+.node image.leaf {
+/*   opacity: 0.6; */
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+marker.arrow { 
+	fill: #bbb;
+}
+
+.infocus { 
+	background-color: yellow;
+}
+
+
+

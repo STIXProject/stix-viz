@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="idVictimTargetingLayer"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%"
+	 viewBox="0 0 144 144" enable-background="new 0 0 144 144" xml:space="preserve">
+<switch>
+	<g>
+		<g>
+			<g>
+				<linearGradient id="idVictimTargetingBackgroundGradient" gradientUnits="userSpaceOnUse" x1="72.0005" y1="144" x2="72.0005" y2="4.882813e-004">
+					<stop  offset="0" style="stop-color:#000000"/>
+					<stop  offset="0.0846" style="stop-color:#1C0011"/>
+					<stop  offset="0.2219" style="stop-color:#440028"/>
+					<stop  offset="0.3637" style="stop-color:#64003B"/>
+					<stop  offset="0.5092" style="stop-color:#7E004A"/>
+					<stop  offset="0.6599" style="stop-color:#900055"/>
+					<stop  offset="0.8188" style="stop-color:#9B005B"/>
+					<stop  offset="1" style="stop-color:#9E005D"/>
+				</linearGradient>
+				<path fill="url(#idVictimTargetingBackgroundGradient)" d="M126,0H18C8.096,0,0,8.098,0,17.998v108.004C0,135.906,8.096,144,18,144h108
+					c9.906,0,18-8.094,18-17.998V17.998C144,8.098,135.906,0,126,0z"/>
+			</g>
+			<defs>
+				<filter id="idVictimTargetingFilter" filterUnits="userSpaceOnUse" x="0" y="0" width="144" height="144">
+					
+						<feColorMatrix  type="matrix" values="-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0" color-interpolation-filters="sRGB" result="source"/>
+				</filter>
+			</defs>
+			<mask maskUnits="userSpaceOnUse" x="0" y="0" width="144" height="144" id="idVictimTargetingMask">
+				<g filter="url(#idVictimTargetingFilter)">
+					
+				</g>
+			</mask>
+			<g opacity="0.6" mask="url(#idVictimTargetingMask)">
+				<path d="M126,0H18C8.096,0,0,8.098,0,17.998v108.004C0,135.906,8.096,144,18,144h108c9.906,0,18-8.094,18-17.998V17.998
+					C144,8.098,135.906,0,126,0z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<text transform="matrix(1.0002 0 0 1 14.8237 127.502)" fill="#FFFFFF" font-family="'Calibri-Bold'" font-size="17.4">VictimTargeting</text>
+			</g>
+		</g>
+		<linearGradient id="idVictimTargetingCurveOpacityGradient" gradientUnits="userSpaceOnUse" x1="72.0015" y1="123.8184" x2="72.0015" y2="2.9146">
+			<stop  offset="0" style="stop-color:#FFFFFF;stop-opacity:0.1"/>
+			<stop  offset="1" style="stop-color:#FFFFFF;stop-opacity:0.2"/>
+		</linearGradient>
+		<path fill="url(#idVictimTargetingCurveOpacityGradient)" d="M123.814,2.914H20.186c-9.502,0-17.271,7.768-17.271,17.271v103.633
+			C14.619,20.68,141.088,20.186,141.088,20.186C141.088,10.682,133.32,2.914,123.814,2.914z"/>
+		<g>
+			
+			<g>
+				<path fill="none" stroke="#FFFFFF" stroke-width="1.6314" stroke-miterlimit="10" d="M34.518,36.947
+					c-3.373-0.025-10.385,7.098-11.594,8.877c-1.055,1.551-2.002,4.156-1.268,5.814c1.074,2.414,2.652,2.955,4.717,1.24
+					c1.783-1.48,2.789-4.537,5.506-2.576c1.549,1.121,9.424,10.84,12.791,13.139c1.945,1.326,2.941,2.832,5.217,3.777
+					c2.607,1.082,4.637,0.371,6.939-1.09c1.512-0.955,4.957-3.295,6.877-2.539c1.908,0.75-0.033,4.936-0.529,6.344
+					c-1.58,4.508-1.633,9.158-5.674,12.396c-1.92,1.543-10.807,4.684-12.967,5.65c-1.957,0.875-4.045,2.121-3.637,4.645
+					c0.33,2.061,2.178,4.162,3.246,5.922c0.963,1.588,2.16,4.643,4.336,4.793c2.838,0.199,2.314-3.4,3.137-5.076
+					c1.07-2.189,9.5-7.209,11.814-8.314c2.098-1,4.301-2.373,6.229-3.764c2.221-1.605,4.037-11.338,4.76-13.859
+					c0.908-3.152,16.508-10.627,19.281-4.932c1.131,2.324,6.453,9.332,8.357,10.537c1.76,1.111,4.561,1.209,6.482,0.357
+					c2.549-1.133,12.23-15.148,13.711-20.48c0.67-2.41,0.627-5.174-2.293-5.637c-1.879-0.299-5.59,0.689-6.797,2.131
+					c-1.361,1.627-7.83,12.646-8.852,12.668c-1.58,0.035-2.816-7.213-3.379-9.725c-0.496-2.217-1.297-4.48-2.295-6.594
+					c-0.592-1.254-1.383-2.039,0.039-2.961c0.818-0.529,2.107-0.541,3.098-0.596c1.279-0.07,1.938,0.361,2.992,0.67
+					c1.283,0.375,2.396,0.111,3.633-0.211c2.348-0.613,4.295-1.232,5.076-3.693c1.783-5.619-1.852-9.361-7.332-9.766
+					c-2.797-0.207-4.051,1.924-5.811,3.697c-2.096,2.111-3.695,1.615-5.744-0.006c-1.799-1.42-3.83-3.27-5.191-5.068
+					c-0.85-1.121-4.855-4.367-5.85-5.186c-1.805-1.48-3.309-2.936-5.459-4.014c-1.938-0.969-19.826,3.611-22.244,4.438
+					c-1.566,0.533-3.914,2.658-4.584,4.197c-1.154,2.656,1.402,4.109,3.457,5.184c3.018,1.578,3.438,0.674,5.773-1.34
+					c1.764-1.518,10.701-4.588,13.086-3.453c1.664,0.793,8.762,8.084,6.904,9.723c-0.883,0.777-16.246,8.566-18.182,9.654
+					c-2.33,1.309-4.818,2.689-7.326,3.498c-2.699,0.871-4.123,0.697-6.104-1.416c-1.645-1.752-7.703-8.717-9.238-10.887
+					c-1.49-2.107-2.824-5.699-4.559-6.072L34.518,36.947z"/>
+			</g>
+		</g>
+	</g>
+</switch>
+</svg>

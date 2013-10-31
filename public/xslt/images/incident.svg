@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="idIncidentLayer"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%"
+	 viewBox="0 0 144 144" enable-background="new 0 0 144 144" xml:space="preserve">
+<switch>
+	<g>
+		<g>
+			<g>
+				<linearGradient id="idIncidentBackgroundGradient" gradientUnits="userSpaceOnUse" x1="72.0005" y1="144.001" x2="72.0005" y2="-4.882813e-004">
+					<stop  offset="0" style="stop-color:#000000"/>
+					<stop  offset="0.0419" style="stop-color:#170B03"/>
+					<stop  offset="0.1484" style="stop-color:#4D2409"/>
+					<stop  offset="0.2591" style="stop-color:#7D3B0F"/>
+					<stop  offset="0.3715" style="stop-color:#A54D13"/>
+					<stop  offset="0.4862" style="stop-color:#C55D17"/>
+					<stop  offset="0.6037" style="stop-color:#DF691A"/>
+					<stop  offset="0.7254" style="stop-color:#F1711C"/>
+					<stop  offset="0.8537" style="stop-color:#FC761E"/>
+					<stop  offset="1" style="stop-color:#FF781E"/>
+				</linearGradient>
+				<path fill="url(#idIncidentBackgroundGradient)" d="M126.002-0.001H17.994C8.092-0.001,0,8.097,0,18v108.006c0,9.902,8.092,17.995,17.994,17.995
+					h108.008c9.902,0,17.998-8.093,17.998-17.995V18C144,8.097,135.904-0.001,126.002-0.001z"/>
+			</g>
+			<defs>
+				<filter id="idIncidentFilter" filterUnits="userSpaceOnUse" x="0" y="-0.001" width="144" height="144.002">
+					
+						<feColorMatrix  type="matrix" values="-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0" color-interpolation-filters="sRGB" result="source"/>
+				</filter>
+			</defs>
+			<mask maskUnits="userSpaceOnUse" x="0" y="-0.001" width="144" height="144.002" id="idIncidentMask">
+				<g filter="url(#idIncidentFilter)">
+					
+				</g>
+			</mask>
+			<g opacity="0.6" mask="url(#idIncidentMask)">
+				<path d="M126.002-0.001H17.994C8.092-0.001,0,8.097,0,18v108.006c0,9.902,8.092,17.995,17.994,17.995h108.008
+					c9.902,0,17.998-8.093,17.998-17.995V18C144,8.097,135.904-0.001,126.002-0.001z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<path fill="#FFFFFF" d="M95.037,29.886l5.949-5.341l-7.895,1.271l1.656-7.824l-5.633,5.669l-3.25-7.298l-1.232,7.896l-6.924-4
+					l3.652,7.116l-7.951,0.833l7.135,3.617l-1.6,1.433c1.154,0.487,2.77,0.543,2.77,0.543l2.795-2.507l-3.232-1.632l3.604-0.385
+					l-1.654-3.223l3.133,1.808l0.553-3.578l1.482,3.313l2.551-2.566l-0.754,3.541l3.568-0.579l-2.688,2.421l3.232,1.639
+					l-3.598,0.381l1.65,3.223l-3.133-1.814l-0.559,3.576l-0.984-2.215c-1.23,1.754-2.643,2.82-4.268,3.24
+					c-0.508,0.13-1.01,0.191-1.502,0.199l-1.084,5.076l5.639-5.669l3.25,7.305l1.229-7.905l6.924,3.999l-3.648-7.112l7.953-0.839
+					L95.037,29.886z M88.469,31.107c-1.646,4.072-3.49,5.679-5.354,6.157c-1.602,0.413-3.213-0.006-4.736-0.396
+					c-1.736-0.449-3.412-0.889-5.277-0.406c-1.211,0.314-2.5,1.012-3.93,2.331c-3.713,3.431-3.045,8.996-2.641,11.028l4.357,0.973
+					l-1.188,5.357c7.912,4.266,12.377,13.396,10.336,22.608C77.576,89.873,66.57,96.881,55.453,94.417
+					c-11.111-2.464-18.121-13.471-15.652-24.584c2.041-9.211,9.949-15.599,18.916-16.118l1.195-5.356l4.061,0.897
+					c-0.436-2.946-0.541-8.466,3.555-12.242c1.758-1.626,3.42-2.483,4.965-2.881c2.512-0.643,4.705-0.075,6.498,0.387
+					c1.404,0.365,2.531,0.656,3.549,0.397c1.293-0.337,2.414-1.574,3.688-4.72L88.469,31.107z"/>
+			</g>
+		</g>
+		<g>
+			
+			<g>
+				<text transform="matrix(1 0 0 1 36.9346 127.4375)" fill="#FFFFFF" font-family="'Calibri-Bold'" font-size="20.6674">Incident</text>
+			</g>
+		</g>
+		<linearGradient id="idIncidentCurveOpacityGradient" gradientUnits="userSpaceOnUse" x1="71.9976" y1="123.8203" x2="71.9976" y2="2.9116">
+			<stop  offset="0" style="stop-color:#FFFFFF;stop-opacity:0.1"/>
+			<stop  offset="1" style="stop-color:#FFFFFF;stop-opacity:0.2"/>
+		</linearGradient>
+		<path fill="url(#idIncidentCurveOpacityGradient)" d="M123.816,2.911H20.18c-9.5,0-17.27,7.77-17.27,17.272V123.82
+			C14.615,20.681,141.084,20.184,141.084,20.184C141.084,10.681,133.318,2.911,123.816,2.911z"/>
+	</g>
+</switch>
+</svg>
