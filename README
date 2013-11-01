@@ -160,8 +160,11 @@ libGLESv2.dll
 
 On other platforms follow the instructions from https://github.com/rogerwang/node-webkit/wiki/How-to-package-and-distribute-your-apps 
 
+-- Runnning from Binary Executable --
 
-
+A pre-packaged Windows executable is available at http://stix.mitre.org/downloads/StixVizDistro.zip. To run this pre-packaged
+executable, extract all of the files included in the zip file into a directory and double click the file StixViz.exe. 
+ 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
