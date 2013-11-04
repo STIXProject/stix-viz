@@ -1237,7 +1237,7 @@ ikirillov@mitre.org
         <div class="container cyboxPropertiesContainer cyboxProperties">
             <div class="heading cyboxPropertiesHeading cyboxProperties">
                 <span class="cyboxPropertiesName"><xsl:value-of select="local-name()"/> </span>
-                <span class="cyboxPropertiesConstraints"><xsl:apply-templates select="@*[not(node-name(.) = fn:QName('', 'object_reference'))][not(node-name(.) = fn:QName('http://www.w3.org/2001/XMLSchema-instance', 'type'))]" mode="#current"/></span>
+                <span class="cyboxPropertiesConstraints"><xsl:apply-templates select="@*[not(node-name(.) = fn:QName('', 'id')) and not(node-name(.) = fn:QName('', 'idref')) and not(node-name(.) = fn:QName('', 'object_reference'))][not(node-name(.) = fn:QName('http://www.w3.org/2001/XMLSchema-instance', 'type'))]" mode="#current"/></span>
                 <xsl:if test="text()">
                     <span class="cyboxPropertiesNameValueSeparator"> &#x2192; </span>
                 </xsl:if>
@@ -1249,6 +1249,9 @@ ikirillov@mitre.org
                 </div>
             </div>
             <div class="contents cyboxPropertiesContents cyboxProperties">
+                <div class="idOrIdrefInsideCyboxProperties">
+                    <xsl:apply-templates select="@*[(node-name(.) = fn:QName('', 'id')) or (node-name(.) = fn:QName('', 'idref')) or (node-name(.) = fn:QName('', 'object_reference'))]" mode="#current"/>
+                </div>
                 <xsl:apply-templates select="*" mode="#current"></xsl:apply-templates>
             </div>
         </div>

@@ -841,7 +841,22 @@ function addXmlDoc (f,xml) {
 	xslFileName = "public/xslt/stix_to_html.xsl";
 	
 	xslt = Saxon.requestXML(xslFileName);
+	//Saxon.setLogLevel("FINEST");
+
+	Saxon.setErrorHandler((function (filename,xmlString,index) { 
+		return function (error) { 
+			console.log("got an error processing file " + filename);
+			xmlDocs[index] = {name:filename,xml:xmlString,html:$("<div><div id='wrapper'><h2>Could not transform XML document</h2></div></div>")};
+			delete working[filename];
+			if (Object.keys(working).length == 0) { 
+				$('body').removeClass('loading');
+			}
+		};
+	})(f,xml,num));
+	
+	
 	var processor = Saxon.newXSLT20Processor(xslt);
+	
 	processor.setSuccess((function (filename,xmlString,index) { 
 		return function (proc) {
 			resultDocument = proc.getResultDocument();
@@ -854,8 +869,11 @@ function addXmlDoc (f,xml) {
 		};
 	})(f,xml,num));
 	
+
 	// Delay processing slightly so that the tree can be fully rendered before the processing starts
-	setTimeout(function () { processor.transformToDocument(xml); }, duration+200);
+	setTimeout(function () { 
+		processor.transformToDocument(xml); 
+	}, duration+200);
 
 	
 	// Construct top level menu for displaying HTML view of XML files
