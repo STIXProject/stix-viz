@@ -822,7 +822,7 @@ function computeAngle (d) {
 /**
  * List of files that are being processed by the XSLT processor
  */
-var working = {};
+var working = 0;
 
 
 /**
@@ -833,7 +833,7 @@ var working = {};
  */
 function addXmlDoc (f,xml) { 
 	// The processing of xslt transforms takes some time. Show the cursor as busy during that time
-	working[f] = true;
+	working++;
 	$('body').addClass('loading');
 	
 	var num = docIndex++;
@@ -841,29 +841,45 @@ function addXmlDoc (f,xml) {
 	xslFileName = "public/xslt/stix_to_html.xsl";
 	
 	xslt = Saxon.requestXML(xslFileName);
+	//Saxon.setLogLevel("FINEST");
+
+	Saxon.setErrorHandler(function (error) { 
+		console.log("XSLT exception processing file");
+		if (--working == 0) {
+			$('body').removeClass('loading');
+		}
+	});
+	
 	var processor = Saxon.newXSLT20Processor(xslt);
+	
 	processor.setSuccess((function (filename,xmlString,index) { 
 		return function (proc) {
 			resultDocument = proc.getResultDocument();
 			//wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
 			xmlDocs[index] = {name:filename,xml:xmlString,html:resultDocument};
-			delete working[filename];
-			if (Object.keys(working).length == 0) { 
+			if (--working == 0) { 
 				$('body').removeClass('loading');
 			}
 		};
 	})(f,xml,num));
 	
+
 	// Delay processing slightly so that the tree can be fully rendered before the processing starts
-	setTimeout(function () { processor.transformToDocument(xml); }, duration+200);
+	setTimeout(function () { 
+		processor.transformToDocument(xml); 
+	}, duration+200);
 
 	
 	// Construct top level menu for displaying HTML view of XML files
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
 
 	$('#xmlFile-'+num).on("click", function () {
-		html = xmlDocs[$(this).attr("id").split("-")[1]].html;
-		showHtml(new XMLSerializer().serializeToString($(html).find('#wrapper').get(0)));
+		doc = xmlDocs[$(this).attr("id").split("-")[1]];
+		if (doc) { 
+			showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+		} else { 
+			showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML</h2></div>");
+		}
 		$('#htmlView').scrollTop(0);
     });
 	
@@ -878,10 +894,11 @@ function addXmlDoc (f,xml) {
  */
 function showHtmlByContext (data) {
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
-		if (Object.keys(working).length == 0) { 
+		if (working == 0) { 
 			clearInterval(waitForXslt);
 			var nodeid = getId(data);
 			if (nodeid) {
+				var found = false;
 				$.each(xmlDocs, function (i,entry) {
 					if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
@@ -889,11 +906,16 @@ function showHtmlByContext (data) {
 						objRef.find('tr').eq(0).addClass("infocus");
 						objRef.get(0).scrollIntoView();
 						expandSection(objRef);
+						found = true;
 						return false;
 					} else { 
 						return true;
 					}
 				});
+				// If we get here, there was no entry in xmldocs for the given node
+				if (!found) { 
+					showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML</h2></div>");
+				}
 			} else { 
 				var section = htmlSectionMap[data.type];
 				$.each(xmlDocs, function (i,entry) {
