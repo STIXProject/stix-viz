@@ -84,11 +84,11 @@
     -->
     <xsl:template name="processStixHeaderNameValue">
         <xsl:param name="evenOrOdd" />
-        <TR><xsl:attribute name="class"><xsl:value-of select="$evenOrOdd" /></xsl:attribute>
-                <TD class="Stix{local-name()}Name">
+        <tr><xsl:attribute name="class"><xsl:value-of select="$evenOrOdd" /></xsl:attribute>
+                <td class="Stix{local-name()}Name">
                   <xsl:value-of select="fn:local-name(.)"/>
-                </TD>
-                <TD class="Stix{local-name()}Value">
+                </td>
+                <td class="Stix{local-name()}Value">
                     <xsl:variable name="class" select="if (self::stix:Description) then ('longText expandableContainer expandableToggle expandableContents expandableSame collapsed') else ('') " />
                     <div>
                         <xsl:if test="$class">
@@ -122,6 +122,12 @@
                           <xsl:when test="self::stix:Information_Source">
                             <xsl:apply-templates mode="cyboxProperties" />
                           </xsl:when>
+                          
+                          <!-- 
+                            html content is saved as an escaped attribute
+                            "data-stix-content" and will be later parsed and
+                            expanded via javascript
+                          -->
                           <xsl:when test="self::*[@structuring_format='HTML5']">
                             <xsl:variable name="content" select="./text()" />
                             <div class="htmlContainer" data-stix-content="{$content}" />
@@ -132,8 +138,8 @@
                         </xsl:choose>
                         
                     </div>
-                </TD>
-            </TR>
+                </td>
+            </tr>
     </xsl:template>    
 
 
