@@ -42,6 +42,10 @@ overflow-y: auto;
 border-top:4px ridge lightgray;
 }
 
+#loadingMessage { 
+	margin:20px;
+}
+
 .loading { 
 	background: lightgray;
 }

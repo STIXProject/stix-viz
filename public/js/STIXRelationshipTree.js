@@ -13,6 +13,8 @@
  * 
  */
 
+
+
 var nodeWidth = 60,
  nodeHeight = 60,
  nodeSep = 160,
@@ -25,7 +27,7 @@ var stixroot,report,svg,layout;
 /* Id of the node that was last right-clicked */
 var contextNode = null;
 
-var xmlDocs = {}, docIndex = 0;
+//var xmlDocs = {}, docIndex = 0;
 
 /* Layout of tree within its div */
 var margin = {
@@ -114,8 +116,11 @@ var typeIconMap = {
 };
 
 
+
+
 $(function() {
 
+	
 	/**
 	 *  Add handler for file select input
 	 */
@@ -819,72 +824,72 @@ function computeAngle (d) {
 }
 
 
-/**
- * List of files that are being processed by the XSLT processor
- */
-var working = 0;
-
-
-/**
- * Add an XML document to the list of documents included in the tree display and process the XSLT transform
- * for that document
- * @param f
- * @param xml
- */
-function addXmlDoc (f,xml) { 
-	// The processing of xslt transforms takes some time. Show the cursor as busy during that time
-	working++;
-	$('body').addClass('loading');
-	
-	var num = docIndex++;
-	
-	xslFileName = "public/xslt/stix_to_html.xsl";
-	
-	xslt = Saxon.requestXML(xslFileName);
-	//Saxon.setLogLevel("FINEST");
-
-	Saxon.setErrorHandler(function (error) { 
-		console.log("XSLT exception processing file");
-		if (--working == 0) {
-			$('body').removeClass('loading');
-		}
-	});
-	
-	var processor = Saxon.newXSLT20Processor(xslt);
-	
-	processor.setSuccess((function (filename,xmlString,index) { 
-		return function (proc) {
-			resultDocument = proc.getResultDocument();
-			//wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
-			xmlDocs[index] = {name:filename,xml:xmlString,html:resultDocument};
-			if (--working == 0) { 
-				$('body').removeClass('loading');
-			}
-		};
-	})(f,xml,num));
-	
-
-	// Delay processing slightly so that the tree can be fully rendered before the processing starts
-	setTimeout(function () { 
-		processor.transformToDocument(xml); 
-	}, duration+200);
-
-	
-	// Construct top level menu for displaying HTML view of XML files
-	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
-
-	$('#xmlFile-'+num).on("click", function () {
-		doc = xmlDocs[$(this).attr("id").split("-")[1]];
-		if (doc) { 
-			showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
-		} else { 
-			showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML</h2></div>");
-		}
-		$('#htmlView').scrollTop(0);
-    });
-	
-	
-}
+///**
+// * List of files that are being processed by the XSLT processor
+// */
+//var working = 0;
+//
+//
+///**
+// * Add an XML document to the list of documents included in the tree display and process the XSLT transform
+// * for that document
+// * @param f
+// * @param xml
+// */
+//function addXmlDoc (f,xml) { 
+//	// The processing of xslt transforms takes some time. Show the cursor as busy during that time
+//	working++;
+//	$('body').addClass('loading');
+//	
+//	var num = docIndex++;
+//	
+//	xslFileName = "public/xslt/stix_to_html.xsl";
+//	
+//	xslt = Saxon.requestXML(xslFileName);
+//	//Saxon.setLogLevel("FINEST");
+//
+//	Saxon.setErrorHandler(function (error) { 
+//		console.log("XSLT exception processing file");
+//		if (--working == 0) {
+//			$('body').removeClass('loading');
+//		}
+//	});
+//	
+//	var processor = Saxon.newXSLT20Processor(xslt);
+//	
+//	processor.setSuccess((function (filename,xmlString,index) { 
+//		return function (proc) {
+//			resultDocument = proc.getResultDocument();
+//			//wrapperHtml = new XMLSerializer().serializeToString($(resultDocument).find('#wrapper').get(0));
+//			xmlDocs[index] = {name:filename,xml:xmlString,html:resultDocument};
+//			if (--working == 0) { 
+//				$('body').removeClass('loading');
+//			}
+//		};
+//	})(f,xml,num));
+//	
+//
+//	// Delay processing slightly so that the tree can be fully rendered before the processing starts
+//	setTimeout(function () { 
+//		processor.transformToDocument(xml); 
+//	}, duration+200);
+//
+//	
+//	// Construct top level menu for displaying HTML view of XML files
+//	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f+'</a></li>');
+//
+//	$('#xmlFile-'+num).on("click", function () {
+//		doc = xmlDocs[$(this).attr("id").split("-")[1]];
+//		if (doc) { 
+//			showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+//		} else { 
+//			showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML</h2></div>");
+//		}
+//		$('#htmlView').scrollTop(0);
+//    });
+//	
+//	
+//}
 
 /**
  * Show HTML view for a given node. 
@@ -893,9 +898,11 @@ function addXmlDoc (f,xml) {
  * @param data The node selected to show HTML
  */
 function showHtmlByContext (data) {
+	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 		if (working == 0) { 
 			clearInterval(waitForXslt);
+			endProcessing();
 			var nodeid = getId(data);
 			if (nodeid) {
 				var found = false;
@@ -933,6 +940,22 @@ function showHtmlByContext (data) {
 }
 
 
+function showProcessing () { 
+	
+	
+	$('#htmlView').empty();
+	$('#htmlView').addClass('loading');
+	$('#htmlView').append('<div id="loadingMessage"><h3> <img src="public/icons/spinner.gif"> Processing XML Transform</h3></div>');
+	layout.open("south");
+}
+
+function endProcessing () { 
+	
+	$('#htmlView').removeClass('loading');
+	$('#htmlView').empty();
+}
+
+
 /**
  * display the given HTML in the HTML view panel
  * @param html
@@ -940,8 +963,6 @@ function showHtmlByContext (data) {
 function showHtml (html) { 
 	$('#htmlView').empty();
 	layout.open("south");
-	$('#htmlView').addClass("loading");
-	$('body').addClass("loading");
 	
 	$('#htmlView').append(html);
 	
@@ -956,8 +977,6 @@ function showHtml (html) {
 		removeHighlightedNodes();
 	});
 	
-	$('#htmlView').removeClass("loading");
-	$('body').removeClass("loading");
 
 }
 

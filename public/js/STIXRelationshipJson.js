@@ -475,7 +475,7 @@ function generateTreeJson(inputFiles) {
             					topNodeName = topNodeName + "\n" + f.name;
             				}
                             xml = new DOMParser().parseFromString(this.result, "text/xml"); 
-                            addXmlDoc(theFile.name,xml);  // adds the new XML file to the drop down menu in the UI
+                            addXmlDoc(theFile);  // adds the new XML file to the drop down menu in the UI
                             // global copy of xml to use for searching via xpFind
                             doc = xml;
                             
