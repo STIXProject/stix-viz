@@ -214,16 +214,16 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBo
 		var coas = xpFind('.//indicator:Suggested_COA', indi);
 		$.merge(indiChildren, processChildCoas(coas));
 		// children are Indicated_TTP, Observables
-	    var indicatedTTP = xpFindSingle('.//indicator:Indicated_TTP', indi);
-		if (indicatedTTP != null) {
-			$.merge(indiChildren, processChildTTPs([indicatedTTP]));
-			addIndicatorToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, indicatedTTP)), subType, indiId);
-		}
+	    var indicatedTTPs = xpFind('.//indicator:Indicated_TTP', indi);
+		$.merge(indiChildren, processChildTTPs(indicatedTTPs));
 		var observables = xpFind('.//indicator:Observable', indi);
 		$.merge(indiChildren, processChildObservables(observables));
 		if (indiId != "") {
 			$(coas).each(function (index, coa) {
 				addIndicatorToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
+			});
+			$(indicatedTTPs).each(function (index, indicatedTTP) {
+				addIndicatorToBottomUpInfo(ttpBottomUpInfo, $(xpFindSingle(STIXPattern.ttp, indicatedTTP)), subType, indiId);
 			});
 			$(observables).each(function (index, obs) {
 				addIndicatorToBottomUpInfo(obsBottomUpInfo, obs, subType, indiId);
