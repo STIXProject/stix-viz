@@ -9,7 +9,7 @@
 
 BY USING THE STIX VIZ APPLICATION, YOU SIGNIFY YOUR ACCEPTANCE OF THE 
 TERMS AND CONDITIONS OF USE.  IF YOU DO NOT AGREE TO THESE TERMS, DO NOT USE 
-THE STIX XML to HTML TRANSFORM.
+THE STIX VIZ TOOL. 
 
 For more information, please refer to the terms.txt file.
 
@@ -17,8 +17,8 @@ For more information, please refer to the terms.txt file.
 StixViz v1.0 alpha1
 Compatible with STIX v1.0.1
 
-This is a proof of concept prototype to visualize a set of STIX documents as a node-link tree 
-with the root at the top of the XML structure.
+This is a proof of concept prototype to visualize a set of STIX documents 
+as a node-link tree with the root at the top of the XML structure.
 
 StixViz is implemented in Javascript as a standalone application using the node-webkit
 application runtime which is based on the Chromium rendering engine and node.js.
@@ -172,6 +172,3 @@ On other platforms follow the instructions from https://github.com/rogerwang/nod
 A pre-packaged Windows executable is available at http://stix.mitre.org/downloads/StixVizDistro.zip. To run this pre-packaged
 executable, extract all of the files included in the zip file into a directory and double click the file StixViz.exe. 
  
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
