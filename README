@@ -66,10 +66,12 @@ requirements:
  - bootstrap.js (v3.0)
  - d3.js (v3)
  - jquery and jquery-ui (tested with jquery 1.10.2)
- - Javascript XSLT 2.0 engine (this has been tested with SaxonCE 1.0)
  - Stix HTML package (tested with v1beta2)
  - one or more STIX 1.0 input xml documents
-
+ - Java 1.7 for XSLT transforms
+    - Java Gson package (tested with 2.2.4)
+    - Saxon HE (tested with version 9.5.3)
+ 
 v1.0alpha1
 2013-10-24
 
@@ -79,57 +81,62 @@ STIX - http://stix.mitre.org
 --Included Files----------------------------------------------------------------
 
 README: this file.
-index.html: The main html page for the application
-package.json: node-webkit config file for the StixViz app
--public
- -js
-    STIXRelationshipJson.js: Transforms STIX XML into Json data structure for tree layout
-    STIXNameResolver.js: Determine node names
-    STIXRelationshipTree.js: Displays the tree structure
-    STIXTTPProcessing.js: Process TTPs into Json
-    STIXUtilities.js: Utilities for XML to JSON conversion
-    -bootstrap
-      bootstrap.min.js
-    -d3
-      d3.v3.js
-    -jquery
-      jquery-1.10.2.min.js
-    -jquery-ui
-      jquery-ui-1.10.3.custom.min.js
-      jquery.ui.draggable.js
-      -plugin
-        jquery.layout-latest.min.js
-    -Saxonce
-      Saxon CE package files
-    -StixHtml
-      common.js
-      wgxpath.install.js
-  -xslt
-    -images
-      directory of icon images
-    cybox_common.xsl
-    icons.xsl
-    normalize.xsl
-    stix_common.xsl
-    stix_to_html.xsl
- -css
-  treeLayout.css: Stylesheet for tree display
-  -stixHtml
-    common.css
-    theme_default.css
-  -bootstrap
-    bootstrap.min.css
-  -jquery-ui
-    jquery-ui-1.10.3.custom.min.css
-    -plugin
-      layout-default.css
-  -icons
-    STIX PNG icon files
--node_modules
-  mime
-    node.js mime package contents
+LICENSE.txt
+-src
+ -nodejs: Runnable NodeJS package 
+    index.html: The main html page for the application
+    package.json: node-webkit config file for the StixViz app
+    -public
+     -js
+        STIXRelationshipJson.js: Transforms STIX XML into Json data structure for tree layout
+        STIXNameResolver.js: Determine node names
+        STIXRelationshipTree.js: Displays the tree structure
+        STIXTTPProcessing.js: Process TTPs into Json
+        STIXUtilities.js: Utilities for XML to JSON conversion
+        -bootstrap
+          bootstrap.min.js
+        -d3
+          d3.v3.js
+        -jquery
+          jquery-1.10.2.min.js
+        -jquery-ui
+          jquery-ui-1.10.3.custom.min.js
+          jquery.ui.draggable.js
+          -plugin
+            jquery.layout-latest.min.js
+        -Saxonce
+          Saxon CE package files
+        -StixHtml
+      -xslt
+        -images
+          directory of icon images
+        cybox_common.xsl
+        icons.xsl
+        normalize.xsl
+        stix_common.xsl
+        stix_to_html.xsl
+        common.js
+        wgxpath.install.js
+        common.css
+        theme_default.css
+        
+     -css
+      treeLayout.css: Stylesheet for tree display
+      -bootstrap
+        bootstrap.min.css
+      -jquery-ui
+        jquery-ui-1.10.3.custom.min.css
+        -plugin
+          layout-default.css
+    -node_modules
+      mime
+        node.js mime package contents
+    -dist
+      NodeRpc.jar: java package for handling remote procedure calls to perform XSLT transform
+  -java
+    Source code for the Java RPC library to respond to requests for XSLT transform. The executable jar file 
+    containing this code is included in the "dist" directory of the nodejs package.
     
-
 --------------------------------------------------------------------------------
 --Usage Notes-------------------------------------------------------------------
 
