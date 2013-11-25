@@ -44,12 +44,22 @@
 <div class="ui-layout-center" id="treeView">
  <div id="jsonOutput"></div>  <!--  leave for debugging purposes -->
  
- <div id="contextMenu" class="dropdown clearfix" style="display:none;">
+ <div id="showHtmlMenu" class="dropdown clearfix" style="display:none;">
   <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
     <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
   </ul>
  </div>
-
+ 
+ 
+ <div id="viewMenu" class="dropdown clearfix" style="display:none;">
+  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
+    <li id="selectView"><a tabindex="-1" href="#">Select View</a></li>
+    <li id="selectView-tree" class="viewItem" value="tree">Tree View</li>
+    <li id="selectView-graph" class="viewItem" value="graph">Graph View</li>
+    <li id="selectView-timeline" class="viewItem" value="timeline">Timeline View</li>
+  </ul>
+ </div>
+ 
 </div>
 
 <div class="ui-layout-south" id="htmlView">

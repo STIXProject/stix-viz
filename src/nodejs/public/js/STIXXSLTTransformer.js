@@ -13,13 +13,10 @@
  */
 
 var client = require('./public/js/JavaRpcClient');
-var path = require('path');
+
 
 var instance = new client();
 
-var xmlDocs = {}, docIndex = 0;
-
-var working = 0;
 
 $(function () { 
 	
@@ -30,46 +27,8 @@ $(function () {
 
 });
 
-/**
- * Add an XML document to the list of documents included in the tree display and process the XSLT transform
- * for that document
- * @param f
- * @param xml
- */
-function addXmlDoc (f) { 
-	
-	working++;
-	var num = docIndex++;
-	
-	xmlDocs[num] = {name:f.name};
-	
-	xmlFilePath = f.path.replace(/\\/g,'\\\\\\\\');
-	xslFilePath = path.resolve("public/xslt/stix_to_html.xsl").replace(/\\/g,'\\\\\\\\');
-	
-	instance.sendXsltRequest(num,xmlFilePath,xslFilePath);
-	
-	// Construct top level menu for displaying HTML view of XML files
-	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f.name+'</a></li>');
 
-	$('#xmlFile-'+num).on("click", function () {
-		doc = xmlDocs[$(this).attr("id").split("-")[1]];
-		if (doc) { 
-			showProcessing();
-			var waitForXslt = setInterval(function () { // wait until xslt processing is complete
-				if (working == 0) { 
-					clearInterval(waitForXslt);
-					endProcessing();
-					showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
-				}
-			}, 200);
-		} else { 
-			showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML</h2></div>");
-		}
-		$('#htmlView').scrollTop(0);
-    });
 	
-	
-}
 
 
 instance.on('message', function(msg){
