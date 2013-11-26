@@ -5,10 +5,12 @@
     "version":"0.0.1",
     "private":true,
     "dependencies": {
-        "mime":"1.2.10"
+        "mime":"1.2.10",
+        "d3":"3.3.10",
+        "jquery":"1.7.x"
     },
     "window":{
-        "toolbar":false,  
+        "toolbar":true,  
         "width":1200,
         "height":700,
         "icon":"public/icons/werner_icon.png"

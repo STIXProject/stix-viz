@@ -6,67 +6,88 @@
  * This is the html file used for the STIXViz interface.  
  * 
  */ -->
-<html  xmlns:stix="http://stix.mitre.org/stix-1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:indicator="http://stix.mitre.org/Indicator-2" xmlns:TTP="http://stix.mitre.org/TTP-1" xmlns:COA="http://stix.mitre.org/CourseOfAction-1" xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1" xmlns:marking="http://data-marking.mitre.org/Marking-1" xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1" xmlns:stixVocabs="http://stix.mitre.org/default_vocabularies-1" xmlns:cyboxCommon="http://cybox.mitre.org/common-2" xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2" xmlns:stixCommon="http://stix.mitre.org/common-1" lang="en">
+<html xmlns:stix="http://stix.mitre.org/stix-1"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:indicator="http://stix.mitre.org/Indicator-2"
+	xmlns:TTP="http://stix.mitre.org/TTP-1"
+	xmlns:COA="http://stix.mitre.org/CourseOfAction-1"
+	xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1"
+	xmlns:marking="http://data-marking.mitre.org/Marking-1"
+	xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1"
+	xmlns:stixVocabs="http://stix.mitre.org/default_vocabularies-1"
+	xmlns:cyboxCommon="http://cybox.mitre.org/common-2"
+	xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2"
+	xmlns:stixCommon="http://stix.mitre.org/common-1" lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">  
-  <title> STIX Tree View </title>
-  
-  <link rel="stylesheet" type="text/css" href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.min.css" />
-  <link rel="stylesheet" type="text/css" href="./public/css/jquery-ui/plugin/layout-default-latest.css"/>
-  <link rel="stylesheet" type="text/css" href="./public/css/bootstrap/bootstrap.min.css"/>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <link rel="stylesheet" type="text/css" href="./public/css/stixHtml/common.css" />
-  <link rel="stylesheet" type="text/css" href="./public/css/stixHtml/theme_default.css" />
-  <link rel="stylesheet" type="text/css" href="./public/css/treeLayout.css" />
-  
-  <script type="text/javascript" src="./public/js/Saxonce/Saxonce.nocache.js"></script>
-  <script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
-  <script type="text/javascript" src="./public/js/jquery/jquery-1.10.2.min.js"></script>
-  <script type="text/javascript" src="./public/js/jquery-ui/jquery-ui-1.10.3.custom.min.js"></script>
-  <script type="text/javascript" src="./public/js/jquery-ui/jquery.ui.draggable.js"></script>
-  <script type="text/javascript" src="./public/js/jquery-ui/plugin/jquery.layout-latest.min.js"></script>
-  <script type="text/javascript" src="./public/js/bootstrap/bootstrap.min.js"></script>
+<title>STIX Tree View</title>
 
-  
-  <script type="text/javascript" src="./public/js/STIXUtilities.js"></script><script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
-  <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
-  <script type="text/javascript" src="./public/js/STIXrelationshipJson.js"></script>
-  <script type="text/javascript" src="./public/js/STIXTTPProcessing.js"></script>
-   <script type="text/javascript" src="./public/js/STIXXSLTTransformer.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.min.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/jquery-ui/plugin/layout-default-latest.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/bootstrap/bootstrap.min.css" />
 
-  <script type="text/javascript" src="./public/js/stixHtml/common.js"></script> 
-  <script type="text/javascript" src="./public/js/stixHtml/wgxpath.install.js"></script> 
+<link rel="stylesheet" type="text/css"
+	href="./public/css/stixHtml/common.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/stixHtml/theme_default.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/treeLayout.css" />
+
+<script type="text/javascript"
+	src="./public/js/Saxonce/Saxonce.nocache.js"></script>
+<script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery/jquery-1.10.2.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/jquery.ui.draggable.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/plugin/jquery.layout-latest.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script type="text/javascript" src="./public/js/STIXUtilities.js"></script>
+<script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipGraph.js"></script>
+<script type="text/javascript" src="./public/js/STIXViz.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipJson.js"></script>
+<script type="text/javascript" src="./public/js/STIXTTPProcessing.js"></script>
+<script type="text/javascript" src="./public/js/STIXXSLTTransformer.js"></script>
+
+<script type="text/javascript" src="./public/js/stixHtml/common.js"></script>
+<script type="text/javascript"
+	src="./public/js/stixHtml/wgxpath.install.js"></script>
 
 </head>
 <body>
 
-<div class="ui-layout-center" id="treeView">
- <div id="jsonOutput"></div>  <!--  leave for debugging purposes -->
- 
- <div id="showHtmlMenu" class="dropdown clearfix" style="display:none;">
-  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
-    <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
-  </ul>
- </div>
- 
- 
- <div id="viewMenu" class="dropdown clearfix" style="display:none;">
-  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu" style="display:block;position:static;margin-bottom:5px;">
-    <li id="selectView"><a tabindex="-1" href="#">Select View</a></li>
-    <li id="selectView-tree" class="viewItem" value="tree">Tree View</li>
-    <li id="selectView-graph" class="viewItem" value="graph">Graph View</li>
-    <li id="selectView-timeline" class="viewItem" value="timeline">Timeline View</li>
-  </ul>
- </div>
- 
-</div>
+	<div id="showHtmlMenu" class="dropdown clearfix" style="display: none;">
+		<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"
+			style="display: block; position: static; margin-bottom: 5px;">
+			<li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
+		</ul>
+	</div>
 
-<div class="ui-layout-south" id="htmlView">
 
-</div>
-    
-    <!--  Put this pane last so that it will have the highest z-index -->
+	<div class="ui-layout-center" id="treeView">
+		<div id="jsonOutput"></div>
+		<!--  leave for debugging purposes -->
+
+	</div>
+
+
+
+	<div class="ui-layout-south" id="htmlView"></div>
+
+	<!--  Put this pane last so that it will have the highest z-index -->
 	<div id="menubar" class="ui-layout-north">
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="collapse navbar-collapse navbar-ex1-collapse">
@@ -80,8 +101,20 @@
 					<li class="dropdown"><a href="#" class="dropdown-toggle"
 						data-toggle="dropdown">Show HTML<b class="caret"></b></a>
 						<ul id="xmlFileList" class="dropdown-menu">
-						</ul>
-					</li>
+						</ul></li>
+
+					<li class="dropdown"><a href="#" class="dropdown-toggle"
+						data-toggle="dropdown">Select View<b class="caret"></b></a>
+						<ul id="viewList" class="dropdown-menu">
+							<li id="selectView-tree"><a href="#">Tree
+								View</a></li>
+							<li id="selectView-graph"><a href="#">Graph
+								View</a></li>
+							<li id="selectView-timeline"><a href="#">Timeline
+								View</a></li>
+
+						</ul></li>
+
 				</ul>
 			</div>
 		</nav>

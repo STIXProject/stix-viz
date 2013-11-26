@@ -1,6 +1,4 @@
 var path = require('path');
-var tree = require('./public/js/StixRelationshipTree');
-var graph = require('./public/js/StixRelationshipGraph');
 
 var xmlDocs = {}, docIndex = 0;
 
@@ -98,24 +96,7 @@ $(function () {
 		} 			
 	});
 	
-	
-	
-	/**
-	 *  Append svg container for tree
-	 */
-	svg = d3.select("#treeView").append("svg")
-    .append("g")
-    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
-
-	/**
-	 *  define color filter for lightening non-expandable nodes
-	 */
-	svg.append("defs")
-	.append("filter")
-	.attr("id","lighten")
-	.append("feColorMatrix")
-		.attr("type","matrix")
-		.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+	view = new StixTree();
 	
 
 	/**
@@ -132,19 +113,20 @@ $(function () {
 	 * Handler for top level Show HTML button
 	 */
 	$('#showHtml').on('click',function () {
-		$("#contextMenu").hide();
+		$("#showHtmlMenu").hide();
 		showHtmlByContext(contextNode);
 	});
 	
 	
-	$('#selectView .viewItem').on('click', function () {
-		var viewType = $(this).val();
-		if (viewType === 'tree') { 
+	$('#viewList li').on('click', function () {
+		var viewType = $(this).attr('id');
+		if (viewType === 'selectView-tree') { 
 			view = new StixTree();
-		} elif (viewType === 'graph') {
+		} else if (viewType === 'selectView-graph') {
 			view = new StixGraph();
 		};
 		if (data) { 
+			reset();
 			view.display(data);
 		};
 	});
@@ -154,7 +136,7 @@ $(function () {
 	 * If there's a context menu open, you can hide it by clicking somewhere else in the document
 	 */
 	$(document).click(function () { 
-		$('#contextMenu').hide();
+		$('#showHtmlMenu').hide();
 	});
 	
 	
@@ -201,11 +183,46 @@ function addXmlDoc (f) {
 }
 
 
-function displayJson (jsonString) { 
+function displayJSON (jsonString) { 
 	data = jsonString;
 	view.display(data);
 }
 
+
+/**
+ *  Get the name to display under the node. 
+ */
+function getName (d) { 
+	return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
+}
+
+/**
+ * Get the id of the node in the XML.
+ * @param d
+ * @returns
+ */
+function getId (d) { 
+	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : "";
+}
+
+/** Show the context menu for showing the HTML view when right clicking a node
+ * 
+ * @param data The node that was clicked
+ */
+function showContext (data,left,top) {
+	contextNode = data;
+	if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
+		$('#showHtml').removeClass('disabled');
+	} else { 
+		$('#showHtml').addClass('disabled');
+	}
+	d3.select("#showHtmlMenu")  // Display the context menu in the right position
+	.style('position','absolute')
+	.style('left',left)
+	.style('top',top)
+	.style('display','block');
+	d3.event.preventDefault();
+}
 
 /**
  * Show HTML view for a given node. 
@@ -316,7 +333,7 @@ function reset () {
 	xmlDocs = {};
 	docIndex = 0;
 	$('#xmlFileList').empty();
-	svg.selectAll().remove(); // remove everything
+	$('#treeView').empty();
 	$('#htmlView').empty();
 	layout.close("south");
 }
@@ -379,34 +396,5 @@ function handleFileSelect(fileinput) {
 function highlightHtml (nodeId) { 
 	if (!nodeId) return;
 	$(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeId+"'] tr").eq(0).addClass("infocus");
-}
-
-
-/**
- * Remove all node highlighting
- */
-function removeHighlightedNodes () { 
-	svg.selectAll("rect.nodeborder").remove();
-}
-
-
-
-/**
- * Highlight all nodes in the tree that match the given nodeId. 
- * 
- * @param nodeId The id of the node to highlight
- */
-function highlightDuplicateNodes (nodeId) { 
-	if (!nodeId) return;
-	var matches = d3.selectAll(".node").filter(function (d) { 
-		return d.nodeId == nodeId || d.nodeIdRef == nodeId;
-	});
-	matches.append("rect")
-	.attr("height", String(nodeHeight+10)+"px")
-	.attr("width", String(nodeWidth+10)+"px")
-	.attr("rx","10")
-	.attr("ry","10")
-	.attr("class","nodeborder")
-	.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
 }
 

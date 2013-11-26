@@ -13,8 +13,11 @@
  * 
  */
 
-var StixTree = function () { 
 
+var StixTree = function () { 
+	var _self = this;
+	
+	
 	var nodeWidth = 60,
 	nodeHeight = 60,
 	nodeSep = 160,
@@ -78,6 +81,25 @@ var StixTree = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		
+		/**
+		 *  Append svg container for tree
+		 */
+		svg = d3.select("#treeView").append("svg")
+	    .append("g")
+	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+		/**
+		 *  define color filter for lightening non-expandable nodes
+		 */
+		svg.append("defs")
+		.append("filter")
+		.attr("id","lighten")
+		.append("feColorMatrix")
+			.attr("type","matrix")
+			.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+		
+		
 		report = $.parseJSON(jsonString);
 		stixroot = report;
 
@@ -91,7 +113,7 @@ var StixTree = function () {
 		// This is where the tree actually gets displayed
 		update(stixroot);
 
-	}
+	};
 
 	/**
 	 * Collapse node d by moving "children" to "_children"
@@ -184,7 +206,12 @@ var StixTree = function () {
 		})
 		.on("click", click)
 		.on("dblclick",doubleclick)
-		.on("contextmenu", showContext)
+		.on("contextmenu", function (d) {
+			position = d3.mouse(this);
+			offset = $(this).offset();
+			scrollTop = $('#treeView').scrollTop(); 
+			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+		})
 		.classed("parent",function(d) { 
 			return hasChildren(d);
 		});
@@ -383,27 +410,7 @@ var StixTree = function () {
 
 	}
 
-	/** Show the context menu for showing the HTML view when right clicking a node
-	 * 
-	 * @param data The node that was clicked
-	 */
-	function showContext (data) {
-		contextNode = data;
-		if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
-			$('#showHtml').removeClass('disabled');
-		} else { 
-			$('#showHtml').addClass('disabled');
-		}
-		position = d3.mouse(this);
-		offset = $(this).offset();
-		scrollTop = $('#treeView').scrollTop(); 
-		d3.select("#contextMenu")  // Display the context menu in the right position
-		.style('position','absolute')
-		.style('left',(position[0]+offset.left+(nodeWidth/2))+'px')
-		.style('top',(position[1]+offset.top-nodeHeight+scrollTop)+'px')
-		.style('display','block');
-		d3.event.preventDefault();
-	}
+
 
 
 	/** 
@@ -552,21 +559,7 @@ var StixTree = function () {
 		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
 	}
 
-	/**
-	 *  Get the name to display under the node. 
-	 */
-	function getName (d) { 
-		return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
-	}
 
-	/**
-	 * Get the id of the node in the XML.
-	 * @param d
-	 * @returns
-	 */
-	function getId (d) { 
-		return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : "";
-	}
 
 	/**
 	 * Clone a list of nodes. Used to create the "infinite tree" when a copy of a node that is defined in 
@@ -599,10 +592,37 @@ var StixTree = function () {
 	}
 
 
+	/**
+	 * Remove all node highlighting
+	 */
+	function removeHighlightedNodes () { 
+		d3.selectAll("rect.nodeborder").remove();
+	}
+
+
+
+	/**
+	 * Highlight all nodes in the tree that match the given nodeId. 
+	 * 
+	 * @param nodeId The id of the node to highlight
+	 */
+	function highlightDuplicateNodes (nodeId) { 
+		if (!nodeId) return;
+		var matches = d3.selectAll(".node").filter(function (d) { 
+			return d.nodeId == nodeId || d.nodeIdRef == nodeId;
+		});
+		matches.append("rect")
+		.attr("height", String(nodeHeight+10)+"px")
+		.attr("width", String(nodeWidth+10)+"px")
+		.attr("rx","10")
+		.attr("ry","10")
+		.attr("class","nodeborder")
+		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+	}
+
+
 
 };
 
-// export StixTree module
-module.exports = StixTree;
 
 

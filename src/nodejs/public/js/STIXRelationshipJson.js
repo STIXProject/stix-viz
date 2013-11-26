@@ -518,7 +518,7 @@ function generateTreeJson(inputFiles) {
                                 //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 
                                 // display the tree
-                                displayTree(JSON.stringify(jsonObj, null, 2));
+                                displayJSON(JSON.stringify(jsonObj, null, 2));
                             }
                         };
                     }) (f);
