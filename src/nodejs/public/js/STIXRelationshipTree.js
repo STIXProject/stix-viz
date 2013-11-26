@@ -209,7 +209,7 @@ var StixTree = function () {
 		.on("contextmenu", function (d) {
 			position = d3.mouse(this);
 			offset = $(this).offset();
-			scrollTop = $('#treeView').scrollTop(); 
+			scrollTop = $('#viewContainer').scrollTop(); 
 			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
 		})
 		.classed("parent",function(d) { 

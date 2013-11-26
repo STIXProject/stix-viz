@@ -43,7 +43,7 @@ var StixGraph = function () {
 	height = 1200 - margin.top- margin.bottom;
 
 	function graphSize () { 
-		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-150];
+		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-200];
 	}
 
 	/**
@@ -66,6 +66,7 @@ var StixGraph = function () {
 	_self.resize = function () { 
 
 			force.size(graphSize());
+
 
 			update();
 	}
@@ -100,7 +101,7 @@ var StixGraph = function () {
 
 		report = $.parseJSON(jsonString);
 
-		//report.children.forEach(collapse);
+		report.children.forEach(collapse);
 
 		// This is where the tree actually gets displayed
 		update();
@@ -171,7 +172,7 @@ var StixGraph = function () {
 		.on("contextmenu", function (d) {
 			position = d3.mouse(this);
 			offset = $(this).offset();
-			scrollTop = $('#treeView').scrollTop(); 
+			scrollTop = $('#viewContainer').scrollTop(); 
 			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
 		})
 		.call(force.drag);
@@ -423,8 +424,8 @@ var StixGraph = function () {
 				links.push({source:parent,target:pos})
 			} else { 
 				node.fixed = true;
-				node.x = graphSize()[0]/2;
-				node.y = graphSize()[1]/2;
+				node.px = graphSize()[0]/2;
+				node.py = graphSize()[1]/2;
 			}
 
 			// Only use top down links in the graph view

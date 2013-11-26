@@ -28,6 +28,10 @@ body {
 }
 
 
+#viewContainer { 
+	padding:0;
+}
+
 #treeView { 
 /* 	width: 100%; */
 	overflow: auto;
