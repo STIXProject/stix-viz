@@ -189,12 +189,7 @@ function displayJSON (jsonString) {
 }
 
 
-/**
- *  Get the name to display under the node. 
- */
-function getName (d) { 
-	return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
-}
+
 
 /**
  * Get the id of the node in the XML.

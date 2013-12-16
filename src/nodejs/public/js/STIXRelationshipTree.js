@@ -513,7 +513,14 @@ var StixTree = function () {
 	}
 
 
-
+	/**
+	 *  Get the name to display under the node. 
+	 */
+	function getName (d) { 
+		return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
+	}
+	
+	
 	/**
 	 * Given a nodeId, find the node in the tree that has that value for its nodeId attribute
 	 * @param nodeId

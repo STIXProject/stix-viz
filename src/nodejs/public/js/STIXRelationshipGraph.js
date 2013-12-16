@@ -379,7 +379,12 @@ var StixGraph = function () {
 	}
 
 
-
+	/**
+	 *  Get the name to display under the node. 
+	 */
+	function getName (d) { 
+		return d.name ? d.name : (d.nodeIdRef && findBaseNode(d.nodeIdRef)) ? findBaseNode(d.nodeIdRef).name : d.subtype ? d.subtype : "";
+	}
 
 
 	/**
@@ -388,7 +393,7 @@ var StixGraph = function () {
 	 * @returns
 	 */
 	function hasChildren (d) { 
-		return d.children || d._children;
+		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
 	}
 
 	/**
@@ -419,7 +424,7 @@ var StixGraph = function () {
 	var nodeid = 0;
 //	Returns a list of all nodes under the root.
 	function flatten(root) {
-		var nodes = [], links = [], i = force.nodes().length;
+		var nodes = [], links = [], rlinks = []; // rlinks are reverse (bottom up) links
 
 		function recurse(node,parent) {
 
@@ -438,8 +443,9 @@ var StixGraph = function () {
 				nodes.push(node);
 				pos = nodes.length-1;
 			}
+
 			if (typeof parent !== 'undefined') { 
-				links.push({source:parent,target:pos})
+				links.push({source:parent,target:pos});
 			} else { 
 				node.fixed = true;
 				node.px = graphSize()[0]/2;
@@ -447,11 +453,44 @@ var StixGraph = function () {
 			}
 
 			// Only use top down links in the graph view
-			if (node.children) node.children.filter(function(c) { return c.linkType === 'topDown'; }).forEach(function (n) { recurse(n,pos);});
+			if (node.children) { 
+				node.children.filter(function(c) { return c.linkType === 'topDown'; })
+				.forEach(function (n) { recurse(n,pos);});
+				
+				node.children.filter(function (c) { return c.linkType === 'bottomUp';})
+				.forEach(function (n) { 
+					rlinks.push({source:n,target:pos});
+				});
+				
+			}
 
 		}
 
 		recurse(root);
+		
+		rlinks.forEach(function (rl) {
+			var cnode = rl.source, cref = null;
+			
+			if (getId(cnode)) { 
+				cref = nodes.filter(function (n) { return getId(n) == getId(cnode);})[0];
+			} 
+			if (!cnode.id && !cref) { 
+				cnode.id = nodeid++;
+			}
+			
+			if (cref) { 
+				cpos = nodes.indexOf(cref);
+			} else { 
+				nodes.push(cnode);
+				cpos = nodes.length-1;
+			}
+			
+			// Don't add duplicate links. A link may be defined top down in one place and bottom up in another
+			if (links.filter(function (l) { return l.source === cpos && l.target === rl.target; }).length == 0) { 
+				links.push({source:cpos,target:rl.target});
+			}
+		});
+		
 		return {nodes:nodes,links:links};
 	}
 
