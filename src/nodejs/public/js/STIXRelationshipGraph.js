@@ -50,9 +50,11 @@ var StixGraph = function () {
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkDistance(200)
+	.linkDistance(170)
+	.linkStrength(.5)
+	.friction(.7)
 	.charge(-200)
-	.gravity(.02)
+	.gravity(.01)
 	.size(graphSize())
 	.on("tick", tick);
 
@@ -95,6 +97,19 @@ var StixGraph = function () {
 			.attr("type","matrix")
 			.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
 		
+		
+		// define arrow markers for graph links
+		svg.select('defs').append('svg:marker')
+		    .attr('id', 'end-arrow')
+		    .attr('viewBox', '0 -5 10 10')
+		    .attr('refX', 60)
+		    .attr('markerWidth', 5)
+		    .attr('markerHeight', 5)
+		    .attr('orient', 'auto')
+		    .attr('class','arrow')
+		  .append('svg:path')
+		    .attr('d', 'M0,-5L10,0L0,5');
+
 
 		link = svg.selectAll(".link");
 		node = svg.selectAll(".node");
@@ -156,7 +171,10 @@ var StixGraph = function () {
 		link.exit().remove();
 
 		link.enter().insert("line", ".node")
-		.attr("class", "link");
+		.attr("class", "link")
+		.attr("marker-end",function(d){ 
+			return "url(#end-arrow)"; 
+		});
 
 		// Update nodes.
 		node = node.data(nodes, function(d) { return d.id; });
@@ -437,6 +455,33 @@ var StixGraph = function () {
 		return {nodes:nodes,links:links};
 	}
 
+	/**
+	 * Remove all node highlighting
+	 */
+	function removeHighlightedNodes () { 
+		d3.selectAll("rect.nodeborder").remove();
+	}
+
+	
+
+	/**
+	 * Highlight all nodes in the tree that match the given nodeId. 
+	 * 
+	 * @param nodeId The id of the node to highlight
+	 */
+	function highlightDuplicateNodes (nodeId) { 
+		if (!nodeId) return;
+		var matches = d3.selectAll(".node").filter(function (d) { 
+			return d.nodeId == nodeId || d.nodeIdRef == nodeId;
+		});
+		matches.append("rect")
+		.attr("height", String(nodeHeight+10)+"px")
+		.attr("width", String(nodeWidth+10)+"px")
+		.attr("rx","10")
+		.attr("ry","10")
+		.attr("class","nodeborder")
+		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
+	}
 
 
 
