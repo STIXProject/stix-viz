@@ -15,6 +15,7 @@
 
 package org.mitre.node_rpc.requests;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
 
@@ -67,11 +68,12 @@ public class ProcessXslt extends RequestMessage {
                 tFactory.newTransformer(new StreamSource(new File(xsltPath)));  
 
             StringWriter writer = new StringWriter();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
             
             transformer.transform(new StreamSource(new File(sourcePath)),  
-                                  new StreamResult(writer));
+                                  new StreamResult(out));
             
-            return new XsltResponse(index,writer.toString());
+            return new XsltResponse(index,out.toString("UTF-8"));
             
         } catch (Exception e) {  
             e.printStackTrace(); 

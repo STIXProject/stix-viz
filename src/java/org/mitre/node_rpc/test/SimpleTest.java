@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -119,9 +120,14 @@ public class SimpleTest {
         // Messages are a lead by an int size and then string message
         for(int pos = 0, length = 0; pos < bytes.length; pos += length + 4) {
             length = byteBuf.getInt(pos);
-            String json = new String(bytes, pos + 4, length);
-            Message message = RequestMessage.jsonToMessage(json, _responseMessages);
-            messages.add(message);
+            try { 
+              String json = new String(bytes, pos + 4, length, "UTF-8");
+              Message message = RequestMessage.jsonToMessage(json, _responseMessages);
+              messages.add(message);
+            } catch (UnsupportedEncodingException e) { 
+              Message message = new org.mitre.node_rpc.responses.Error(e);
+              messages.add(message);
+            }
         }
         
         return messages.toArray((new Message[0]));
@@ -149,7 +155,7 @@ public class SimpleTest {
     
     @Test
     public void testXsltRequest() throws IOException  {
-      sendToInput("{messageName:'ProcessXslt', index:0, xmlFilePath:'C:\\\\Users\\\\gertner\\\\git\\\\StixViz\\\\StixViz\\\\data\\\\fireeye_pivy_stix.xml', xsltFilePath:'c:\\\\Users\\\\gertner\\\\Documents\\\\GitHub\\\\stix-viz\\\\public\\\\xslt\\\\stix_to_html.xsl'}");
+      sendToInput("{messageName:'ProcessXslt', index:0, xmlFilePath:'C:\\\\Users\\\\gertner\\\\git\\\\StixViz\\\\StixViz\\\\data\\\\CISCP Sample_v2.4.xml', xsltFilePath:'C:\\\\Users\\\\gertner\\\\Documents\\\\GitHub\\\\stix-viz\\\\src\\\\nodejs\\\\public\\\\xslt\\\\stix_to_html.xsl'}");
       RequestMessage message = RequestMessage.fetchRequest();
       assertEquals(message.getClass(), ProcessXslt.class);
       message.process();
