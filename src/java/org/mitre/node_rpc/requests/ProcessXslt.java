@@ -67,7 +67,6 @@ public class ProcessXslt extends RequestMessage {
             Transformer transformer =  
                 tFactory.newTransformer(new StreamSource(new File(xsltPath)));  
 
-            StringWriter writer = new StringWriter();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             
             transformer.transform(new StreamSource(new File(sourcePath)),  
