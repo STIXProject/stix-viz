@@ -40,7 +40,7 @@ public class ResponseMessage extends Message {
     public void send() {
         try {
             String message = _gson.toJson(this);
-            byte[] bytes = message.getBytes();
+            byte[] bytes = message.getBytes("UTF-8");
             int length = bytes.length;
 
             _out.writeInt(length);
