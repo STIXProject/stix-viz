@@ -230,4 +230,23 @@
             <xsl:apply-templates select="@*|node()" mode="verbatim"/>
         </xsl:copy>
     </xsl:template>
+
+
+<!--
+  <xsl:template match="text()" mode="createReference" priority="30000">
+    <xsl:variable name="text" select="fn:data(.)" />
+    <xsl:variable name="tokens" select="fn:tokenize($text, '###comma###')" />
+    
+    <div>OPTION #4</div>
+    <xsl:for-each select="$tokens">
+      <div>
+        <xsl:value-of select="." />
+      </div>
+    </xsl:for-each>
+  </xsl:template>
+-->
+  
+  
 </xsl:stylesheet>
+
+

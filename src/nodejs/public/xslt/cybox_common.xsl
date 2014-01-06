@@ -42,6 +42,7 @@ ikirillov@mitre.org
     
     xmlns:indicator="http://stix.mitre.org/Indicator-2"
     xmlns:incident="http://stix.mitre.org/Incident-1"
+    xmlns:threat-actor='http://stix.mitre.org/ThreatActor-1'
     
     xmlns:coa="http://stix.mitre.org/CourseOfAction-1"
     
@@ -55,6 +56,8 @@ ikirillov@mitre.org
     xmlns:et="http://stix.mitre.org/ExploitTarget-1"
     xmlns:stix='http://stix.mitre.org/stix-1'
     
+    xmlns:campaign="http://stix.mitre.org/Campaign-1"
+    
     xmlns:AddressObject='http://cybox.mitre.org/objects#AddressObject-2'
     xmlns:URIObject='http://cybox.mitre.org/objects#URIObject-2'
     xmlns:EmailMessageObj="http://cybox.mitre.org/objects#EmailMessageObject-2"
@@ -62,6 +65,10 @@ ikirillov@mitre.org
 
 
     <xsl:output method="html" omit-xml-declaration="yes" indent="yes" media-type="text/html" version="4.0" />
+  
+    <!-- <xsl:include href="cybox_util.xsl" /> -->
+    <xsl:include href="cybox_objects.xsl" />
+    <xsl:include href="cybox_objects__customized.xsl" />
   
 
     <!--
@@ -119,7 +126,7 @@ ikirillov@mitre.org
                 <xsl:value-of select="$output" />
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'ThreatActorType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/indicator:Title) then $actualItem/indicator:Title/text() else ('[ThreatActor, no Title]')" />
+                <xsl:variable name="output" select="if ($actualItem/threat-actor:Title) then $actualItem/threat-actor:Title/text() else ('[ThreatActor, no Title]')" />
                 <xsl:value-of select="$output" />
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'TTPType')]"  xml:space="preserve">
@@ -132,6 +139,14 @@ ikirillov@mitre.org
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'IncidentType')]"  xml:space="preserve">
                 <xsl:variable name="output" select="if ($actualItem/coa:Type) then $actualItem/coa:Type/text() else ('[Incident, no Type]')" />
+                <xsl:value-of select="$output" />
+            </xsl:when>
+            <xsl:when test="$actualItem[self::stix:Campaign]">
+                <xsl:variable name="output" select="if ($actualItem/campaign:Names/campaign:Name) then $actualItem[self::stix:Campaign]/campaign:Names/campaign:Name/text() else ('[Other Campaign]')" />
+                <xsl:value-of select="$output" />
+            </xsl:when>
+            <xsl:when test="$actualItem[self::stixCommon:Kill_Chain]">
+                <xsl:variable name="output" select="if ($actualItem/@name) then fn:data($actualItem/@name) else ('[Other Kill Chain]')" />
                 <xsl:value-of select="$output" />
             </xsl:when>
             <!-- /stix -->
@@ -1126,28 +1141,6 @@ ikirillov@mitre.org
     </xsl:template>
 
     <!--
-      Output URI & Link value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="cybox:Properties[contains(@xsi:type,'URIObjectType')]|cybox:Properties[contains(@xsi:type,'LinkObjectType')]">
-        <fieldset>
-            <legend>URI</legend>
-            <div class="container cyboxPropertiesContainer cyboxProperties">
-                <div class="heading cyboxPropertiesHeading cyboxProperties">
-                    <xsl:apply-templates select="URIObject:Value" mode="cyboxProperties" />
-                </div>
-            </div>
-        </fieldset>
-    </xsl:template>
-    <xsl:template match="URIObject:Value" mode="cyboxProperties">
-        Value <xsl:value-of select="Common:Defanged(@is_defanged, @defanging_algorithm_ref)" />
-        <xsl:choose>
-            <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-            <xsl:otherwise> = </xsl:otherwise>
-        </xsl:choose>
-        <xsl:value-of select="." />
-    </xsl:template>
-
-    <!--
       Output Port value without unnecessary nested schema tree structure
     -->
     <xsl:template match="*:Port[contains(@xsi:type,'PortObjectType')]|*:Port[./*:Port_Value]" mode="cyboxProperties">
@@ -1208,27 +1201,6 @@ ikirillov@mitre.org
         </xsl:choose>
         <xsl:value-of select="." />
     </xsl:template>
-    <xsl:function name="Common:ConditionType">
-        <xsl:param name="condition" />
-        <xsl:choose>
-            <xsl:when test="$condition='Equals'"> = </xsl:when>
-            <xsl:when test="$condition='DoesNotEqual'"> != </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$condition" />: 
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:function>
-    <xsl:function name="Common:Defanged">
-        <xsl:param name="is_defanged" />
-        <xsl:param name="defanging_algorithm_ref" />
-        <xsl:if test="$is_defanged='true'">
-            (defanged 
-            <xsl:if test="$defanging_algorithm_ref!=''">
-                with <xsl:value-of select="$defanging_algorithm_ref" />
-            </xsl:if>
-            )
-        </xsl:if>
-    </xsl:function>
     
     <!--
       default template for outputting hierarchical cybox:Properties names/values/constraints
@@ -1341,5 +1313,16 @@ ikirillov@mitre.org
       </table> 
     </div>
   </xsl:function>
+    
+  <!--
+   match="cybox:Properties[contains(@xsi:type,'URIObjectType')]
+   <xsl:template match="cybox:Properties[@xsi:type='cyboxEmail:EmailMessageObjectType']" priority="1000">
+  -->
+  <xsl:template match="cybox:Properties[contains(@xsi:type,'EmailMessageObjectType')]" priority="1000">
+    <div class="emailCustomTemplate">
+      EMAIL HERE BBB
+    </div>
+  </xsl:template>
+    
   
 </xsl:stylesheet>

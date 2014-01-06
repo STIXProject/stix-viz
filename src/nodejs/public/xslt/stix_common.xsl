@@ -40,6 +40,8 @@
   
     <!-- this depends on some of the templates in the cybox-to-html transform -->
     <xsl:include href="cybox_common.xsl"/>
+    <xsl:include href="stix_objects.xsl" />
+    <xsl:include href="stix_objects__customized.xsl" />
 
     <!--
       Print the "stix header" table (this shows up in the output below the
@@ -166,6 +168,12 @@
       <xsl:if test="campaign:Status">
         <xsl:copy-of select="stix:printNameValueTable('Status', campaign:Status)" />
       </xsl:if>              
+      <xsl:if test="campaign:Intended_Effect">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="campaign:Intended_Effect" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Intended Effect', $contents)" />
+      </xsl:if>
       <xsl:if test="campaign:Related_Incidents/campaign:Related_Incident">
         <xsl:variable name="contents">
           <xsl:apply-templates select="campaign:Related_Incidents/campaign:Related_Incident" />
@@ -183,6 +191,18 @@
           <xsl:apply-templates select="campaign:Related_Indicators/campaign:Related_Indicator" />
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Related Indicators', $contents)" />
+      </xsl:if>
+      <xsl:if test="campaign:Attribution/*">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="campaign:Attribution" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Attribution', $contents)" />
+      </xsl:if>
+      <xsl:if test="campaign:Associated_Campaigns">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="campaign:Associated_Campaigns" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Associated Campaigns', $contents)" />
       </xsl:if>
       
     </div>
@@ -206,6 +226,45 @@
     </div>
   </xsl:template>
 
+  <xsl:template match="*:Intended_Effect">
+    <div class="stixCommonValue">
+      <xsl:apply-templates select="stixCommon:Value" />
+    </div>
+    <div class="stixCommonDescription">
+      <xsl:apply-templates select="stixCommon:Description" />
+    </div>
+  </xsl:template>
+  
+  <xsl:template match="campaign:Attribution">
+    <xsl:variable name="threatActorCount" select="count(campaign:Attributed_Threat_Actor/stixCommon:Threat_Actor)" />
+    <xsl:if test="$threatActorCount gt 0">
+      <div class="stixSectionTitle">Attributed Threat Actor<xsl:if test="$threatActorCount ge 2">s</xsl:if></div>
+    </xsl:if>
+    <xsl:apply-templates select="campaign:Attributed_Threat_Actor/stixCommon:Threat_Actor"/>
+  </xsl:template>
+  
+  <xsl:template match="campaign:Associated_Campaigns">
+    <xsl:variable name="associatedCampaignCount" select="count(campaign:Associated_Campaign/stixCommon:Campaign)" />
+    <xsl:if test="$associatedCampaignCount gt 0">
+      <div class="stixSectionTitle">Associated Campaign<xsl:if test="$associatedCampaignCount ge 2">s</xsl:if></div>
+    </xsl:if>
+    <xsl:apply-templates select="campaign:Associated_Campaign/stixCommon:Campaign"/>
+  </xsl:template>
+  
+  <xsl:template match="stixCommon:Threat_Actor[@idref]|stixCommon:Campaign[@idref]">
+    <div class="">
+      <xsl:variable name="targetId" select="string(@idref)"/>
+      <xsl:variable name="relationshipOrAssociationType" select="''" />
+      
+      <!-- (indicator within composition - - idref: <xsl:value-of select="fn:data(@idref)"/>) -->
+      <xsl:call-template name="headerAndExpandableContent">
+        <xsl:with-param name="targetId" select="$targetId"/>
+        <xsl:with-param name="isComposition" select="fn:false()"/>
+        <xsl:with-param name="relationshipOrAssociationType" select="''" />
+      </xsl:call-template>
+    </div>
+  </xsl:template>
+  
   <!--
     The process*Contents templates are used to convert the top level catgory "items" into html.
     
@@ -221,12 +280,32 @@
       </xsl:attribute>
       -->
       
+      <xsl:if test="incident:Time">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="incident:Time/incident:Incident_Reported" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Time', $contents)" />
+      </xsl:if>
       <xsl:if test="incident:Description">
         <xsl:variable name="contents">
           <xsl:apply-templates select="incident:Description" />
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
       </xsl:if>              
+      <xsl:if test="incident:Categories/incident:Category">
+        <xsl:variable name="label" select="if (count(incident:Categories/incident:Category) ge 2) then ('Categories') else ('Category')" />
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="incident:Categories/incident:Category" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable($label, $contents)" />
+      </xsl:if>
+      <xsl:if test="incident:Victim/*">
+        <xsl:variable name="label" select="if (count(incident:Victim/*) ge 2) then ('Victims') else ('Victim')" />
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="incident:Victim/*" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable($label, $contents)" />
+      </xsl:if>
       <xsl:if test="incident:Status">
         <xsl:copy-of select="stix:printNameValueTable('Status', incident:Status)" />
       </xsl:if>              
@@ -240,7 +319,13 @@
         <xsl:variable name="contents">
           <xsl:apply-templates select="incident:Leveraged_TTPs/incident:Leveraged_TTP" />
         </xsl:variable>
-        <xsl:copy-of select="stix:printNameValueTable('Related TTPs', $contents)" />
+        <xsl:copy-of select="stix:printNameValueTable('Leveraged TTPs', $contents)" />
+      </xsl:if>
+      <xsl:if test="incident:Attributed_Threat_Actors/incident:Threat_Actor">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="incident:Attributed_Threat_Actors/incident:Threat_Actor" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Attributed Threat Actors', $contents)" />
       </xsl:if>
     </div>
   </xsl:template>
@@ -295,11 +380,29 @@
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Motivations', $contents)" />
       </xsl:if>
+      <xsl:if test="ta:Intended_Effect">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="ta:Intended_Effect" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Intended Effect', $contents)" />
+      </xsl:if>
       <xsl:if test="ta:Observed_TTPs/ta:Observed_TTP">
         <xsl:variable name="contents">
           <xsl:apply-templates select="ta:Observed_TTPs/ta:Observed_TTP" />
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Observed TTPs', $contents)" />
+      </xsl:if>
+      <xsl:if test="ta:Associated_Campaigns/ta:Associated_Campaign">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="ta:Associated_Campaigns/ta:Associated_Campaign" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Associated Campaigns', $contents)" />
+      </xsl:if>
+      <xsl:if test="ta:Associated_Actors/ta:Associated_Actor/stixCommon:Threat_Actor">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="ta:Associated_Actors/ta:Associated_Actor/stixCommon:Threat_Actor" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Associated Actors', $contents)" />
       </xsl:if>
     </div>
   </xsl:template>
@@ -412,6 +515,12 @@
           <xsl:apply-templates select="indicator:Confidence" mode="cyboxProperties" />
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Confidence', $contents)" />
+      </xsl:if> 
+      <xsl:if test="indicator:Sightings/indicator:Sighting">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="indicator:Sightings" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Sightings', $contents)" />
       </xsl:if> 
       </div>
     </xsl:template>
@@ -749,4 +858,34 @@
   <xsl:template match="indicator:Suggested_COA">
     <xsl:apply-templates />
   </xsl:template>
+
+  <!--
+    purpose: format incident reported times
+    this shows up mostly as incident:Time/incident:Incident_Reported
+  -->
+  <xsl:template match="incident:Incident_Reported">
+    <xsl:variable name="incidentReportedTime" select="text()" />
+    <div class="incidentReportedTime">
+      reported <xsl:value-of select="$incidentReportedTime" />
+    </div>
+  </xsl:template>
+  
+  
+  <xsl:template match="incident:Category">
+    <xsl:variable name="categoryName" select="text()" />
+    
+    <div class="incidentCategory">
+      <xsl:value-of select="$categoryName" />
+    </div>
+  </xsl:template>
+
+  <xsl:template match="stixCommon:Name">
+    <xsl:variable name="name" select="text()" />
+    
+    <div class="stixCommonName">
+      <xsl:value-of select="$name" />
+    </div>
+  </xsl:template>
+  
 </xsl:stylesheet>
+
