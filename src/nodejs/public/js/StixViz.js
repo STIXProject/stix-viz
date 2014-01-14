@@ -124,6 +124,8 @@ $(function () {
 			view = new StixTree();
 		} else if (viewType === 'selectView-graph') {
 			view = new StixGraph();
+		} else if (viewType === 'selectView-timeline'){
+			view = new StixTimeline();
 		};
 		if (data) { 
 			reset();
