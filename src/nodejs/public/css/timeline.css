@@ -33,7 +33,7 @@
 }
 
 .bandMinMaxLabel {
-    fill: blue;
+    fill: #546172;
     font: 10px sans-serif;
     font-weight: bold;
 }
@@ -58,21 +58,21 @@
 }
 
 .interval {
-    fill: #AAFFFF;
+    fill: #87A581;
     stroke-width: 6;
     cursor : default;
     pointer-events: true;
 }
 
 .instant {
-    fill: #FFAAFF;
+    fill: #546172;
     stroke-width: 6;
     cursor : default;
     /*pointer-events: true;*/
 }
 
 .instantLabel {
-    fill : blue;
+    fill : black;
     font: 10px sans-serif;
     shape-rendering: crispEdges;
 }
