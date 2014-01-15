@@ -16,21 +16,33 @@ var StixTimeline = function () {
 	left: 20
     },
     outerWidth = 1050,
-    outerHeight = 700,
+    outerHeight = 500,
     width = outerWidth - margin.left - margin.right,
     height = outerHeight - margin.top - margin.bottom;
 
     _self.display = function (jsonString) {
-	alert("display timeline");
 	//alert(jsonString);
 	// Define domElement and sourceFile
 	var domElement = "#treeView";
-	var sourceFile = "./public/TempData/iSight-incidents.json";
-	//var sourceFile = "./public/TempData/"+file;
+	//var sourceFile = "./public/TempData/iSight-incidents.json";
+	var sourceFile = "./public/TempData/testData1.json";
+
+	/*var report = $.parseJSON(jsonString);
+	timeline(domElement)
+	.data(dataset)
+	.band("mainBand", 0.82)
+	.band("naviBand", 0.08)
+	.xAxis("mainBand")
+	.tooltips("mainBand")
+	.xAxis("naviBand")
+	.labels("mainBand")
+	.labels("naviBand")
+	.brush("naviBand", ["mainBand"])
+	.redraw();
+	*/
 
 	// Read in the data and construct the timeline
 	d3.json(sourceFile, function(dataset) {
-
 	    timeline(domElement)
 	    .data(dataset)
 	    .band("mainBand", 0.82)
@@ -44,6 +56,7 @@ var StixTimeline = function () {
 	    .redraw();
 
 	});
+	
     }
 
 
@@ -137,18 +150,18 @@ var StixTimeline = function () {
 
 	    var today = new Date(),
 	    tracks = [],
-	    yearMillis = 31622400000,
-	    instantOffset = 100 * yearMillis;
+	    //InstantOffset is How big an instant dot appears on the timeline
+	    instantOffset = 10000000;
 
 	    data.items = items;
-
+	    
 	    function showItems(n) {
 		var count = 0, n = n || 10;
-		console.log("\n");
+		//console.log("\n");
 		items.forEach(function (d) {
 		    count++;
 		    if (count > n) return;
-		    console.log(toYear(d.start) + " - " + toYear(d.end) + ": " + d.label);
+		    //console.log(toYear(d.start) + " - " + toYear(d.end) + ": " + d.label);
 		})
 	    }
 
@@ -238,7 +251,7 @@ var StixTimeline = function () {
 
 	    // Convert yearStrings into dates
 	    data.items.forEach(function (item){
-		if (item.end == "" || item.end==item.start) {
+		if (item.end == null || item.end == "" || item.end==item.start) {
 		    //console.log("1 item.start: " + item.start);
 		    //console.log("2 item.end: " + item.end);
 		    item.start = parseDate(item.start);
@@ -295,7 +308,6 @@ var StixTimeline = function () {
 	    band.itemHeight = band.trackHeight * 0.8,
 	    band.parts = [],
 	    band.instantWidth = 100; // arbitray value
-
 	    band.xScale = d3.time.scale()
 	    .domain([data.minDate, data.maxDate])
 	    .range([0, band.w]);
@@ -482,7 +494,7 @@ var StixTimeline = function () {
 		// trigger, function
 		["mouseover", showTooltip],
 		["mouseout", hideTooltip],
-		["contextmenu", showContext]
+		["contextmenu", showContextTimeline]
 		]);
 
 	    function getHtml(element, d) {
@@ -515,24 +527,19 @@ var StixTimeline = function () {
 		tooltip.style("visibility", "hidden");
 	    }
 	
-	    /** Show the context menu for showing the HTML view when right clicking a node
+	/** Show the context menu for showing the HTML view when right clicking a node
 	 * 
 	 * @param data The node that was clicked
 	 */
-	    function showContext (data) {
-
+	    function showContextTimeline (data) {
 		contextNode = data;
 		$('#showHtml').removeClass('disabled');
 
 		position = d3.mouse(this);
 		offset = $(this).offset();
 		scrollTop = 10; 
-		d3.select("#contextMenu")  // Display the context menu in the right position
-		.style('position','absolute')
-		.style('left',(position[0]+offset.left+(10/2))+'px')
-		.style('top',(position[1]+offset.top-50+scrollTop)+'px')
-		.style('display','block');
-		d3.event.preventDefault();
+		showContext(data,(position[0]+offset.left+(10/2))+'px',(position[1]+offset.top-50+scrollTop)+'px');
+		
 	    }
 
 	    return timeline;
@@ -618,11 +625,16 @@ var StixTimeline = function () {
 	//
 
 	function parseDate(dateString) {
-	    var format = d3.time.format("%Y-%m-%dT%H:%M:%S"),
-	    date,
-	    year;
+	    //alert(dateString);
+	    var date = new Date(dateString);
+	    //alert(date);
+
+	    //var format = d3.time.format("%Y-%m-%dT%H:%M:%S%Z"),
+	    //date,
+	    //year;
 	    
-	    date = format.parse(dateString);
+	    //date = format.parse(dateString);
+	    //alert(date);
 	    if (date !== null) 
 	    {
 		return date;
@@ -639,21 +651,29 @@ var StixTimeline = function () {
 	}
     
 	function displayDateTicks(date) {
-	    return date.getFullYear(); 
+	    var month = date.getMonth();
+	    var day = date.getDate();
+	    var year = date.getFullYear();
+	    
+	    return month + "/" + day + "/" + year;
 	}
     
 	function displayDateMinMax(date) {
-	    return date.getFullYear();  
+	    var month = date.getMonth();
+	    var day = date.getDate();
+	    var year = date.getFullYear();
+	    
+	    return month + "/" + day + "/" + year;
 	}
     
 	function getIcon(d) {
 	    if(d.type)
 	    {
 		var imgStr = '';
-		if(typeIconMap[d.type])
+		/*if(typeIconMap[d.type])
 		{
 		    imgStr += '<img src="./public/xslt/images/'+typeIconMap[d.type]+'.svg">';
-		}
+		}*/
 		imgStr += "<br>ID: " +d.label;
 	    }
 	    return imgStr;
