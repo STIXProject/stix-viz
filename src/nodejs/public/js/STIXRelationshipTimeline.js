@@ -23,7 +23,7 @@ var StixTimeline = function () {
     _self.display = function (jsonString) {
 	//alert(jsonString);
 	// Define domElement and sourceFile
-	var domElement = "#treeView";
+	var domElement = "#contentDiv";
 	//var sourceFile = "./public/TempData/iSight-incidents.json";
 	var sourceFile = "./public/TempData/testData1.json";
 

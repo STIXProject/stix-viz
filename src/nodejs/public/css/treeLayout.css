@@ -9,7 +9,7 @@
  * lubar@mitre.org
  * 
  */
- body,html,#treeView { 
+ body,html,#contentDiv{ 
 	height: 100%;
 }
 
@@ -32,7 +32,7 @@ body {
 	padding:0;
 }
 
-#treeView { 
+#contentDiv { 
 /* 	width: 100%; */
 	overflow: auto;
 }
