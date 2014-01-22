@@ -419,11 +419,9 @@ function processChildObservables(observables) {
 }
 
 var doc = null;
-
 var jsonObj = {"type": "top",
 	       "name": "",
 	       "children": []};
-
  
 // main function for creating JSON to be displayed in the tree
 //  top level entities are gathered from each xml file
@@ -432,6 +430,7 @@ var jsonObj = {"type": "top",
 //  all nodes are placed into a top level jsonObj
 //   and it is displayed
 function generateTreeJson(inputFiles) {
+
 	var campaignObjs = [];
 	var coaObjs = [];
 	var etObjs = [];
@@ -518,7 +517,7 @@ function generateTreeJson(inputFiles) {
                                 //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
                                 
                                 // display the tree
-                                displayJSON(JSON.stringify(jsonObj, null, 2));
+                                displayRelationshipJSON(JSON.stringify(jsonObj, null, 2));
                             }
                         };
                     }) (f);

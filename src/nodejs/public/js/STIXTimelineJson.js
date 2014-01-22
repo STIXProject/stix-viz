@@ -10,27 +10,6 @@
  * 
  */
 
-//SRL - temporary for testing
-$(function () { 
-	$('#files').on('change', function () { handleFileSelect($(this)); });
-});
-
-function handleFileSelect(fileinput) {	
-    var mime = require('mime');	
-    var files = fileinput.get(0).files;
-	
-	$(files).each(function (index, f) {
-		var mimetype = mime.lookup(f.name);
-
-		// Only process xml files.
-		if (!mimetype.match('application/xml')) {
-			return;
-		}
-	});
-	
-	generateTimelineJson(files);
-}
-
 //indiObjs are Sightings with timestamps
 function getIndicatorNodes(indiObjs) {
 	var indiNodes = [];
