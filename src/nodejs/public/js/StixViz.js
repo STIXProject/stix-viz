@@ -329,7 +329,7 @@ function reset () {
 	xmlDocs = {};
 	docIndex = 0;
 	$('#xmlFileList').empty();
-	$('#treeView').empty();
+	$('#contentDiv').empty();
 	$('#htmlView').empty();
 	layout.close("south");
 }

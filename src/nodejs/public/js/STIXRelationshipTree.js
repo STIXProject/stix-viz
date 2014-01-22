@@ -85,7 +85,7 @@ var StixTree = function () {
 		/**
 		 *  Append svg container for tree
 		 */
-		svg = d3.select("#treeView").append("svg")
+		svg = d3.select("#contentDiv").append("svg")
 	    .append("g")
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
