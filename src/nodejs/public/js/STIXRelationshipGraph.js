@@ -218,7 +218,12 @@ var StixGraph = function () {
 		nodeEnter.append("svg:image")
 		.attr("height", String(nodeHeight)+"px")
 		.attr("width", String(nodeWidth)+"px")
-		.attr("xlink:href",function (d) {  return "./public/icons/13-008 ICONS - STIX_"+typeIconMap[d.type]+".png"; })
+		        .attr("xlink:href",function (d) { 
+        	if (d.type == 'top') 
+        		return "./public/icons/report.png";
+        	else
+        		return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+        	})
 		.attr("transform","translate("+ -nodeWidth/2 + "," + -nodeHeight/2 + ")")
 		.attr("class", function(d) { return d.type; })
 		.attr("filter",function (d) { 
