@@ -20,7 +20,8 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	markerSize = 6;
+	markerSize = 6,
+	labelHeight = 20;
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
@@ -38,12 +39,10 @@ var StixGraph = function () {
 			right : 20,
 			bottom : 35,
 			left : 10
-	}, 
-	width = 1100 - margin.right - margin.left,
-	height = 1200 - margin.top- margin.bottom;
+	};
 
 	function graphSize () { 
-		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-200];
+		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-100];
 	}
 
 	/**
@@ -54,7 +53,7 @@ var StixGraph = function () {
 	.linkStrength(.5)
 	.friction(.7)
 	.charge(-200)
-	.gravity(.01)
+	.gravity(.005)
 	.size(graphSize())
 	.on("tick", tick);
 
@@ -279,7 +278,12 @@ var StixGraph = function () {
 	 */
 	function tick() {
 
+		// avoid node collisions
 		node.each(collide(0.5));
+		
+		// Move nodes within the view bounding box
+		node.attr("x", function(d) { return d.x = Math.max(nodeWidth, Math.min(graphSize()[0] - nodeWidth, d.x)); })
+        .attr("y", function(d) { return d.y = Math.max(nodeHeight - labelHeight, Math.min(graphSize()[1], d.y)); });
 
 		link.attr("x1", function(d) { return d.source.x; })
 		.attr("y1", function(d) { return d.source.y; })
@@ -291,7 +295,7 @@ var StixGraph = function () {
 
 
 
-//	Resolves collisions between d and all other circles.
+//	Resolves collisions between d and all other nodes.
 	function collide(alpha) {
 		var quadtree = d3.geom.quadtree(force.nodes());
 		return function(d) {
