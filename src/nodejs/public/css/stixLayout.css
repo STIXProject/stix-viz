@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2014 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains shared CSS for the Stix Visualization tools
+ * 
+ * created 2014
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+
+body,html,#contentDiv{ 
+	height: 100%;
+}
+
+body.loading { 
+	cursor:wait !important;
+}
+
+svg { 
+	height: 99%;
+}
+
+body {
+  cursor:default;
+  margin: 0;
+  padding: 0;
+}
+
+
+#viewContainer { 
+	padding:0;
+}
+
+#contentDiv { 
+/* 	width: 100%; */
+	overflow: auto;
+}
+
+#initialInstructions {
+	display: block;
+	font-size: 150%;
+	text-align: center;
+	margin-top: 100px;	
+}
+
+#htmlView {
+margin: 0;
+width: 100%;
+height: 30%;
+padding: 0;
+overflow-y: auto;
+border-top:4px ridge lightgray;
+}
+
+#loadingMessage { 
+	margin:20px;
+}
+
+.loading { 
+	background: lightgray;
+}
+
+nav.navbar { 
+	margin-bottom:0;
+}
+
+#menubar { 
+	overflow:visible;
+	padding: 0;
+	color: lightsteelblue;
+}
+
+.ui-layout-pane-north { 
+	border:none;
+}
+
+.ui-layout-pane-center { 
+	border-top: none; 
+}

@@ -5,7 +5,9 @@ var xmlDocs = {}, docIndex = 0;
 var working = 0;
 
 var view = null,
-data=null,
+viewType = null,
+relationshipData=null,
+timelineData = null,
 layout=null;
 
 /**
@@ -95,7 +97,8 @@ $(function () {
 		} 			
 	});
 	
-	view = new StixTree();
+	viewType = "selectView-tree";   // Default to tree view
+	view = new StixTree();  
 	
 
 	/**
@@ -118,18 +121,26 @@ $(function () {
 	
 	
 	$('#viewList li').on('click', function () {
-		var viewType = $(this).attr('id');
+		viewType = $(this).attr('id');
+		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
+		reset();
 		if (viewType === 'selectView-tree') { 
 			view = new StixTree();
+			if (relationshipData) { 
+				view.display(relationshipData);
+			};
 		} else if (viewType === 'selectView-graph') {
 			view = new StixGraph();
+			if (relationshipData) { 
+				view.display(relationshipData);
+			};
 		} else if (viewType === 'selectView-timeline'){
 			view = new StixTimeline();
+			if (timelineData) {
+				view.display(timelineData);
+			}
 		};
-		if (data) { 
-			reset();
-			view.display(data);
-		};
+
 	});
 
 
@@ -184,9 +195,9 @@ function addXmlDoc (f) {
 }
 
 
-function displayJSON (jsonString) { 
-	data = jsonString;
-	view.display(data);
+function displayRelationshipJSON (jsonString) { 
+	relationshipData = jsonString;
+	view.display(relationshipData);
 }
 
 
@@ -376,9 +387,11 @@ function handleFileSelect(fileinput) {
     		}
     	});
 
-
-    	// create json tree structure from xml files read in
-    	generateTreeJson(files);
+    	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
+    		generateTreeJson(files);
+		} else if (viewType === 'selectView-timeline'){
+    		generateTimelineJson(files);
+		}
     }
 
 };

@@ -35,6 +35,7 @@
 <link rel="stylesheet" type="text/css" href="./public/xslt/theme_default.css" />
 <link rel="stylesheet" type="text/css" href="./public/css/treeLayout.css" />
 <link rel="stylesheet" type="text/css" href="./public/css/timeline.css" />
+<link rel="stylesheet" type="text/css"href="./public/css/stixLayout.css" />
 
 <script type="text/javascript"
 	src="./public/js/Saxonce/Saxonce.nocache.js"></script>
@@ -58,6 +59,7 @@
 <script type="text/javascript" src="./public/js/STIXRelationshipTimeline.js"></script>
 <script type="text/javascript" src="./public/js/STIXViz.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipJson.js"></script>
+<script type="text/javascript" src="./public/js/STIXTimelineJson.js"></script>
 <script type="text/javascript" src="./public/js/STIXTTPProcessing.js"></script>
 <script type="text/javascript" src="./public/js/STIXXSLTTransformer.js"></script>
 
@@ -79,6 +81,7 @@
 			</ul>
 		</div>
 		<div id="contentDiv">
+			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
 			<!--  leave for debugging purposes -->
 		</div>
 	</div>
@@ -104,7 +107,7 @@
 						</ul></li>
 
 					<li class="dropdown"><a href="#" class="dropdown-toggle"
-						data-toggle="dropdown">Select View<b class="caret"></b></a>
+						data-toggle="dropdown" id="selectedView">Tree View<b class="caret"></b></a>
 						<ul id="viewList" class="dropdown-menu">
 							<li id="selectView-tree"><a href="#">Tree
 								View</a></li>
