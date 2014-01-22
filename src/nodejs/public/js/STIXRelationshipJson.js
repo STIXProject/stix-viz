@@ -241,7 +241,7 @@ function processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBo
 	});
     // for each subtype add a child indicator node
     $.map(subTypeMap, function(children, subType) {
-	    indiJson = {"type": STIXType.indi, "subtype":subType, "children":children, "linkType":"topDown"};
+	    indiJson = {"type": STIXType.indi, "grouping":"true", "subtype":subType, "children":children, "linkType":"topDown"};
 	    indiNodes.push(indiJson);
 	});
     return indiNodes;
