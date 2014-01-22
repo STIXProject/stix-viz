@@ -200,7 +200,10 @@ function displayRelationshipJSON (jsonString) {
 	view.display(relationshipData);
 }
 
-
+function displayTimelineJSON(jsonString) {
+	timelineData = jsonString;
+	view.display(timelineData);
+}
 
 
 /**
