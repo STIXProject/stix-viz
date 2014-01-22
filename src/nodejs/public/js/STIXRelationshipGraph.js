@@ -50,10 +50,10 @@ var StixGraph = function () {
 	 */
 	var force = d3.layout.force()
 	.linkDistance(170)
-	.linkStrength(.5)
-	.friction(.7)
+	.linkStrength(1)
+	.friction(.6)
 	.charge(-200)
-	.gravity(.005)
+	.gravity(.001)
 	.size(graphSize())
 	.on("tick", tick);
 
@@ -114,13 +114,15 @@ var StixGraph = function () {
 		node = svg.selectAll(".node");
 
 		report = $.parseJSON(jsonString);
-
+		
+		removeBottomUp(report);		
+		flatten(report); // this will set the correct ids for all nodes in the graph 
 		report.children.forEach(collapse);
 
 		// This is where the tree actually gets displayed
 		update();
 
-	}
+	};
 
 	/**
 	 * Collapse node d by moving "children" to "_children"
@@ -130,7 +132,21 @@ var StixGraph = function () {
 		if (d.children) {
 			d._children = d.children;
 			d._children.forEach(collapse);
-			d.children = null;
+			d.children = [];
+		}
+	}
+	
+	/**
+	 * Remove links that are "bottom up" since they are only needed for tree view
+	 */
+	function removeBottomUp(d) {
+		if (d.children) { 
+			d.children = d.children.filter(function(c) { return c.linkType === 'topDown'; });
+			d.children.forEach(removeBottomUp);
+		}
+		if (d._children) { 
+			d._children = d._children.filter(function (c) { return c.linkType === 'topDown'; });
+			d._children.forEach(removeBottomUp);
 		}
 	}
 
@@ -141,7 +157,7 @@ var StixGraph = function () {
 	function expand (d) { 
 		if (d._children) { 
 			d.children = d._children; 
-			d._children = null;
+			d._children = [];
 		}
 	}
 
@@ -179,6 +195,9 @@ var StixGraph = function () {
 		node = node.data(nodes, function(d) { return d.id; });
 
 		node.exit().remove();
+		
+		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
 
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
@@ -263,27 +282,41 @@ var StixGraph = function () {
 	 */
 	function click(d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
-		if (d.children) {
-			d._children = d.children;
-			d.children = null;
-		} else {
+		if (d._children) {
 			d.children = d._children;
 			d._children = null;
-		}
+			d.children.forEach(function (c) { 
+				node.each(function (n) {
+					if (n._children) { 
+						n._children.forEach(function (nc) { 
+							if (nc.id && nc.id === c.id) { 
+								n.children.push(nc);
+							}
+						});
+					}
+				});
+			});
+		} else {
+			d._children = d.children;
+			d.children = [];
+		} 
 		update();
 	}	
 
 	/** 
 	 * Reposition nodes and links on each tick
 	 */
-	function tick() {
+	function tick(e) {
 
-		// avoid node collisions
+	    // avoid node collisions
 		node.each(collide(0.5));
 		
 		// Move nodes within the view bounding box
-		node.attr("x", function(d) { return d.x = Math.max(nodeWidth, Math.min(graphSize()[0] - nodeWidth, d.x)); })
-        .attr("y", function(d) { return d.y = Math.max(nodeHeight - labelHeight, Math.min(graphSize()[1], d.y)); });
+		node.each(function (d) { 
+			d.x = Math.max(nodeWidth, Math.min(graphSize()[0] - nodeWidth, d.x));
+			d.y = Math.max(nodeHeight - labelHeight, Math.min(graphSize()[1], d.y));
+		});
+
 
 		link.attr("x1", function(d) { return d.source.x; })
 		.attr("y1", function(d) { return d.source.y; })
@@ -397,7 +430,7 @@ var StixGraph = function () {
 	 * @returns
 	 */
 	function hasChildren (d) { 
-		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0);
+		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0); 
 	}
 
 	/**
@@ -428,9 +461,9 @@ var StixGraph = function () {
 	var nodeid = 0;
 //	Returns a list of all nodes under the root.
 	function flatten(root) {
-		var nodes = [], links = [], rlinks = []; // rlinks are reverse (bottom up) links
+		var nodes = [], links = [];
 
-		function recurse(node,parent) {
+		function recurse(node,depth,parent) {
 
 			var ref = null;
 			var pos;
@@ -439,17 +472,23 @@ var StixGraph = function () {
 			}
 			if (!node.id && !ref) { 
 				node.id = nodeid++;
+				node.depth = depth;
 			}
 
 			if (ref) {
 				pos = nodes.indexOf(ref);
+				if (!node.id) node.id = ref.id;
+				if (!node.name) node.name = ref.name;
+				else if (!ref.name) ref.name = node.name;
 			} else {
 				nodes.push(node);
 				pos = nodes.length-1;
 			}
 
-			if (typeof parent !== 'undefined') { 
-				links.push({source:parent,target:pos});
+			if (typeof parent !== 'undefined') {
+				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
+					links.push({source:parent,target:pos});
+				}
 			} else { 
 				node.fixed = true;
 				node.px = graphSize()[0]/2;
@@ -458,43 +497,14 @@ var StixGraph = function () {
 
 			// Only use top down links in the graph view
 			if (node.children) { 
-				node.children.filter(function(c) { return c.linkType === 'topDown'; })
-				.forEach(function (n) { recurse(n,pos);});
-				
-				node.children.filter(function (c) { return c.linkType === 'bottomUp';})
-				.forEach(function (n) { 
-					rlinks.push({source:n,target:pos});
+				node.children.forEach(function (n) { recurse(n,depth+1,pos);
 				});
 				
 			}
 
 		}
 
-		recurse(root);
-		
-		rlinks.forEach(function (rl) {
-			var cnode = rl.source, cref = null;
-			
-			if (getId(cnode)) { 
-				cref = nodes.filter(function (n) { return getId(n) == getId(cnode);})[0];
-			} 
-			if (!cnode.id && !cref) { 
-				cnode.id = nodeid++;
-			}
-			
-			if (cref) { 
-				cpos = nodes.indexOf(cref);
-			} else { 
-				nodes.push(cnode);
-				cpos = nodes.length-1;
-			}
-			
-			// Don't add duplicate links. A link may be defined top down in one place and bottom up in another
-			if (links.filter(function (l) { return l.source === cpos && l.target === rl.target; }).length == 0) { 
-				links.push({source:cpos,target:rl.target});
-			}
-		});
-		
+		recurse(root,0);
 		return {nodes:nodes,links:links};
 	}
 
