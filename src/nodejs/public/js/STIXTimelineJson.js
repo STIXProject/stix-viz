@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ? The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the functionality for extracting time related data specified in the xml
@@ -107,7 +107,7 @@ function generateTimelineJson(inputXMLFiles) {
             					reportName = topNodeName + "\n" + f.name;
             				}
                             xml = new DOMParser().parseFromString(this.result, "text/xml"); 
-                            //addXmlDoc(theFile);  // adds the new XML file to the drop down menu in the UI
+                            addXmlDoc(theFile);  // adds the new XML file to the drop down menu in the UI
                             // global copy of xml to use for searching via xpFind
                             doc = xml;
                             

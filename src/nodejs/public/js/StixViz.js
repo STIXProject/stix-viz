@@ -21,7 +21,18 @@ var htmlSectionMap = {
 	"CoursesOfAction":"Courses of Action",
 	"Incidents":"Incidents",
 	"ExploitTargets":"Exploit Targets",
-	"Observables":"Observables"
+	"Observables":"Observables",
+	"Indicator-Sighting" :"Indicator Sighting",
+	"Incident-First_Malicious_Action" :"Incident: First Malicious Action",
+	"Incident-Initial_Compromise" :"Incident: Initial Compromise",
+	"Incident-First_Data_Exfiltration" :"Incident: First Data Exfiltration",
+	"Incident-Incident_Discovery" :"Incident: Incident Discovery",
+	"Incident-Incident_Opened" :"Incident: Incident Opened",
+	"Incident-Containment_Achieved" :"Incident: Containment Achieved",
+	"Incident-Restoration_Achieved" :"Incident: Restoration Achieved",
+	"Incident-Incident_Reported" :"Incident: Incident Reported",
+	"Incident-Incident_Closed" :"Incident: Incident Closed",
+	"Incident-COATaken" :"Incident: COATaken"
 };
 
 /**
@@ -161,7 +172,7 @@ $(function () {
  * @param xml
  */
 function addXmlDoc (f) { 
-	
+
 	working++;
 	var num = docIndex++;
 	
@@ -212,7 +223,7 @@ function displayTimelineJSON(jsonString) {
  * @returns
  */
 function getId (d) { 
-	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : "";
+	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : d.label ? d.label :"";
 }
 
 /** Show the context menu for showing the HTML view when right clicking a node
