@@ -58,14 +58,14 @@
 }
 
 .interval {
-    fill: #87A581;
+    
     stroke-width: 6;
     cursor : default;
     pointer-events: true;
 }
 
 .instant {
-    fill: #546172;
+    fill: #f1c40f;
     stroke-width: 6;
     cursor : default;
     /*pointer-events: true;*/

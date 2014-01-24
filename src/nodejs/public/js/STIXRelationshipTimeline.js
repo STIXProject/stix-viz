@@ -25,9 +25,9 @@ var StixTimeline = function () {
 	// Define domElement and sourceFile
 	var domElement = "#contentDiv";
 	//var sourceFile = "./public/TempData/iSight-incidents.json";
-	var sourceFile = "./public/TempData/testData1.json";
+	//var sourceFile = "./public/TempData/testData2.json";
 
-	/*var report = $.parseJSON(jsonString);
+	var dataset = $.parseJSON(jsonString);
 	timeline(domElement)
 	.data(dataset)
 	.band("mainBand", 0.82)
@@ -39,10 +39,10 @@ var StixTimeline = function () {
 	.labels("naviBand")
 	.brush("naviBand", ["mainBand"])
 	.redraw();
-	*/
+	
 
 	// Read in the data and construct the timeline
-	d3.json(sourceFile, function(dataset) {
+	/*d3.json(sourceFile, function(dataset) {
 	    timeline(domElement)
 	    .data(dataset)
 	    .band("mainBand", 0.82)
@@ -55,50 +55,28 @@ var StixTimeline = function () {
 	    .brush("naviBand", ["mainBand"])
 	    .redraw();
 
-	});
+	});*/
 	
     }
 
 
     function timeline(domElement) {
-	/**
-     * Mapping from node type to icon names to be used in the tree display
-     */
-	var typeIconMap = {
-	    "ThreatActors" : "threat_actor",
-	    "TTPs" : "ttp",
-	    "CourseOfAction" : "course_of_action",
-	    "CoursesOfAction" : "course_of_action",
-	    "AttackPattern" : "attack_patterns",
-	    "Indicator" : "indicator",
-	    "MalwareBehavior" : "malware",
-	    "Observable" : "observable",
-	    "Observable-ElectronicAddress" : "observable",
-	    "Observable-Email" : "observable",
-	    "Observable-IPRange" : "observable",
-	    "Indicators" : "indicator",
-	    "Campaigns" : "campaign",
-	    "campaign" : "campaign",
-	    "Observable" : "observable",
-	    "Observables" : "observable",
-	    "Observable-MD5" : "observable",
-	    "Observable-URI" : "observable",
-	    "ObservedTTP" : "ttp",
-	    "threatActor" : "threat_actor",
-	    "UsesTool" : "tool",
-	    "Tools" : "tool",
-	    "VictimTargeting" : "victim_targeting",
-	    "Indicator-Utility" : "indicator",
-	    "Indicator-Composite" : "indicator",
-	    "Indicator-Backdoor" : "indicator",
-	    "Indicator-Downloader" : "indicator",
-	    "Incident" : "incident",
-	    "Incidents" : "incident",
-	    "Exploit" : "exploit_target",
-	    "ExploitTarget" : "exploit_target",
-	    "ExploitTargets" :  "exploit_target",
-	    "top" : "report"
-	};
+
+	
+	var typeColorMap = {
+	    "Indicator-Sighting" :"#1abc9c",
+	    "Incident-First-Malicious-Action" :"#e67e22",
+	    "Incident-Initial_Compromise" :"#2ecc71",
+	    "Incident-First_Data_Exfiltration" :"#9b59b6",
+	    "Incident-Incident_Discovery" :"#f1c40f",
+	    "Incident-Incident_Opened" :"#2ecc71",
+	    "Incident-Containment_Achieved" :"#e74c3c",
+	    "Incident-Restoration_Achieved" :"#95a5a6",
+	    "Incident-Incident_Reported" :"#d35400",
+	    "Incident-Incident_Closed" :"#34495e",
+	    "Incident-COATaken" :"#27ae60"
+
+	}
 
 
 	//--------------------------------------------------------------------------
@@ -149,9 +127,7 @@ var StixTimeline = function () {
 	timeline.data = function(items) {
 
 	    var today = new Date(),
-	    tracks = [],
-	    //InstantOffset is How big an instant dot appears on the timeline
-	    instantOffset = 10000000;
+	    tracks = [];
 
 	    data.items = items;
 	    
@@ -248,7 +224,53 @@ var StixTimeline = function () {
 		else
 		    sortBackward();
 	    }
+	    var maxEnd = null; 
+	    var maxStart = null;
+	    
+	    //A bunch of math to figure out the scale of our data.
+	    data.items.forEach(function (item){
+		if(maxStart == null)
+		{
+		    maxStart = item.start;
+		}
+		if(item.start < maxStart)
+		{
+		    maxStart = item.start;
+		}
+		if(item.end < maxStart)
+		{
+		    maxStart = item.end;
+		}
+		
+		
+		if(maxEnd == null)
+		{
+		    if(item.end == null)
+		    {
+			maxEnd = item.start;
+		    }
+		    else
+		    {
+			maxEnd = item.end;
+		    }
+		}
+		if(item.end > maxEnd)
+		{
+		    maxEnd = item.end;
+		}
+		if(item.start > maxEnd)
+		{
+		    maxEnd = item.start;
+		}
+	    });
+	    
+	    var ed = new Date(maxEnd);
+	    var sd = new Date(maxStart);
+	    var ts = ed.getTime()-sd.getTime();
+	    //InstantOffset is How big an instant dot appears on the timeline
+	    var instantOffset = Math.pow(10, ts.toString().length-1);
 
+	    
 	    // Convert yearStrings into dates
 	    data.items.forEach(function (item){
 		if (item.end == null || item.end == "" || item.end==item.start) {
@@ -311,7 +333,7 @@ var StixTimeline = function () {
 	    band.xScale = d3.time.scale()
 	    .domain([data.minDate, data.maxDate])
 	    .range([0, band.w]);
-
+	    
 	    band.yScale = function (track) {
 		return band.trackOffset + track * band.trackHeight;
 	    };
@@ -339,8 +361,12 @@ var StixTimeline = function () {
 
 	    var intervals = d3.select("#band" + bandNum).selectAll(".interval");
 	    intervals.append("rect")
+	    .style("fill", function (d) {
+		return typeColorMap[d.type];
+	    })
 	    .attr("width", "100%")
 	    .attr("height", "100%");
+	    
 	    intervals.append("text")
 	    .attr("class", "intervalLabel")
 	    .attr("x", 1)
@@ -351,9 +377,13 @@ var StixTimeline = function () {
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
 	    instants.append("circle")
+	    .style("fill", function (d) {
+		return typeColorMap[d.type];
+	    })
 	    .attr("cx", band.itemHeight / 2)
 	    .attr("cy", band.itemHeight / 2)
 	    .attr("r", 5);
+	    
 	    instants.append("text")
 	    .attr("class", "instantLabel")
 	    .attr("x", 15)
@@ -361,14 +391,6 @@ var StixTimeline = function () {
 	    .text(function (d) {
 		return d.type;
 	    });
-	    /*instants.append("svg:image")
-	    .attr("width", 40)
-	    .attr("height", 40)
-            .attr("x", 15)
-            .attr("y", 10)
-	    .attr("xlink:href", "./public/icons/report.png");*/
-
-
 
 	    band.addActions = function(actions) {
 		// actions - array: [[trigger, function], ...]
@@ -627,7 +649,6 @@ var StixTimeline = function () {
 	function parseDate(dateString) {
 	    //alert(dateString);
 	    var date = new Date(dateString);
-	    //alert(date);
 
 	    //var format = d3.time.format("%Y-%m-%dT%H:%M:%S%Z"),
 	    //date,
@@ -674,12 +695,11 @@ var StixTimeline = function () {
 		{
 		    imgStr += '<img src="./public/xslt/images/'+typeIconMap[d.type]+'.svg">';
 		}*/
-		imgStr += "<br>ID: " +d.label;
+		imgStr += "Event Type: " +d.type;
 	    }
 	    return imgStr;
 	}
-    
-    
+	
 
 	return timeline;
     }
