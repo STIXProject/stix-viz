@@ -65,7 +65,7 @@ var StixTimeline = function () {
 	
 	var typeColorMap = {
 	    "Indicator-Sighting" :"#1abc9c",
-	    "Incident-First-Malicious-Action" :"#e67e22",
+	    "Incident-First_Malicious_Action" :"#e67e22",
 	    "Incident-Initial_Compromise" :"#2ecc71",
 	    "Incident-First_Data_Exfiltration" :"#9b59b6",
 	    "Incident-Incident_Discovery" :"#f1c40f",
@@ -372,7 +372,7 @@ var StixTimeline = function () {
 	    .attr("x", 1)
 	    .attr("y", 10)
 	    .text(function (d) {
-		return d.type;
+		return htmlSectionMap[d.type];
 	    });
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
@@ -389,7 +389,7 @@ var StixTimeline = function () {
 	    .attr("x", 15)
 	    .attr("y", 10)
 	    .text(function (d) {
-		return d.type;
+		return htmlSectionMap[d.type];
 	    });
 
 	    band.addActions = function(actions) {
@@ -516,6 +516,7 @@ var StixTimeline = function () {
 		// trigger, function
 		["mouseover", showTooltip],
 		["mouseout", hideTooltip],
+		["click", nodeClick],
 		["contextmenu", showContextTimeline]
 		]);
 
@@ -554,14 +555,15 @@ var StixTimeline = function () {
 	 * @param data The node that was clicked
 	 */
 	    function showContextTimeline (data) {
-		contextNode = data;
-		$('#showHtml').removeClass('disabled');
-
 		position = d3.mouse(this);
 		offset = $(this).offset();
 		scrollTop = 10; 
 		showContext(data,(position[0]+offset.left+(10/2))+'px',(position[1]+offset.top-50+scrollTop)+'px');
+
 		
+	    }
+	    
+	    function nodeClick(data) {
 	    }
 
 	    return timeline;
@@ -695,7 +697,7 @@ var StixTimeline = function () {
 		{
 		    imgStr += '<img src="./public/xslt/images/'+typeIconMap[d.type]+'.svg">';
 		}*/
-		imgStr += "Event Type: " +d.type;
+		imgStr += "Event Type: " +htmlSectionMap[d.type];
 	    }
 	    return imgStr;
 	}
