@@ -5,7 +5,11 @@
 /StixVizDistro.zip
 /build
 /.project
+<<<<<<< HEAD
 /examples
 /bin
 ./src/nodejs/public/TempData
 
+=======
+./src/nodejs/public/TempData
+>>>>>>> 1fcde9010dc3bfce41557671281f4adf6eef3ea9
