@@ -17,13 +17,36 @@ function getIndicatorNodes(indiObjs) {
 	var node = {};
 	$(indiObjs).each(function (index, indi) {
 		node = {'type':'Indicator-Sighting'};
-		indiId = getObjIdStr($(indi).parent());
-		node['label'] = indiId;
+		parentIndi = $(indi).parent();
+		indiId = getObjIdStr(parentIndi);
+		node['parentObjId'] = indiId;
+		node['description'] = getBestIndicatorName(parentIndi);
 		node['timeRange'] = false;
 		node['start'] = $(indi).attr('timestamp');
 		indiNodes.push(node);
 	});
 	return indiNodes;
+}
+
+// return description string for incident:Course_Of_Action
+function getCOADescription(coaTaken) {
+	desc = "";
+	if (coaTaken != null) {
+		var coaType = xpFindSingle('./coa:Type', coaTaken);
+		if (coaType != null) {
+			desc = $(coaType).text();
+		}
+		var coaDescription = xpFindSingle('./coa:Description', coaTaken);
+		if (coaDescription != null) {
+			if (desc.length > 0) {
+				desc = desc + ": " + $(coaDescription).text();
+			}
+			else {
+				desc = $(coaDescription).Text();
+			}
+		}
+	}
+	return desc;
 }
 
 //incident objs are all incidents - check to see if have time, coataken
@@ -41,7 +64,8 @@ function getIncidentNodes(incidentObjs) {
 		timeObj = xpFindSingle('./incident:Time', incident);
 		if (timeObj != null) {
 			node = {}
-			node["label"] = incidentId;
+			node["parentObjId"] = incidentId;
+			node["description"] = getBestIncidentName(incident);
 			node['timeRange'] = false;
 			//timeTypeObj = xpFindSingle('./incident:First_Malicious_Action', timeObj);
 			// there are many different time types: First_Malicious_Action, Initial_Compromise, First_Data_Exfiltration,  Incident_Discovery, Incident_Opened, Containment_Achieved,        
@@ -58,7 +82,9 @@ function getIncidentNodes(incidentObjs) {
 		coaTakenTime = xpFindSingle('./incident:COA_Taken/incident:Time', incident);
 		if (coaTakenTime != null) {
 			node = {}
-			node["label"] = incidentId;
+			node["parentObjId"] = incidentId;
+			var coaTaken = xpFindSingle('./incident:COA_Taken/incident:Course_Of_Action', incident);
+			node["description"] = getCOADescription(coaTaken);
 			node['timeRange'] = true;
 			node['type'] = 'Incident-COATaken';
 			startTime = xpFindSingle('./incident:Start', coaTakenTime);
