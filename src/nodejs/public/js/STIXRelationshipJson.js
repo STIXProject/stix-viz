@@ -425,13 +425,19 @@ var jsonObj = {"type": "top",
 	       "children": []};
 
  
-// main function for creating JSON to be displayed in the tree
-//  top level entities are gathered from each xml file
-//  then json nodes are created for each entity
-//  next bottom up references are added to the nodes
-//  all nodes are placed into a top level jsonObj
-//   and it is displayed
-function generateTreeJson(inputFiles) {
+
+
+/** 
+ * main function for creating JSON to be displayed in the tree
+ * top level entities are gathered from each xml file
+ * then json nodes are created for each entity
+ * next bottom up references are added to the nodes
+ * all nodes are placed into a top level jsonObj
+ * and the callback function is called with the resulting JSON string.
+ * 
+ * Callback should be a function that takes a single JSON string as an argument
+*/
+function generateTreeJson(inputFiles,callback) {
 	var campaignObjs = [];
 	var coaObjs = [];
 	var etObjs = [];
@@ -459,70 +465,88 @@ function generateTreeJson(inputFiles) {
 	var taBottomUpInfo = {};
 	var ttpBottomUpInfo = {};
 	
-	var numFiles = 0;
-	var topNodeName = "";
+	var topNodeName = $.map(inputFiles,function (f) {
+		return f.name;
+	}).join('\n');
+	
+	function readFile(file) {
+	    var reader = new FileReader();
+	    var deferred = $.Deferred();
+	 
+	    reader.onload = function(event) {
+	    	
+	        var xml = new DOMParser().parseFromString(this.result, "text/xml"); 
 
-	$(inputFiles).each(function (index, f) {
-                var xml = null;
-                var reader = new FileReader();
-                reader.onload = (function(theFile) {
-                        return function(e) {
-                        	// top node name in tree is list of filenames
-            				if (numFiles == 0) {
-            					topNodeName = f.name;
-            				}
-            				else {
-            					topNodeName = topNodeName + "\n" + f.name;
-            				}
-                            xml = new DOMParser().parseFromString(this.result, "text/xml"); 
-                            addXmlDoc(theFile);  // adds the new XML file to the drop down menu in the UI
-                            // global copy of xml to use for searching via xpFind
-                            doc = xml;
-                            
-                            // first collect top level components from all files
-                            // ets are in stixCommon, observables are in cybox, other top level objs are in stix
-                            $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
-                            $.merge(coaObjs, xpFind('//stix:Courses_Of_Action/stix:Course_Of_Action', xml));
-                            $.merge(etObjs, xpFind('//stix:Exploit_Targets/stixCommon:Exploit_Target', xml));
-                            $.merge(incidentObjs, xpFind('//stix:Incidents/stix:Incident', xml));
-                            $.merge(indiObjs, xpFind('//stix:Indicators/stix:Indicator', xml));
-                            $.merge(obsObjs, xpFind('//stix:Observables/cybox:Observable', xml));
-                            $.merge(taObjs, xpFind('//stix:Threat_Actors/stix:Threat_Actor', xml));
-                            $.merge(ttpObjs, xpFind('//stix:TTPs/stix:TTP', xml));
-                            numFiles++;
-                            
-                            // done collecting from files, start processing objects
-                            if (numFiles == inputFiles.length) {  // finished last file
-                            	jsonObj["name"] = topNodeName;
-                                campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
-                                coaNodes = processCoaObjs(coaObjs);
-                                etNodes = processETObjs(etObjs, coaBottomUpInfo);
-                                incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
-                                indiNodes = processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, ttpBottomUpInfo);
-                                obsNodes = processObservableObjs(obsObjs);
-                                taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo);
-                                ttpNodes = processTTPObjs(ttpObjs, etBottomUpInfo);
+	        // global copy of xml to use for searching via xpFind
+	        doc = xml;
+	        
+	        // first collect top level components from all files
+	        // ets are in stixCommon, observables are in cybox, other top level objs are in stix
+	        $.merge(campaignObjs, xpFind('//stix:Campaigns/stix:Campaign', xml));
+	        $.merge(coaObjs, xpFind('//stix:Courses_Of_Action/stix:Course_Of_Action', xml));
+	        $.merge(etObjs, xpFind('//stix:Exploit_Targets/stixCommon:Exploit_Target', xml));
+	        $.merge(incidentObjs, xpFind('//stix:Incidents/stix:Incident', xml));
+	        $.merge(indiObjs, xpFind('//stix:Indicators/stix:Indicator', xml));
+	        $.merge(obsObjs, xpFind('//stix:Observables/cybox:Observable', xml));
+	        $.merge(taObjs, xpFind('//stix:Threat_Actors/stix:Threat_Actor', xml));
+	        $.merge(ttpObjs, xpFind('//stix:TTPs/stix:TTP', xml));
+	        
+	        deferred.resolve();
+	    };
+	 
+	    reader.onerror = function() {
+	        deferred.reject(this);
+	    };
+	 
+	    reader.readAsText(file);
+	 
+	    return deferred.promise();
+	}
+	
+	// Create a deferred object for each input file
+	var deferreds = $.map(inputFiles, function (f) {
+		return readFile(f);
+	});
+	
+	// When all of the files have been read, this will happen
+	$.when.apply(null, deferreds)
+		.then(
+			function () {
+                
+                // done collecting from files, start processing objects
+				jsonObj["name"] = topNodeName;
+				campaignNodes = processCampaignObjs(campaignObjs, incidentBottomUpInfo, indiBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
+				coaNodes = processCoaObjs(coaObjs);
+				etNodes = processETObjs(etObjs, coaBottomUpInfo);
+				incidentNodes = processIncidentObjs(incidentObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, taBottomUpInfo, ttpBottomUpInfo);
+				indiNodes = processIndicatorObjs(indiObjs, coaBottomUpInfo, indiBottomUpInfo, obsBottomUpInfo, ttpBottomUpInfo);
+				obsNodes = processObservableObjs(obsObjs);
+				taNodes = processThreatActorObjs(taObjs, campaignBottomUpInfo, ttpBottomUpInfo);
+				ttpNodes = processTTPObjs(ttpObjs, etBottomUpInfo);
 
-                                // after processing object, add children collected from idRefs
-                                addBottomUpInfoForNodes(campaignNodes, campaignBottomUpInfo);
-                                addBottomUpInfoForNodes(coaNodes, coaBottomUpInfo);
-                                addBottomUpInfoForNodes(etNodes, etBottomUpInfo);
-                                addBottomUpInfoForNodes(incidentNodes, incidentBottomUpInfo);
-                                addBottomUpInfoForNodes(obsNodes, obsBottomUpInfo);
-                                addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
-                                addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
-                                
-                                // create the json for the tree
-                                jsonObj = createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, obsNodes, taNodes, ttpNodes);
-                                // displays Json to web page for debugging
-                                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
-                                
-                                // display the tree
-                                displayJSON(JSON.stringify(jsonObj, null, 2));
-                            }
-                        };
-                    }) (f);
-                reader.readAsText(f);
-	    });
+				// after processing object, add children collected from idRefs
+				addBottomUpInfoForNodes(campaignNodes, campaignBottomUpInfo);
+				addBottomUpInfoForNodes(coaNodes, coaBottomUpInfo);
+				addBottomUpInfoForNodes(etNodes, etBottomUpInfo);
+				addBottomUpInfoForNodes(incidentNodes, incidentBottomUpInfo);
+				addBottomUpInfoForNodes(obsNodes, obsBottomUpInfo);
+				addBottomUpInfoForNodes(taNodes, taBottomUpInfo);
+				addBottomUpInfoForNodes(ttpNodes, ttpBottomUpInfo);
+
+				// create the json for the tree
+				jsonObj = createTreeJson(jsonObj, campaignNodes, coaNodes, etNodes, incidentNodes, indiNodes, obsNodes, taNodes, ttpNodes);
+
+				// displays Json to web page for debugging
+				//$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+
+				// Do something with the Json String
+				callback(JSON.stringify(jsonObj, null, 2));
+		})
+		.fail(function (f) { 
+			console.log("Error reading input file: " + f.name);
+		});
+	
+	
+
 }
 
