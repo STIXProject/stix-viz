@@ -109,53 +109,70 @@ function createTimelineJson(incidentObjs, indiObjs) {
  return timelineJson;
 }
 
+var doc = null;
 
-function generateTimelineJson(inputXMLFiles) {
+
+function generateTimelineJson(inputXMLFiles,callback) {
 
 	var incidentObjs = [];
 	var indiObjs = [];
 
 	var timeNodes = [];
 	
-	var numFiles = 0;
-	var reportName = "";
+	var reportName = $.map(inputXMLFiles,function (f) {
+		return f.name;
+	}).join('\n');
+	
+	function readFile(file) {
+	    var reader = new FileReader();
+	    var deferred = $.Deferred();
+	 
+	    reader.onload = function(event) {
+	    	
+	        var xml = new DOMParser().parseFromString(this.result, "text/xml"); 
 
-	$(inputXMLFiles).each(function (index, f) {
-                var xml = null;
-                var reader = new FileReader();
-                reader.onload = (function(theFile) {
-                        return function(e) {
-                        	// top node name in tree is list of filenames
-            				if (numFiles == 0) {
-            					reportName = "Timeline for " + f.name;
-            				}
-            				else {
-            					reportName = topNodeName + "\n" + f.name;
-            				}
-                            xml = new DOMParser().parseFromString(this.result, "text/xml"); 
-                            addXmlDoc(theFile);  // adds the new XML file to the drop down menu in the UI
-                            // global copy of xml to use for searching via xpFind
-                            doc = xml;
-                            
-                            // first collect top level components from all files
-                            // ets are in stixCommon, observables are in cybox, other top level objs are in stix
-                            $.merge(incidentObjs, xpFind('.//stix:Incidents/stix:Incident', xml));  // get all incident objs
-                            $.merge(indiObjs, xpFind('.//stix:Indicators/stix:Indicator/indicator:Sightings/indicator:Sighting[@timestamp]', xml));
+	        // global copy of xml to use for searching via xpFind
+	        doc = xml;
+	        
+	        // first collect top level components from all files
+            // ets are in stixCommon, observables are in cybox, other top level objs are in stix
+            $.merge(incidentObjs, xpFind('.//stix:Incidents/stix:Incident', xml));  // get all incident objs
+            $.merge(indiObjs, xpFind('.//stix:Indicators/stix:Indicator/indicator:Sightings/indicator:Sighting[@timestamp]', xml));
 
-                            numFiles++;
-                            
-                            if (numFiles == inputXMLFiles.length) {  // finished last file
-                   
-                            	jsonObj = createTimelineJson(incidentObjs, indiObjs);
-                                
-                            	// displays Json to web page for debugging
-                                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
-                                
-                                // display the tree
-                                displayTimelineJSON(JSON.stringify(jsonObj, null, 2));
-                            }
-                        };
-                    }) (f);
-                reader.readAsText(f);
-	    });
+	        
+	        deferred.resolve();
+	    };
+	 
+	    reader.onerror = function() {
+	        deferred.reject(this);
+	    };
+	 
+	    reader.readAsText(file);
+	 
+	    return deferred.promise();
+	}
+	
+	// Create a deferred object for each input file
+	var deferreds = $.map(inputXMLFiles, function (f) {
+		return readFile(f);
+	});
+	
+	// When all of the files have been read, this will happen
+	$.when.apply(null, deferreds)
+		.then(
+			function () {
+                
+                // done collecting from files, start processing objects
+				jsonObj = createTimelineJson(incidentObjs, indiObjs);
+                
+            	// displays Json to web page for debugging
+                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
+                
+                // display the tree
+                callback(JSON.stringify(jsonObj, null, 2));
+		})
+		.fail(function (f) { 
+			console.log("Error reading input file: " + f.name);
+		});
+	
 }

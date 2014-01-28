@@ -393,18 +393,21 @@ function handleFileSelect(fileinput) {
     	reset();     	// remove old xml docs and reset display
     	
     	$(files).each(function (index, f) {
+    	    
     		var mimetype = mime.lookup(f.name);
 
     		// Only process xml files.
     		if (!mimetype.match('application/xml')) {
     			return;
+    		} else { 
+        	    addXmlDoc(f);  // adds the new XML file to the drop down menu in the UI
     		}
     	});
 
     	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
-    		generateTreeJson(files);
+    		generateTreeJson(files,displayRelationshipJSON);
 		} else if (viewType === 'selectView-timeline'){
-    		generateTimelineJson(files);
+    		generateTimelineJson(files,displayTimelineJSON);
 		}
     }
 
