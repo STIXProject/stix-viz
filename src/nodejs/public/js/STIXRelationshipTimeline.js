@@ -88,6 +88,7 @@ var StixTimeline = function () {
 	// global timeline variables
 	var timeline = {},   // The timeline
 	data = {},       // Container for the data
+	groupedData = [],
 	components = [], // All the components of the timeline for redrawing
 	bandGap = 25,    // Arbitray gap between to consecutive bands
 	bands = {},      // Registry for all the bands in the timeline
@@ -183,11 +184,12 @@ var StixTimeline = function () {
 		return 0;
 	    }
 
-	    function calculateTracks(items, sortOrder, timeOrder) {
+	    function calculateTracks(items, sortOrder, timeOrder, groupOrder) {
 		var i, track;
 
 		sortOrder = sortOrder || "descending"; // "ascending", "descending"
 		timeOrder = timeOrder || "backward";   // "forward", "backward"
+		groupOrder = groupOrder || "parentid";
 
 		function sortBackward() {
 		    // older items end deeper
@@ -213,6 +215,9 @@ var StixTimeline = function () {
 			tracks[track] = item.end;
 		    });
 		}
+		function sortGrouped() {
+		    //group the tracks in some way
+		}
 
 		if (sortOrder === "ascending")
 		    data.items.sort(compareAscending);
@@ -223,6 +228,9 @@ var StixTimeline = function () {
 		    sortForward();
 		else
 		    sortBackward();
+		
+		if(groupOrder === "parentid")
+		    sortGrouped();
 	    }
 	    var maxEnd = null; 
 	    var maxStart = null;
@@ -293,13 +301,24 @@ var StixTimeline = function () {
 		    item.end = today
 		    };
 	    });
-
+	    
+	    //Group the events
+	    data.items.forEach(function (item){
+		if(groupedData.hasOwnProperty(item.parentObjId))
+		{
+		    groupedData[item.parentObjId]++;
+		}
+		else{
+		    groupedData[item.parentObjId] = 1;
+		}
+	    });
+	    
 	    //calculateTracks(data.items);
 	    // Show patterns
 	    //calculateTracks(data.items, "ascending", "backward");
 	    //calculateTracks(data.items, "descending", "forward");
 	    // Show real data
-	    calculateTracks(data.items, "descending", "backward");
+	    calculateTracks(data.items, "descending", "backward", "parentid");
 	    //calculateTracks(data.items, "ascending", "forward");
 	    data.nTracks = tracks.length;
 	    data.minDate = d3.min(data.items, function (d) {
