@@ -649,15 +649,9 @@ var StixTimeline = function () {
 	//
 
 	function parseDate(dateString) {
-	    //alert(dateString);
+
 	    var date = new Date(dateString);
 
-	    //var format = d3.time.format("%Y-%m-%dT%H:%M:%S%Z"),
-	    //date,
-	    //year;
-	    
-	    //date = format.parse(dateString);
-	    //alert(date);
 	    if (date !== null) 
 	    {
 		return date;
@@ -697,6 +691,8 @@ var StixTimeline = function () {
 		{
 		    imgStr += '<img src="./public/xslt/images/'+typeIconMap[d.type]+'.svg">';
 		}*/
+		imgStr += "Parent ID: " + d.parentObjId + "<br>";
+		imgStr += "Description: " +d.description+ "<br>";
 		imgStr += "Event Type: " +htmlSectionMap[d.type];
 	    }
 	    return imgStr;

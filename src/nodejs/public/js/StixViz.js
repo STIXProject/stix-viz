@@ -223,7 +223,7 @@ function displayTimelineJSON(jsonString) {
  * @returns
  */
 function getId (d) { 
-	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : d.label ? d.label :"";
+	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : d.parentObjId ? d.parentObjId :"";
 }
 
 /** Show the context menu for showing the HTML view when right clicking a node
