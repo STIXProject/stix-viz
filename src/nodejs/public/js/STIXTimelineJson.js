@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2013 ? The MITRE Corporation
+ * Copyright (c) 2014 The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the functionality for extracting time related data specified in the xml
  * files loaded.  The top level function is generateTimelineJson(inputXMLFiles)
  * 
  * Json is created representing time related data as either single points (instances) or time
- * ranges with a start and end time.   This is passed to displayTimeline(json) for display in STIXViz.
+ * ranges with a start and end time.   This is passed to displayJson(json) for display in STIXViz.
  * 
  */
 
@@ -102,77 +102,29 @@ function getIncidentNodes(incidentObjs) {
 	return incidentNodes;
 }
 
-function createTimelineJson(incidentObjs, indiObjs) {
+function createTimelineJson(topLevelObjs) {
  var timelineJson = [];
- $.merge(timelineJson, getIncidentNodes(incidentObjs));
- $.merge(timelineJson, getIndicatorNodes(indiObjs));
+ $.merge(timelineJson, getIncidentNodes(topLevelObjs['incidentObjs']));
+ $.merge(timelineJson, getIndicatorNodes(topLevelObjs['indiObjs']));
  return timelineJson;
 }
 
-var doc = null;
-
-
-function generateTimelineJson(inputXMLFiles,callback) {
-
-	var incidentObjs = [];
-	var indiObjs = [];
-
-	var timeNodes = [];
+/** 
+ * Top level entities are gathered from each xml file
+ * 
+*/
+function gatherTimelineTopLevelObjs(xml, topLevelObjs) {
 	
-	var reportName = $.map(inputXMLFiles,function (f) {
-		return f.name;
-	}).join('\n');
-	
-	function readFile(file) {
-	    var reader = new FileReader();
-	    var deferred = $.Deferred();
-	 
-	    reader.onload = function(event) {
-	    	
-	        var xml = new DOMParser().parseFromString(this.result, "text/xml"); 
-
-	        // global copy of xml to use for searching via xpFind
-	        doc = xml;
-	        
-	        // first collect top level components from all files
-            // ets are in stixCommon, observables are in cybox, other top level objs are in stix
-            $.merge(incidentObjs, xpFind('.//stix:Incidents/stix:Incident', xml));  // get all incident objs
-            $.merge(indiObjs, xpFind('.//stix:Indicators/stix:Indicator/indicator:Sightings/indicator:Sighting[@timestamp]', xml));
-
-	        
-	        deferred.resolve();
-	    };
-	 
-	    reader.onerror = function() {
-	        deferred.reject(this);
-	    };
-	 
-	    reader.readAsText(file);
-	 
-	    return deferred.promise();
+	if (topLevelObjs == null) {
+		topLevelObjs = {};
+		topLevelObjs['incidentObjs'] = [];
+		topLevelObjs['indiObjs'] = [];
 	}
 	
-	// Create a deferred object for each input file
-	var deferreds = $.map(inputXMLFiles, function (f) {
-		return readFile(f);
-	});
-	
-	// When all of the files have been read, this will happen
-	$.when.apply(null, deferreds)
-		.then(
-			function () {
-                
-                // done collecting from files, start processing objects
-				jsonObj = createTimelineJson(incidentObjs, indiObjs);
-                
-            	// displays Json to web page for debugging
-                //$('#jsonOutput').text(JSON.stringify(jsonObj, null, 2));  
-                
-                // display the tree
-                callback(JSON.stringify(jsonObj, null, 2));
-		})
-		.fail(function (f) { 
-			console.log("Error reading input file: " + f.name);
-		});
-	
+    // ets are in stixCommon, observables are in cybox, other top level objs are in stix
+    $.merge(topLevelObjs['incidentObjs'], xpFind('.//stix:Incidents/stix:Incident', xml));  // get all incident objs
+    $.merge(topLevelObjs['indiObjs'], xpFind('.//stix:Indicators/stix:Indicator/indicator:Sightings/indicator:Sighting[@timestamp]', xml));
+    
+    return topLevelObjs;
 }
+

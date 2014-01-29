@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2014 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the functionality for determining relationships specified in the xml
+ * files loaded.  The top level function is generateTreeJson(inputXMLFiles)
+ * 
+ * Json is created representing the nodes and links in the tree.   This is passed to 
+ * displayTree(json) for display in STIXViz.
+ * 
+ */
+
 var path = require('path');
 
 var xmlDocs = {}, docIndex = 0;
@@ -6,8 +18,9 @@ var working = 0;
 
 var view = null,
 viewType = null,
-relationshipData=null,
-timelineData = null,
+jsonDataObj = null,  // json returned from generateJson
+relationshipData=null,  // stringified relationship json
+timelineData = null,   // stringified timeline json
 layout=null;
 
 /**
@@ -120,8 +133,6 @@ $(function () {
 	});
 	
 	
-	
-	
 	/**
 	 * Handler for top level Show HTML button
 	 */
@@ -136,16 +147,19 @@ $(function () {
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
 		reset();
 		if (viewType === 'selectView-tree') { 
+			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
 			if (relationshipData) { 
 				view.display(relationshipData);
 			};
 		} else if (viewType === 'selectView-graph') {
+			$('#viewName').text('STIX Graph View');
 			view = new StixGraph();
 			if (relationshipData) { 
 				view.display(relationshipData);
 			};
 		} else if (viewType === 'selectView-timeline'){
+			$('#viewName').text('STIX Timeline View');
 			view = new StixTimeline();
 			if (timelineData) {
 				view.display(timelineData);
@@ -205,17 +219,18 @@ function addXmlDoc (f) {
 	
 }
 
-
-function displayRelationshipJSON (jsonString) { 
-	relationshipData = jsonString;
-	view.display(relationshipData);
+// callback function for generateJson, which is called from handlefileselect
+//  jsonDataObj created by generateJson contains a child for each type of view
+//    child json is stringified into global vars for later use when switching views
+function displayJson(jsonDataObj, viewType) {
+	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
+	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
+	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
+		view.display(relationshipData);
+	} else if (viewType === 'selectView-timeline'){
+		view.display(timelineData);
+	}
 }
-
-function displayTimelineJSON(jsonString) {
-	timelineData = jsonString;
-	view.display(timelineData);
-}
-
 
 /**
  * Get the id of the node in the XML.
@@ -359,8 +374,6 @@ function reset () {
 	layout.close("south");
 }
 
-
-
 /**
  * Handle the selection of input file(s)
  * @param fileinput
@@ -403,12 +416,16 @@ function handleFileSelect(fileinput) {
         	    addXmlDoc(f);  // adds the new XML file to the drop down menu in the UI
     		}
     	});
+    	
+    	generateJsonForFiles(files, viewType, displayJson);
 
+    	/*
     	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
     		generateTreeJson(files,displayRelationshipJSON);
 		} else if (viewType === 'selectView-timeline'){
     		generateTimelineJson(files,displayTimelineJSON);
 		}
+		*/
     }
 
 };
