@@ -49,11 +49,13 @@ var StixGraph = function () {
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkDistance(170)
 	.linkStrength(1)
 	.friction(.6)
-	.charge(-200)
-	.gravity(.001)
+	.charge(Math.min.apply(Math,graphSize()) * -1.5)
+	.linkDistance(Math.min.apply(Math,graphSize())/4)
+	.gravity(function (d) { 
+		return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+	})
 	.size(graphSize())
 	.on("tick", tick);
 
@@ -66,7 +68,13 @@ var StixGraph = function () {
 
 	_self.resize = function () { 
 
-			force.size(graphSize());
+			force
+			.size(graphSize())
+			.linkDistance(Math.min.apply(Math,graphSize())/4)
+			.gravity(function (d) { 
+				return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+				})
+			.charge(Math.min.apply(Math,graphSize()) * -1.5);
 
 
 			update();
@@ -287,9 +295,9 @@ var StixGraph = function () {
 	 */
 	function click(d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
-		if (d._children) {
+		if (d._children && d._children.length > 0) {
 			d.children = d._children;
-			d._children = null;
+			d._children = [];
 			d.children.forEach(function (c) { 
 				node.each(function (n) {
 					if (n._children) { 
@@ -485,7 +493,19 @@ var StixGraph = function () {
 				if (!node.id) node.id = ref.id;
 				if (!node.name) node.name = ref.name;
 				else if (!ref.name) ref.name = node.name;
-			} else {
+				// adjust depth to lowest observed value
+				if (ref.depth > node.depth) { 
+					ref.depth = node.depth;
+				}
+				
+				// merge children
+				if (ref.children && node.children) { 
+					var refchildids = ref.children.map(function (c) { return c.id; });
+					ref.children = ref.children.concat(node.children.filter(function (c) { return refchildids.indexOf(c.id) === -1; }));
+				} else if (node.children){ 
+					ref.children = node.children;
+				}
+			} else if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
 				nodes.push(node);
 				pos = nodes.length-1;
 			}
@@ -500,7 +520,6 @@ var StixGraph = function () {
 				node.py = graphSize()[1]/2;
 			}
 
-			// Only use top down links in the graph view
 			if (node.children) { 
 				node.children.forEach(function (n) { recurse(n,depth+1,pos);
 				});
