@@ -133,11 +133,12 @@ var StixGraph = function () {
 	};
 
 	/**
-	 * Collapse node d by moving "children" to "_children"
+	 * Collapse node d by moving "children" to "_children". Since this is a graph, we could go through the same 
+	 * node twice, therefore check that the children are not empty before collapsing them. 
 	 * @param d
 	 */
 	function collapse(d) {
-		if (d.children) {
+		if (d.children && d.children.length > 0) {
 			d._children = d.children;
 			d._children.forEach(collapse);
 			d.children = [];
@@ -479,55 +480,71 @@ var StixGraph = function () {
 		function recurse(node,depth,parent) {
 
 			var ref = null;
-			var pos;
+			var pos = 0;
 			if (getId(node)) {
+				// Look in the list of nodes we have seen so far and see if this node is a duplicate, by id 
 				ref = nodes.filter(function (n) { return getId(n) === getId(node);})[0];
+			} else if (node.id) { 
+				ref = nodes.filter(function (n) { return n.id === node.id; })[0];
 			}
+			
+			// If this is the first time we have processed this node, add an id and depth parameter
 			if (!node.id && !ref) { 
 				node.id = nodeid++;
 				node.depth = depth;
 			}
-
+			// If there is a pre-existing node, merge it with the new node and then replace the new node with the old one in 
+			// the new node's parent's list of children (creating a true graph rather than a tree)
 			if (ref) {
 				pos = nodes.indexOf(ref);
-				if (!node.id) node.id = ref.id;
-				if (!node.name) node.name = ref.name;
-				else if (!ref.name) ref.name = node.name;
+//				if (!node.id) node.id = ref.id;
+//				if (!node.name) node.name = ref.name;
+				
+				if (!ref.name) ref.name = node.name;
 				// adjust depth to lowest observed value
-				if (ref.depth > node.depth) { 
-					ref.depth = node.depth;
+				if (ref.depth > depth) { 
+					ref.depth = depth;
 				}
 				
 				// merge children
 				if (ref.children && node.children) { 
 					var refchildids = ref.children.map(function (c) { return c.id; });
 					ref.children = ref.children.concat(node.children.filter(function (c) { return refchildids.indexOf(c.id) === -1; }));
-				} else if (node.children){ 
+					node.children = ref.children;
+				} else if (node.children) { 
 					ref.children = node.children;
 				}
-			} else if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
+				var childPos = nodes[parent].children.indexOf(node);
+				if (childPos > -1) { 
+					// Remove the duplicate child and replace it with the existing ref node 
+					nodes[parent].children.splice(childPos,1,ref);
+				}
+			// If this is the first time we've seen this node, add it to the list
+			} else {//if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
 				nodes.push(node);
 				pos = nodes.length-1;
 			}
-
+			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
 					links.push({source:parent,target:pos});
 				}
+			// If it's the root node, fix it in the middle of the window
 			} else { 
 				node.fixed = true;
 				node.px = graphSize()[0]/2;
 				node.py = graphSize()[1]/2;
 			}
 
+			// Recurse on the children of the new node, since we might not have seen them before
 			if (node.children) { 
-				node.children.forEach(function (n) { recurse(n,depth+1,pos);
+				node.children.forEach(function (n) { 
+					recurse(n,depth+1,pos);
 				});
-				
 			}
 
 		}
-
+		
 		recurse(root,0);
 		return {nodes:nodes,links:links};
 	}
