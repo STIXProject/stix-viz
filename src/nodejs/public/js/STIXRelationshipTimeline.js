@@ -89,6 +89,7 @@ var StixTimeline = function () {
 	var timeline = {},   // The timeline
 	data = {},       // Container for the data
 	groupedData = [],
+	maxGroupSize = 0,
 	components = [], // All the components of the timeline for redrawing
 	bandGap = 25,    // Arbitray gap between to consecutive bands
 	bands = {},      // Registry for all the bands in the timeline
@@ -216,8 +217,17 @@ var StixTimeline = function () {
 		    });
 		}
 		function sortGrouped() {
-		    //group the tracks in some way
+		    items.forEach(function (item) {
+			items.forEach(function (i) {
+			    if(item.parentObjId == i.parentObjId)
+			    {
+				i.track = item.track;
+			    }
+			});
+		    });
 		}
+
+		
 
 		if (sortOrder === "ascending")
 		    data.items.sort(compareAscending);
@@ -306,12 +316,36 @@ var StixTimeline = function () {
 	    data.items.forEach(function (item){
 		if(groupedData.hasOwnProperty(item.parentObjId))
 		{
-		    groupedData[item.parentObjId]++;
+		    var group = groupedData[item.parentObjId];
+		    group.count++;
+		    if(item.start < group.x)
+		    {
+			group.x = item.start;
+		    }
+		    if(item.end > group.width)
+		    {
+			group.width = item.end;
+		    }
 		}
 		else{
-		    groupedData[item.parentObjId] = 1;
+		    var group = {};
+		    group.count = 1;
+		    group.x = item.start;
+		    group.width = item.end;
+		    groupedData[item.parentObjId] = group;
+		    
 		}
 	    });
+	    
+
+	    
+	    for (var k in groupedData) {
+		if(maxGroupSize < groupedData[k].count)
+		{
+		    maxGroupSize = groupedData[k].count;
+		    
+		}
+	    }
 	    
 	    //calculateTracks(data.items);
 	    // Show patterns
@@ -337,7 +371,11 @@ var StixTimeline = function () {
 	//
 
 	timeline.band = function (bandName, sizeFactor) {
+	    
+	    var border=1;
+            var bordercolor='black';
 	    var band = {};
+	    var printedGroupSize = {};
 	    band.id = "band" + bandNum;
 	    band.x = 0;
 	    band.y = bandY;
@@ -346,17 +384,19 @@ var StixTimeline = function () {
 	    band.trackOffset = 4;
 	    // Prevent tracks from getting too high
 	    band.trackHeight = Math.min((band.h - band.trackOffset) / data.nTracks, 20);
-	    band.itemHeight = band.trackHeight * 0.8,
+	    band.trackHeight = band.trackHeight * maxGroupSize;
+	    band.itemHeight = band.trackHeight * (1 / maxGroupSize),
 	    band.parts = [],
 	    band.instantWidth = 100; // arbitray value
 	    band.xScale = d3.time.scale()
 	    .domain([data.minDate, data.maxDate])
 	    .range([0, band.w]);
+
 	    
 	    band.yScale = function (track) {
 		return band.trackOffset + track * band.trackHeight;
 	    };
-
+	    	    
 	    band.g = chart.append("g")
 	    .attr("id", band.id)
 	    .attr("transform", "translate(0," + band.y +  ")");
@@ -365,26 +405,84 @@ var StixTimeline = function () {
 	    .attr("class", "band")
 	    .attr("width", band.w)
 	    .attr("height", band.h);
+	    
 
+	    
 	    // Items
 	    var items = band.g.selectAll("g")
 	    .data(data.items)
 	    .enter().append("svg")
 	    .attr("y", function (d) {
-		return band.yScale(d.track);
+		var numPrinted = 0;
+		if(!printedGroupSize.hasOwnProperty(d.parentObjId))
+		{
+		    printedGroupSize[d.parentObjId] = 1;
+		}
+		else
+		{
+		   numPrinted = printedGroupSize[d.parentObjId];
+		   printedGroupSize[d.parentObjId]++; 
+		}
+		return (band.yScale(d.track)+(numPrinted*band.itemHeight));
+
 	    })
 	    .attr("height", band.itemHeight)
 	    .attr("class", function (d) {
 		return d.instant ? "part instant" : "part interval";
 	    });
+	    
+	    
+	    //Groups
+	    var groupings = band.g.selectAll("g")
+	    .data(data.items)
+	    .enter().append("svg")
+	    .attr("y", function (d) {
+		//var numPrinted = printedGroupSize.hasOwnProperty(d.parentObjId);
+		return band.yScale(d.track);
 
+	    })
+	    .attr("height", function (d) {
+		var numPrinted = printedGroupSize[d.parentObjId];
+		return band.itemHeight * numPrinted;
+	    })
+	    .attr("width", function (d) {
+		//need to calculate the length of all the items in the group
+		//alert(groupedData[d.parentObjId].width);
+		
+		return band.xScale(groupedData[d.parentObjId].width);
+	    })
+	    .attr("x", function (d) {
+		//Need to calculate the left most position in the group
+		return band.xScale(groupedData[d.parentObjId].x);
+
+	    })
+	    .attr("class", "part grouping");
+	    	   
+		   
+	    var groups = d3.select("#band0" ).selectAll(".grouping");
+	    groups.append("rect")
+	    .style("fill", "none")
+	    .attr("width", "100%")
+	    .attr("height", "100%")
+	    .style("stroke", "blue")
+	    .style("stroke-width", function (d) {
+		if(groupedData[d.parentObjId].count > 1)
+		{
+		    return 3;
+		}
+		else
+		{
+		    return 0;
+		}
+	    })
+	    
 	    var intervals = d3.select("#band" + bandNum).selectAll(".interval");
 	    intervals.append("rect")
 	    .style("fill", function (d) {
 		return typeColorMap[d.type];
 	    })
 	    .attr("width", "100%")
-	    .attr("height", "100%");
+	    .attr("height", "90%");
 	    
 	    intervals.append("text")
 	    .attr("class", "intervalLabel")
