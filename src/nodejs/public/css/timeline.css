@@ -59,7 +59,7 @@
 
 .interval {
     
-    stroke-width: 6;
+    stroke-width: 2;
     cursor : default;
     pointer-events: true;
 }
