@@ -25,11 +25,11 @@ var StixGraph = function () {
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
-	var report,svg,node,link;
+	var report={},
+	svg=null,
+	node=[],
+	link=[];
 
-
-	/* Id of the node that was last right-clicked */
-	var contextNode = null;
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -42,39 +42,36 @@ var StixGraph = function () {
 	};
 
 	function graphSize () { 
-		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-100];
+		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
 	}
 
 	/**
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkStrength(1)
-	.friction(.6)
-	.charge(Math.min.apply(Math,graphSize()) * -1.5)
-	.linkDistance(Math.min.apply(Math,graphSize())/4)
+	.linkStrength(.6)
+	.friction(.7)
+	.charge(Math.min.apply(Math,graphSize()) * -2)
+	.linkDistance(Math.min.apply(Math,graphSize())/5)
 	.gravity(function (d) { 
-		return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+		return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 	})
 	.size(graphSize())
 	.on("tick", tick);
 
-	/**
-	 * Duration of animated transitions
-	 */
-	var duration = 750;
 
 
 
 	_self.resize = function () { 
 
 			force
+			.linkStrength(.6)
 			.size(graphSize())
-			.linkDistance(Math.min.apply(Math,graphSize())/4)
+			.linkDistance(Math.min.apply(Math,graphSize())/5)
 			.gravity(function (d) { 
-				return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 				})
-			.charge(Math.min.apply(Math,graphSize()) * -1.5);
+			.charge(Math.min.apply(Math,graphSize()) * -2);
 
 
 			update();
@@ -123,8 +120,8 @@ var StixGraph = function () {
 
 		report = $.parseJSON(jsonString);
 		
-		removeBottomUp(report);		
-		flatten(report); // this will set the correct ids for all nodes in the graph 
+		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
+		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
 		report.children.forEach(collapse);
 
 		// This is where the tree actually gets displayed
@@ -140,8 +137,8 @@ var StixGraph = function () {
 	function collapse(d) {
 		if (d.children && d.children.length > 0) {
 			d._children = d.children;
-			d._children.forEach(collapse);
 			d.children = [];
+			d._children.forEach(collapse);
 		}
 	}
 	
@@ -299,6 +296,7 @@ var StixGraph = function () {
 		if (d._children && d._children.length > 0) {
 			d.children = d._children;
 			d._children = [];
+			// Expand other nodes that share children in common with the clicked node
 			d.children.forEach(function (c) { 
 				node.each(function (n) {
 					if (n._children) { 
@@ -313,6 +311,19 @@ var StixGraph = function () {
 		} else {
 			d._children = d.children;
 			d.children = [];
+			// collapse other nodes that have children in common with the clicked node
+			d._children.forEach(function (c) { 
+				node.each(function (n) {
+					if (n._children) {
+						n._children.forEach(function (nc) {
+							if (nc.id && nc.id === c.id) {
+								pos = n.children.indexOf(nc);
+								n.children.splice(pos,1); // remove node from other node's children
+							}
+						});
+					}
+				});
+			});
 		} 
 		update();
 	}	
@@ -470,12 +481,13 @@ var StixGraph = function () {
 		return null;
 	};
 
-
-
-	var nodeid = 0;
-//	Returns a list of all nodes under the root.
-	function flatten(root) {
-		var nodes = [], links = [];
+	
+	/**
+	 * Traverse the entire tree from the root, merging any nodes that have the same id. This will produce a graph from the tree. 
+	 * @param root
+	 */
+	function mergeNodes (root) { 
+		var nodes = [],nodeid=0;
 
 		function recurse(node,depth,parent) {
 
@@ -524,6 +536,46 @@ var StixGraph = function () {
 				nodes.push(node);
 				pos = nodes.length-1;
 			}
+
+			// Recurse on the children of the new node, since we might not have seen them before
+			if (node.children) { 
+				node.children.forEach(function (n) { 
+					recurse(n,depth+1,pos);
+				});
+			}
+
+		}
+		
+		recurse(root,0);
+	}
+
+
+	/**
+	 * flatten the graph into a list of nodes and a list of links, to be used by the d3 force layout 
+	 * @param root
+	 * @returns the lists of nodes and links that define the graph
+	 */
+	function flatten(root) {
+		var nodes = [], links = [];
+
+		function recurse(node,parent) {
+
+			var pos = 0;
+
+			// Recurse on the node's children
+			// If we have seen this node before, use the position in the node list
+			if (nodes.indexOf(node) > -1) { 
+				pos = nodes.indexOf(node); 
+			} else { 			// Otherwise, add the node to the list
+				nodes.push(node);
+				pos = nodes.length-1;
+				if (node.children) { 
+					node.children.forEach(function (n) { 
+						recurse(n,pos);
+					});
+				}
+			}
+
 			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
@@ -536,34 +588,29 @@ var StixGraph = function () {
 				node.py = graphSize()[1]/2;
 			}
 
-			// Recurse on the children of the new node, since we might not have seen them before
-			if (node.children) { 
-				node.children.forEach(function (n) { 
-					recurse(n,depth+1,pos);
-				});
-			}
-
+			
 		}
 		
-		recurse(root,0);
+		recurse(root);
 		return {nodes:nodes,links:links};
 	}
+
 
 	/**
 	 * Remove all node highlighting
 	 */
-	function removeHighlightedNodes () { 
+	_self.removeHighlightedNodes = function () { 
 		d3.selectAll("rect.nodeborder").remove();
-	}
+	};
 
-	
+
 
 	/**
 	 * Highlight all nodes in the tree that match the given nodeId. 
 	 * 
 	 * @param nodeId The id of the node to highlight
 	 */
-	function highlightDuplicateNodes (nodeId) { 
+	_self.highlightDuplicateNodes = function (nodeId) { 
 		if (!nodeId) return;
 		var matches = d3.selectAll(".node").filter(function (d) { 
 			return d.nodeId == nodeId || d.nodeIdRef == nodeId;
@@ -574,10 +621,8 @@ var StixGraph = function () {
 		.attr("rx","10")
 		.attr("ry","10")
 		.attr("class","nodeborder")
-		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
-	}
+		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + ((-nodeHeight/2) - 5) + ")");
+	};
 
 
-
-
-}
+};
