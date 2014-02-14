@@ -65,13 +65,13 @@ var StixTimeline = function () {
 	
 	var typeColorMap = {
 	    "Indicator-Sighting" :"#1abc9c",
-	    "Incident-First_Malicious_Action" :"#e67e22",
+	    "Incident-First_Malicious_Action" :"#95a5a6",
 	    "Incident-Initial_Compromise" :"#2ecc71",
 	    "Incident-First_Data_Exfiltration" :"#9b59b6",
 	    "Incident-Incident_Discovery" :"#f1c40f",
 	    "Incident-Incident_Opened" :"#2ecc71",
 	    "Incident-Containment_Achieved" :"#e74c3c",
-	    "Incident-Restoration_Achieved" :"#95a5a6",
+	    "Incident-Restoration_Achieved" :"#e67e22",
 	    "Incident-Incident_Reported" :"#d35400",
 	    "Incident-Incident_Closed" :"#34495e",
 	    "Incident-COATaken" :"#27ae60"
@@ -318,20 +318,28 @@ var StixTimeline = function () {
 		{
 		    var group = groupedData[item.parentObjId];
 		    group.count++;
-		    if(item.start < group.x)
+		    if(item.start < group.start)
 		    {
-			group.x = item.start;
+			group.start = item.start;
 		    }
-		    if(item.end > group.width)
+		    if(item.end > group.end)
 		    {
-			group.width = item.end;
+			group.end = item.end;
 		    }
 		}
 		else{
 		    var group = {};
 		    group.count = 1;
-		    group.x = item.start;
-		    group.width = item.end;
+		    group.start = item.start;
+		    if(item.instant == true)
+		    {
+			group.end = 0;
+			group.hasinstant = true;
+		    }
+		    else
+		    {
+			group.end = item.end;
+		    }
 		    groupedData[item.parentObjId] = group;
 		    
 		}
@@ -431,7 +439,7 @@ var StixTimeline = function () {
 		return d.instant ? "part instant" : "part interval";
 	    });
 	    
-	    
+
 	    //Groups
 	    var groupings = band.g.selectAll("g")
 	    .data(data.items)
@@ -445,30 +453,19 @@ var StixTimeline = function () {
 		var numPrinted = printedGroupSize[d.parentObjId];
 		return band.itemHeight * numPrinted;
 	    })
-	    .attr("width", function (d) {
-		//need to calculate the length of all the items in the group
-		//alert(groupedData[d.parentObjId].width);
-		
-		return band.xScale(groupedData[d.parentObjId].width);
-	    })
-	    .attr("x", function (d) {
-		//Need to calculate the left most position in the group
-		return band.xScale(groupedData[d.parentObjId].x);
-
-	    })
 	    .attr("class", "part grouping");
 	    	   
-		   
-	    var groups = d3.select("#band0" ).selectAll(".grouping");
+		
+	    var groups = d3.select("#band0").selectAll(".grouping");
 	    groups.append("rect")
 	    .style("fill", "none")
 	    .attr("width", "100%")
-	    .attr("height", "100%")
+	    .attr("height", "93%")
 	    .style("stroke", "blue")
 	    .style("stroke-width", function (d) {
 		if(groupedData[d.parentObjId].count > 1)
 		{
-		    return 3;
+		    return 2;
 		}
 		else
 		{
@@ -523,6 +520,24 @@ var StixTimeline = function () {
 		})
 		.attr("width", function (d) {
 		    return band.xScale(d.end) - band.xScale(d.start);
+		});
+		band.parts.forEach(function(part) {
+		    part.redraw();
+		});
+		
+		groupings
+		.attr("x", function (d) {
+		    //return band.xScale(d.start);
+		    return band.xScale(groupedData[d.parentObjId].start);
+		})
+		.attr("width", function (d) {
+		    //return band.xScale(d.end) - band.xScale(d.start);
+		    var width = band.xScale(groupedData[d.parentObjId].end) - band.xScale(groupedData[d.parentObjId].start);
+		    if(groupedData[d.parentObjId].hasinstant && width < 15)
+		    {
+			return 15;
+		    }
+		    return band.xScale(groupedData[d.parentObjId].end) - band.xScale(groupedData[d.parentObjId].start);
 		});
 		band.parts.forEach(function(part) {
 		    part.redraw();
