@@ -139,10 +139,10 @@ $(function () {
 	
 	
 	/**
-	 * Handler for top level Show HTML button
+	 * Handler for Show HTML context menu
 	 */
-	$('#showHtml').on('click',function () {
-		$("#showHtmlMenu").hide();
+	$('#contextMenu #showHtml').on('click',function () {
+		$("#contextMenu").hide();
 		showHtmlByContext(contextNode);
 	});
 	
@@ -178,7 +178,7 @@ $(function () {
 	 * If there's a context menu open, you can hide it by clicking somewhere else in the document
 	 */
 	$(document).click(function () { 
-		$('#showHtmlMenu').hide();
+		$('#contextMenu').hide();
 	});
 	
 	
@@ -250,14 +250,15 @@ function getId (d) {
  * 
  * @param data The node that was clicked
  */
-function showContext (data,left,top) {
-	contextNode = data;
+function showContext (node,left,top) {
+	contextNode = node;
+	var data = d3.select(node).datum();
 	if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
 		$('#showHtml').removeClass('disabled');
 	} else { 
 		$('#showHtml').addClass('disabled');
 	}
-	d3.select("#showHtmlMenu")  // Display the context menu in the right position
+	d3.select("#contextMenu")  // Display the context menu in the right position
 	.style('position','absolute')
 	.style('left',left)
 	.style('top',top)
@@ -271,7 +272,8 @@ function showContext (data,left,top) {
  *  the type section header. 
  * @param data The node selected to show HTML
  */
-function showHtmlByContext (data) {
+function showHtmlByContext (node) {
+	var data = d3.select(node).datum();
 	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 		if (working == 0) { 

@@ -40,7 +40,7 @@ var StixTree = function () {
 	}, 
 	width = 1100 - margin.right - margin.left,
 	height = 1200 - margin.top- margin.bottom;
-
+	
 	function treeWidth () { 
 		return $('#contentDiv').width() - nodeWidth;
 	}
@@ -209,7 +209,7 @@ var StixTree = function () {
 			position = d3.mouse(this);
 			offset = $(this).offset();
 			scrollTop = $('#viewContainer').scrollTop(); 
-			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+			showContext(this,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
 		})
 		.classed("parent",function(d) { 
 			return hasChildren(d);

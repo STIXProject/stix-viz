@@ -74,11 +74,11 @@
 
 	<div class="ui-layout-center" id="viewContainer">
 		<div id="jsonOutput"></div>
-		<div id="showHtmlMenu" class="dropdown clearfix"
+		<div id="contextMenu" class="dropdown clearfix"
 			style="display: none;">
 			<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"
 				style="display: block; position: static; margin-bottom: 5px;">
-				<li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
+				      <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
 			</ul>
 		</div>
 		<div id="contentDiv">
@@ -123,6 +123,14 @@
 			</div>
 		</nav>
 	</div>
+	
+	<script id="treeContextMenuTemplate" type="text/template">
+  </script>
+  
+  <script id="graphContextMenuTemplate" type="text/template">
+      <li id="toggleFix"><a tabindex="-1" href="#"></a></li>
+      <li id="hideNode"><a tabindex="-1" href="#">Hide Node</a></li>
+  </script>
 
 </body>
 </html>
