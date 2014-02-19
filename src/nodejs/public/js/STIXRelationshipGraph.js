@@ -80,7 +80,7 @@ var StixGraph = function () {
 	.on("dragend", function (d, i) {
 		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
 			force.resume();                     // were valid in "dragstart"
-			d3.select(this).classed("fixed", d.fixed = true);
+			//d3.select(this).classed("fixed", d.fixed = true);
 			tick();
 			dragInitiated = false;              // terminate drag gesture
 		}
@@ -393,6 +393,7 @@ var StixGraph = function () {
 	 */
 	function click(d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
+		if (!hasChildren(d)) return; // ignore leaf nodes
 		if (d._children && d._children.length > 0) {
 			d.children = d._children.concat(d.children);
 			d._children = [];
