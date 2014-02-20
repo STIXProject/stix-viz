@@ -117,7 +117,12 @@ $(function () {
 		},
 		south: {
 			initClosed:true,
-			size:300
+			size:300,
+			onshow: function () { view && view.resize(); },
+			onhide: function () { view && view.resize(); },
+			onopen: function () { view && view.resize(); },
+			onclose: function () { view && view.resize(); },
+			onresize: function () { view && view.resize(); }
 		} 			
 	});
 	
@@ -134,10 +139,10 @@ $(function () {
 	
 	
 	/**
-	 * Handler for top level Show HTML button
+	 * Handler for Show HTML context menu
 	 */
-	$('#showHtml').on('click',function () {
-		$("#showHtmlMenu").hide();
+	$('#contextMenu #showHtml').on('click',function () {
+		$("#contextMenu").hide();
 		showHtmlByContext(contextNode);
 	});
 	
@@ -145,7 +150,7 @@ $(function () {
 	$('#viewList li').on('click', function () {
 		viewType = $(this).attr('id');
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
-		reset();
+		reset('view');
 		if (viewType === 'selectView-tree') { 
 			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
@@ -173,7 +178,7 @@ $(function () {
 	 * If there's a context menu open, you can hide it by clicking somewhere else in the document
 	 */
 	$(document).click(function () { 
-		$('#showHtmlMenu').hide();
+		$('#contextMenu').hide();
 	});
 	
 	
@@ -245,14 +250,15 @@ function getId (d) {
  * 
  * @param data The node that was clicked
  */
-function showContext (data,left,top) {
-	contextNode = data;
+function showContext (node,left,top) {
+	contextNode = node;
+	var data = d3.select(node).datum();
 	if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
 		$('#showHtml').removeClass('disabled');
 	} else { 
 		$('#showHtml').addClass('disabled');
 	}
-	d3.select("#showHtmlMenu")  // Display the context menu in the right position
+	d3.select("#contextMenu")  // Display the context menu in the right position
 	.style('position','absolute')
 	.style('left',left)
 	.style('top',top)
@@ -266,7 +272,8 @@ function showContext (data,left,top) {
  *  the type section header. 
  * @param data The node selected to show HTML
  */
-function showHtmlByContext (data) {
+function showHtmlByContext (node) {
+	var data = d3.select(node).datum();
 	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 		if (working == 0) { 
@@ -349,6 +356,29 @@ function showHtml (html) {
 
 }
 
+
+/**
+ * Remove all node highlighting
+ */
+function removeHighlightedNodes () { 
+	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
+		view.removeHighlightedNodes();
+	}
+}
+
+
+
+/**
+ * Highlight all nodes in the tree that match the given nodeId. 
+ * 
+ * @param nodeId The id of the node to highlight
+ */
+function highlightDuplicateNodes (nodeId) {
+	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
+		view.highlightDuplicateNodes(nodeId);
+	}
+}
+
 /**
  * Expand a given node in the HTML and then expand all of the nested expandable nodes (uses stix_to_html function
  * to expand nested expandables).
@@ -365,13 +395,17 @@ function expandSection (node) {
 /**
  *  Reset the display when new XML files are loaded
  */
-function reset () { 
-	xmlDocs = {};
-	docIndex = 0;
-	$('#xmlFileList').empty();
+function reset (context) {
+	// If the context is 'all', reset everything because we are loading new XML files
+	if (context === 'all') { 
+		xmlDocs = {};
+		docIndex = 0;
+		$('#xmlFileList').empty();
+		$('#htmlView').empty();
+		layout.close("south");
+	}
+	// In all contexts, empty the view div
 	$('#contentDiv').empty();
-	$('#htmlView').empty();
-	layout.close("south");
 }
 
 /**
@@ -387,7 +421,7 @@ function handleFileSelect(fileinput) {
     // If only one JSON file was loaded (for testing purposes only)
     if (files.length == 1 && mime.lookup(files[0].name).match('application/json')) { 
     	// remove old xml docs
-    	reset();
+    	reset('all');
 
         var reader = new FileReader();
 
@@ -403,7 +437,7 @@ function handleFileSelect(fileinput) {
 
     } else { // When one or more XML files are selected
 
-    	reset();     	// remove old xml docs and reset display
+    	reset('all');     	// remove old xml docs and reset display
     	
     	$(files).each(function (index, f) {
     	    

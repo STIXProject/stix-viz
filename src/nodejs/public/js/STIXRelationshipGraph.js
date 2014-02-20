@@ -25,11 +25,11 @@ var StixGraph = function () {
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
-	var report,svg,node,link;
+	var report={},
+	svg=null,
+	node=[],
+	link=[];
 
-
-	/* Id of the node that was last right-clicked */
-	var contextNode = null;
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -42,39 +42,97 @@ var StixGraph = function () {
 	};
 
 	function graphSize () { 
-		return [$(window).width() - nodeWidth,$(window).height()-nodeHeight-100];
+		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
 	}
 
+	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
+	
 	/**
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkStrength(1)
-	.friction(.6)
-	.charge(Math.min.apply(Math,graphSize()) * -1.5)
-	.linkDistance(Math.min.apply(Math,graphSize())/4)
+	.linkStrength(.6)
+	.friction(.7)
+	.charge(Math.min.apply(Math,graphSize()) * -2)
+	.linkDistance(Math.min.apply(Math,graphSize())/5)
 	.gravity(function (d) { 
-		return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+		return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 	})
 	.size(graphSize())
 	.on("tick", tick);
 
-	/**
-	 * Duration of animated transitions
-	 */
-	var duration = 750;
 
+	var drag = force.drag()
+	.on("dragstart", function (d, i) {
+		if (d3.event.sourceEvent.which == 1) // initiate on left mouse button only
+			dragInitiated = true;               // -> set dragInitiated to true
+		force.stop();
+	})
+	.on("drag", function (d, i) { 
+		if (dragInitiated) {                   // perform only if a drag was initiated
+			d.px += d3.event.dx;
+			d.py += d3.event.dy;
+			d.x += d3.event.dx;
+			d.y += d3.event.dy;
+			tick();
+		}
+	})
+	.on("dragend", function (d, i) {
+		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
+			force.resume();                     // were valid in "dragstart"
+			d3.select(this).classed("fixed", d.fixed = true);
+			tick();
+			dragInitiated = false;              // terminate drag gesture
+		}
+	});
 
+	function updateContext (d) { 
+		if (d.fixed) { 
+			$('#toggleFix a').text("Unpin node");
+		} else { 
+			$('#toggleFix a').text("Pin node");
+		}
+	}
+	
+	
+	// Handlers for right-click context menu on nodes
+	
+	$('#toggleFix a').click(function () { toggleFix(contextNode); });
+	
+
+	function toggleFix (node) {
+		d3.select(node).classed("fixed", function (d) { 
+			return d.fixed = !d.fixed;
+		});
+		force.resume();
+	}
+
+	$('#hideNode a').click(function () { hideNode(contextNode); });
+
+	function hideNode (node) { 
+		var d = d3.select(node).datum();
+		d.parents.forEach(function (p) { 
+				if (p._children.indexOf(d) === -1) { 
+					p._children.push(d);
+				}
+				pos = p.children.indexOf(d);
+				p.children.splice(pos,1);
+			});
+		update();
+	}
+	
+	
 
 	_self.resize = function () { 
 
 			force
+			.linkStrength(.6)
 			.size(graphSize())
-			.linkDistance(Math.min.apply(Math,graphSize())/4)
+			.linkDistance(Math.min.apply(Math,graphSize())/5)
 			.gravity(function (d) { 
-				return .05/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 				})
-			.charge(Math.min.apply(Math,graphSize()) * -1.5);
+			.charge(Math.min.apply(Math,graphSize()) * -2);
 
 
 			update();
@@ -109,11 +167,25 @@ var StixGraph = function () {
 		svg.select('defs').append('svg:marker')
 		    .attr('id', 'end-arrow')
 		    .attr('viewBox', '0 -5 10 10')
-		    .attr('refX', 60)
-		    .attr('markerWidth', 5)
-		    .attr('markerHeight', 5)
+		    .attr('refX', 90)
+		    .attr('markerWidth', 10)
+		    .attr('markerHeight', 10)
 		    .attr('orient', 'auto')
 		    .attr('class','arrow')
+		    .attr('markerUnits','userSpaceOnUse')
+		  .append('svg:path')
+		    .attr('d', 'M0,-5L10,0L0,5');
+
+		// bold arrow for highlighted links
+		svg.select('defs').append('svg:marker')
+		    .attr('id', 'bold-arrow')
+		    .attr('viewBox', '0 -5 10 10')
+		    .attr('refX', 90)
+		    .attr('markerWidth', 10)
+		    .attr('markerHeight', 10)
+		    .attr('orient', 'auto')
+		    .attr('class','arrow bold')
+		    .attr('markerUnits','userSpaceOnUse')
 		  .append('svg:path')
 		    .attr('d', 'M0,-5L10,0L0,5');
 
@@ -123,8 +195,9 @@ var StixGraph = function () {
 
 		report = $.parseJSON(jsonString);
 		
-		removeBottomUp(report);		
-		flatten(report); // this will set the correct ids for all nodes in the graph 
+		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
+		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
+		report._children = [];
 		report.children.forEach(collapse);
 
 		// This is where the tree actually gets displayed
@@ -140,8 +213,8 @@ var StixGraph = function () {
 	function collapse(d) {
 		if (d.children && d.children.length > 0) {
 			d._children = d.children;
-			d._children.forEach(collapse);
 			d.children = [];
+			d._children.forEach(collapse);
 		}
 	}
 	
@@ -196,9 +269,7 @@ var StixGraph = function () {
 
 		link.enter().insert("line", ".node")
 		.attr("class", "link")
-		.attr("marker-end",function(d){ 
-			return "url(#end-arrow)"; 
-		});
+		.attr("marker-end","url(#end-arrow)");
 
 		// Update nodes.
 		node = node.data(nodes, function(d) { return d.id; });
@@ -215,12 +286,18 @@ var StixGraph = function () {
 		})
 		.on("click", click)
 		.on("contextmenu", function (d) {
+			if (d3.event.defaultPrevented) {
+				force.resume();
+				return;
+			}
 			position = d3.mouse(this);
 			offset = $(this).offset();
-			scrollTop = $('#viewContainer').scrollTop(); 
-			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+			scrollTop = $('#viewContainer').scrollTop();
+			updateContext(d);
+			showContext(this,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+			d3.event.preventDefault();
 		})
-		.call(force.drag);
+		.call(drag);
 
 
 		// Append the image icon according to typeIconMap
@@ -271,12 +348,32 @@ var StixGraph = function () {
 			var d = d3.select(this).datum();  
 			var nodeId = d.nodeId ? d.nodeId : d.nodeIdRef;
 
+			// Highlight related links
+			d3.selectAll('.link').filter(function (l) { return l.source === d; })
+			.classed("bold",true)
+			.classed("out",true)
+			.attr("marker-end","url(#bold-arrow)");
+			d3.selectAll('.link').filter(function (l) { return l.target === d; }).
+			classed("bold",true)
+			.classed("in",true)
+			.attr("marker-end","url(#bold-arrow)");
+
+			
 			highlightHtml(nodeId);
 		});
 
 		// handler to remove highlighting when the mouse leaves the node
 		$(".node").on("mouseleave", function () { 
 			removeHighlightedNodes();
+
+			// un-highlight links
+			d3.selectAll('.link')
+			.classed("bold",false)
+			.classed("in",false)
+			.classed("out",false)
+			.attr("marker-end","url(#end-arrow)");
+
+
 			$(".expandableContainer tr").removeClass("infocus");
 		});
 
@@ -297,24 +394,38 @@ var StixGraph = function () {
 	function click(d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
 		if (d._children && d._children.length > 0) {
-			d.children = d._children;
+			d.children = d._children.concat(d.children);
 			d._children = [];
-			d.children.forEach(function (c) { 
-				node.each(function (n) {
-					if (n._children) { 
-						n._children.forEach(function (nc) { 
-							if (nc.id && nc.id === c.id) { 
-								n.children.push(nc);
-							}
-						});
+			// Expand other nodes that share children in common with the clicked node
+			d.children.forEach(function (c) {
+				c.parents.forEach(function (n) {
+					if (n._children) {
+						pos = n._children.indexOf(c);
+						if (pos > -1) {
+							n.children.push(c);
+							n._children.splice(pos,1);
+						}
 					}
 				});
 			});
 		} else {
-			d._children = d.children;
+			d._children = d.children.concat(d._children);
 			d.children = [];
+			// collapse other nodes that have children in common with the clicked node
+			d._children.forEach(function (c) { 
+				c.parents.forEach(function (n) {
+					if (n.children) {
+						pos = n.children.indexOf(c);
+						if (pos > -1) {
+							n._children.push(c);
+							n.children.splice(pos,1); // remove node from other node's children
+						}
+					}
+				});
+			});
 		} 
 		update();
+		$(this).mouseenter();
 	}	
 
 	/** 
@@ -470,12 +581,14 @@ var StixGraph = function () {
 		return null;
 	};
 
-
-
-	var nodeid = 0;
-//	Returns a list of all nodes under the root.
-	function flatten(root) {
-		var nodes = [], links = [];
+	
+	/**
+	 * Traverse the entire tree from the root, merging any nodes that have the same id. This will produce a graph from the tree. 
+	 * Also saves the list of parents in each node, for easier manipulation later
+	 * @param root
+	 */
+	function mergeNodes (root) { 
+		var nodes = [],nodeid=0;
 
 		function recurse(node,depth,parent) {
 
@@ -492,6 +605,7 @@ var StixGraph = function () {
 			if (!node.id && !ref) { 
 				node.id = nodeid++;
 				node.depth = depth;
+				node.parents = [nodes[parent]]; // the parent list is initialized to a list containing the current parent
 			}
 			// If there is a pre-existing node, merge it with the new node and then replace the new node with the old one in 
 			// the new node's parent's list of children (creating a true graph rather than a tree)
@@ -519,21 +633,13 @@ var StixGraph = function () {
 					// Remove the duplicate child and replace it with the existing ref node 
 					nodes[parent].children.splice(childPos,1,ref);
 				}
+
+				ref.parents.push(nodes[parent]);
+				
 			// If this is the first time we've seen this node, add it to the list
 			} else {//if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
 				nodes.push(node);
 				pos = nodes.length-1;
-			}
-			// Add link to parent
-			if (typeof parent !== 'undefined') {
-				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
-					links.push({source:parent,target:pos});
-				}
-			// If it's the root node, fix it in the middle of the window
-			} else { 
-				node.fixed = true;
-				node.px = graphSize()[0]/2;
-				node.py = graphSize()[1]/2;
 			}
 
 			// Recurse on the children of the new node, since we might not have seen them before
@@ -546,24 +652,70 @@ var StixGraph = function () {
 		}
 		
 		recurse(root,0);
+	}
+
+
+	/**
+	 * flatten the graph into a list of nodes and a list of links, to be used by the d3 force layout 
+	 * @param root
+	 * @returns the lists of nodes and links that define the graph
+	 */
+	function flatten(root) {
+		var nodes = [], links = [];
+
+		function recurse(node,parent) {
+
+			var pos = 0;
+
+			// Recurse on the node's children
+			// If we have seen this node before, use the position in the node list
+			if (nodes.indexOf(node) > -1) { 
+				pos = nodes.indexOf(node); 
+			} else { 			// Otherwise, add the node to the list
+				nodes.push(node);
+				pos = nodes.length-1;
+				if (node.children) { 
+					node.children.forEach(function (n) { 
+						recurse(n,pos);
+					});
+				}
+			}
+
+			// Add link to parent
+			if (typeof parent !== 'undefined') {
+				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
+					links.push({source:parent,target:pos});
+				}
+			// If it's the root node, fix it in the middle of the window
+			} else { 
+				node.fixed = true;
+				node.px = graphSize()[0]/2;
+				node.py = graphSize()[1]/2;
+			}
+
+			
+		}
+		
+		recurse(root);
 		return {nodes:nodes,links:links};
 	}
+
 
 	/**
 	 * Remove all node highlighting
 	 */
-	function removeHighlightedNodes () { 
+	_self.removeHighlightedNodes = function () { 
 		d3.selectAll("rect.nodeborder").remove();
-	}
+	};
 
-	
+
 
 	/**
 	 * Highlight all nodes in the tree that match the given nodeId. 
 	 * 
 	 * @param nodeId The id of the node to highlight
 	 */
-	function highlightDuplicateNodes (nodeId) { 
+	_self.highlightDuplicateNodes = function (nodeId) { 
 		if (!nodeId) return;
 		var matches = d3.selectAll(".node").filter(function (d) { 
 			return d.nodeId == nodeId || d.nodeIdRef == nodeId;
@@ -574,10 +726,8 @@ var StixGraph = function () {
 		.attr("rx","10")
 		.attr("ry","10")
 		.attr("class","nodeborder")
-		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
-	}
+		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + ((-nodeHeight/2) - 5) + ")");
+	};
 
 
-
-
-}
+};

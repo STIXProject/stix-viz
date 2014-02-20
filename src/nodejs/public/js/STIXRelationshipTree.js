@@ -25,10 +25,9 @@ var StixTree = function () {
 	var nodeCount = 0;
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
-	var stixroot=null,report,svg;
-
-	/* Id of the node that was last right-clicked */
-	var contextNode = null;
+	var stixroot=null,
+	report=null,
+	svg=null;
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -41,9 +40,9 @@ var StixTree = function () {
 	}, 
 	width = 1100 - margin.right - margin.left,
 	height = 1200 - margin.top- margin.bottom;
-
+	
 	function treeWidth () { 
-		return $(window).width() - nodeWidth;
+		return $('#contentDiv').width() - nodeWidth;
 	}
 
 	/**
@@ -194,7 +193,7 @@ var StixTree = function () {
 			if (d.y > maxY) maxY = d.y;
 		});
 
-		$('svg').height(maxY+margin.top+margin.bottom+(2*nodeHeight)+nodeSep);
+		$('#contentDiv svg').height(maxY+margin.top+margin.bottom+(2*nodeHeight)+nodeSep);
 
 
 		// Enter any new nodes at the parent's previous position.
@@ -210,7 +209,7 @@ var StixTree = function () {
 			position = d3.mouse(this);
 			offset = $(this).offset();
 			scrollTop = $('#viewContainer').scrollTop(); 
-			showContext(d,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+			showContext(this,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
 		})
 		.classed("parent",function(d) { 
 			return hasChildren(d);
@@ -607,9 +606,9 @@ var StixTree = function () {
 	/**
 	 * Remove all node highlighting
 	 */
-	function removeHighlightedNodes () { 
+	_self.removeHighlightedNodes = function () { 
 		d3.selectAll("rect.nodeborder").remove();
-	}
+	};
 
 
 
@@ -618,7 +617,7 @@ var StixTree = function () {
 	 * 
 	 * @param nodeId The id of the node to highlight
 	 */
-	function highlightDuplicateNodes (nodeId) { 
+	_self.highlightDuplicateNodes = function (nodeId) { 
 		if (!nodeId) return;
 		var matches = d3.selectAll(".node").filter(function (d) { 
 			return d.nodeId == nodeId || d.nodeIdRef == nodeId;
@@ -630,7 +629,7 @@ var StixTree = function () {
 		.attr("ry","10")
 		.attr("class","nodeborder")
 		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + "-5" + ")");
-	}
+	};
 
 
 

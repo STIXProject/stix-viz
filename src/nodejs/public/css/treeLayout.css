@@ -60,8 +60,24 @@ user-select: none;
   stroke-width: 1.5px;
 }
 
+.link.bold { 
+	stroke-width: 3px;
+}
+
+.link.bold.out { 
+	stroke: green;
+}
+
+.link.bold.in { 
+	stroke: blue;
+}
+
 marker.arrow { 
 	fill: #bbb;
+}
+
+marker.arrow.bold {
+	fill: #333;
 }
 
 .infocus { 
