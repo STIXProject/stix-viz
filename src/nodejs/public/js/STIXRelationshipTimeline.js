@@ -16,7 +16,7 @@ var StixTimeline = function () {
 	left: 20
     },
     outerWidth = 1050,
-    outerHeight = 500,
+    outerHeight = 650,
     width = outerWidth - margin.left - margin.right,
     height = outerHeight - margin.top - margin.bottom;
 
@@ -221,9 +221,32 @@ var StixTimeline = function () {
 			items.forEach(function (i) {
 			    if(item.parentObjId == i.parentObjId)
 			    {
-				i.track = item.track;
+				i.track = (item.track+1);
 			    }
 			});
+		    });
+		}
+		function sortBackwardGrouped() {
+		    // older items end deeper
+		    items.forEach(function (item) {
+			if(!item.track)
+			{
+			    for (i = 0, track = 0; i < tracks.length; i++, track++) {
+				if (item.end < tracks[i]) {
+				    break;
+				}
+			    }
+			    item.track = track;
+			    tracks[track] = item.start;
+			    items.forEach(function (it) {
+				if(item.parentObjId == it.parentObjId)
+				{
+				    it.track = (item.track+1);
+				    tracks[item.track+1] = item.start;
+				}
+			    });
+			}
+			
 		    });
 		}
 
@@ -237,7 +260,8 @@ var StixTimeline = function () {
 		if (timeOrder === "forward")
 		    sortForward();
 		else
-		    sortBackward();
+		    sortBackwardGrouped();
+		    //sortBackward();
 		
 		if(groupOrder === "parentid")
 		    sortGrouped();
@@ -380,8 +404,6 @@ var StixTimeline = function () {
 
 	timeline.band = function (bandName, sizeFactor) {
 	    
-	    var border=1;
-            var bordercolor='black';
 	    var band = {};
 	    var printedGroupSize = {};
 	    band.id = "band" + bandNum;
@@ -392,8 +414,8 @@ var StixTimeline = function () {
 	    band.trackOffset = 4;
 	    // Prevent tracks from getting too high
 	    band.trackHeight = Math.min((band.h - band.trackOffset) / data.nTracks, 20);
-	    band.trackHeight = band.trackHeight * maxGroupSize;
-	    band.itemHeight = band.trackHeight * (1 / maxGroupSize),
+	    //band.trackHeight = band.trackHeight * maxGroupSize;
+	    band.itemHeight = band.trackHeight,// * (1 / maxGroupSize),
 	    band.parts = [],
 	    band.instantWidth = 100; // arbitray value
 	    band.xScale = d3.time.scale()
@@ -451,7 +473,8 @@ var StixTimeline = function () {
 	    })
 	    .attr("height", function (d) {
 		var numPrinted = printedGroupSize[d.parentObjId];
-		return band.itemHeight * numPrinted;
+		return band.trackHeight * numPrinted;
+		//alert(band.itemHeight);
 	    })
 	    .attr("class", "part grouping");
 	    	   
