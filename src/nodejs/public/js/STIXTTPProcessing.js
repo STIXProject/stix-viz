@@ -8,9 +8,9 @@
 
 // Create basic Json node for a TTP
 // used by processTTPObjs and processChildTTPs
-function createSingleTTPJson(ttp, etBottomUpInfo) {
+function createSingleTTPJson(ttp, etBottomUpInfo, relationship) {
 	var ttpId = getObjIdStr(ttp);
-    var ttpJson = createTopDownNode(ttpId, STIXType.ttp, getBestTTPName(ttp));
+    var ttpJson = createTopDownNode(ttpId, STIXType.ttp, getBestTTPName(ttp), relationship);
     // children can be INDICATORS (from indicator file), RESOURCES, 
     // BEHAVIORS, or Victim_Targeting
     var ttpChildren = [];
@@ -38,11 +38,11 @@ function processTTPBehaviors(ttp) {
 		    //mName = $(instance).children('ttp\\:Name, Name').text();
 			mName = concatenateNames($(xpFind('.//ttp:Name', instance)));
 		}
-		behaviors.push(createTopDownNode(null, 'MalwareBehavior', "Malware Behavior: " + mName));
+		behaviors.push(createTopDownNode(null, 'MalwareBehavior', "Malware Behavior: " + mName, 'ttp:Malware'));
  }
  var attackPats = xpFind('.//ttp:Behavior//ttp:Attack_Pattern', ttp);
  $(attackPats).each(function (index, pat) {
-         behaviors.push(createTopDownNode(null, 'AttackPattern', "Attack Pattern"));
+         behaviors.push(createTopDownNode(null, 'AttackPattern', "Attack Pattern", 'ttp:Attack_Pattern'));
      });
  var exploits = xpFind('.//ttp:Behavior//ttp:Exploits', ttp);
  $(exploits).each(function (index, exploit) {
@@ -68,7 +68,7 @@ function processTTPResources(ttp) {
 			if (resourceName == "") {
 				resourceName = getBestObservableName(observable);
 			}
-		    resources.push(createTopDownNode(null, "Observable", resourceName));
+		    resources.push(createTopDownNode(null, "Observable", resourceName, 'ttp:Resource'));
 		}
 		else {
 		    var tools = xpFind('.//ttp:Tool', resourceObj);
@@ -85,7 +85,7 @@ function processTTPResources(ttp) {
 			    }
 			});
 		    if (toolString.length>0) {
-		    	resources.push(createTopDownNode(null, "Tools", "Tool: " + toolString));
+		    	resources.push(createTopDownNode(null, "Tools", "Tool: " + toolString, 'ttp:Resource'));
 		    }
 		}
  }
@@ -103,7 +103,7 @@ function processTTPVictimTargeting(ttp) {
     	if (identity != null) {
     		nameStr = getBestIdentityName(identity);
     	}
-		targets.push(createTopDownNode(null, "VictimTargeting", nameStr));
+		targets.push(createTopDownNode(null, "VictimTargeting", nameStr, 'ttp:Victim_Targeting'));
     }
     return targets;
 }
@@ -123,12 +123,12 @@ function processChildExploitTargets(ttp, etBottomUpInfo) {
 	    $(targets).each(function (index, target) {
 	    	var idRef = getObjIdRefStr(target);
 	    	if (idRef != "") {  // target is specified via an idRef
-	    		etNodes.push(createTopDownIdRef(STIXType.et, idRef));
+	    		etNodes.push(createTopDownIdRef(STIXType.et, idRef, 'ttp:Exploit_Target'));
 	    	}
 	    	else {   // target is specified inline
-	    		var etNode = createTopDownNode(null, STIXType.et, getBestExploitTargetName(target));
+	    		var etNode = createTopDownNode(null, STIXType.et, getBestExploitTargetName(target), 'ttp:Exploit_Target');
 	    		var coas = xpFind('.//et:Potential_COAs', target);
-	    		var children = processChildCoas(coas);
+	    		var children = processChildCoas(coas, 'et:Potential_COAs');
 	    		if (children.length > 0) {
 	    			etNode["children"] = children;
 	    		}
