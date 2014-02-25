@@ -118,19 +118,20 @@ function getObjIdStr(obj) {
 }
 
 // basic json object
-function createNode(id, type, name, direction) {
+function createNode(id, type, name, direction, relationship) {
 	var json = {"type": type};
 	if (id != null) {
 		json["nodeId"] = id;
 	}
 	json["name"] = name;
 	json["linkType"] = direction;	
+	json["relationship"] = relationship;
 	return json;	
 }
 
 // json object with linkType topDown
-function createTopDownNode(id, type, name) {
-	return createNode(id, type, name, "topDown");	
+function createTopDownNode(id, type, name, relationship) {
+	return createNode(id, type, name, "topDown", relationship);	
 }
 
 // json object with linkType bottomUp
@@ -139,8 +140,8 @@ function createBottomUpNode(id, type, name) {
 }
 
 // json for topDown idRef
-function createTopDownIdRef(type, idRef) {
-	return {"type": type, "nodeIdRef":idRef, "linkType":"topDown"};
+function createTopDownIdRef(type, idRef, relationship) {
+	return {"type": type, "nodeIdRef":idRef, "linkType":"topDown", "relationship":relationship};
 }
 
 // json for bottomUp idRef
