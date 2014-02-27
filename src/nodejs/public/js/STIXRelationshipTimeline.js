@@ -15,9 +15,9 @@ var StixTimeline = function () {
 	bottom: 20, 
 	left: 20
     },
-    outerWidth = 1050,
+    outerWidth = 1150,
     outerHeight = 650,
-    width = outerWidth - margin.left - margin.right,
+    width = outerWidth - margin.left - margin.right-150,
     height = outerHeight - margin.top - margin.bottom;
 
     _self.display = function (jsonString) {
@@ -47,10 +47,10 @@ var StixTimeline = function () {
 	    "Incident-Initial_Compromise" :"#2ecc71",
 	    "Incident-First_Data_Exfiltration" :"#9b59b6",
 	    "Incident-Incident_Discovery" :"#f1c40f",
-	    "Incident-Incident_Opened" :"#2ecc71",
+	    "Incident-Incident_Opened" :"#775c2c",
 	    "Incident-Containment_Achieved" :"#e74c3c",
 	    "Incident-Restoration_Achieved" :"#e67e22",
-	    "Incident-Incident_Reported" :"#d35400",
+	    "Incident-Incident_Reported" :"#0080ff",
 	    "Incident-Incident_Closed" :"#34495e",
 	    "Incident-COATaken" :"#27ae60"
 
@@ -191,10 +191,19 @@ var StixTimeline = function () {
                             items.forEach(function (it) {
                                 if(item.parentObjId === it.parentObjId && item !== it)
                                 {
+                                    //THis assumes there is a max of 2 tracks in a group.
+                                    //If there are more we need to find all tracks for that parent id and compare them
                                     it.track = item.track+1;
-                                    tracks[it.track] = it.end;
-                                    //TODO: find the largest end of this track and make all the tracks in this group have the same end.
-                                    //This way no other items can be printed within out group block
+                                    if(it.end > tracks[item.track])
+                                    {
+                                       tracks[it.track] = it.end;
+                                       tracks[item.track] = it.end;
+                                        
+                                    }
+                                    else
+                                    {
+                                        tracks[it.track] = item.end;
+                                    }
                                 }
                             });
                         }
@@ -390,7 +399,57 @@ var StixTimeline = function () {
 	    .attr("height", band.h);
 	    
 
-	    
+        
+            var legendMap = [
+                    {type: "Indicator-Sighting", name: "Indicator-Sighting"}, 
+                    {type:  "Incident-First_Malicious_Action",name: "First Malicious Action"}, 
+                    {type: "Incident-Initial_Compromise",name: "Initial Compromise"}, 
+                    {type: "Incident-First_Data_Exfiltration",name: "First Data Exfiltration"}, 
+                    {type: "Incident-Incident_Discovery",name: "Incident Discovery"}, 
+                    {type: "Incident-Incident_Opened",name: "Incident Opened"}, 
+                    {type: "Incident-Containment_Achieved",name: "Containment Achieved"},
+                    {type: "Incident-Restoration_Achieved",name: "Restoration Achieved"},
+                    {type: "Incident-Incident_Reported",name: "Incident_Reported"},   
+                    {type: "Incident-Incident_Closed",name: "Incident Closed"},
+                    {type: "Incident-COATaken",name: "COATaken"}, 
+
+            ];
+
+             // add legend   
+            var legend = svg.append("g")
+              .attr("class", "legend")
+              .attr("x", outerWidth -180)
+              .attr("y", 25)
+              .attr("height", 100)
+              .attr("width", 100);
+
+
+
+            legend.selectAll('g')
+                .data(legendMap)
+                .enter()
+                .append('g')
+                .each(function(d, i) {
+                  var g = d3.select(this);
+                  g.append("rect")
+                    .attr("x", outerWidth - 180)
+                    .attr("y", i*15)
+                    .attr("width", 10)
+                    .attr("height", 10)
+                    .style("fill", typeColorMap[d.type]);
+
+                  g.append("text")
+                    .attr("x", outerWidth - 170)
+                    .attr("y", i * 15+9)
+                    .attr("height",30)
+                    .attr("width",100)
+                    .style("fill", typeColorMap[d.type])
+                    .text(d.name);
+
+                });
+
+
+            
 	    // Items
             //TODO: The groups should be the items passed it but unsure how this is processed
 	    var items = band.g.selectAll("g")
@@ -436,7 +495,7 @@ var StixTimeline = function () {
 	    .style("fill", "none")
 	    .attr("width", "100%")
 	    .attr("height", "93%")
-	    .style("stroke", "blue")
+	    .style("stroke", "black")
 	    .style("stroke-width", function (d) {
 		if(groupedData[d.parentObjId].count > 1)
 		{
@@ -480,7 +539,7 @@ var StixTimeline = function () {
 	    .text(function (d) {
                 return d.description.substring(0,20);
 	    });
-
+            
 	    band.addActions = function(actions) {
 		// actions - array: [[trigger, function], ...]
 		actions.forEach(function (action) {
@@ -518,7 +577,7 @@ var StixTimeline = function () {
 		    part.redraw();
 		})
 	    };
-
+            
 	    bands[bandName] = band;
 	    components.push(band);
 	    // Adjust values for next band
