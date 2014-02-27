@@ -21,12 +21,8 @@ var StixTimeline = function () {
     height = outerHeight - margin.top - margin.bottom;
 
     _self.display = function (jsonString) {
-	//alert(jsonString);
 	// Define domElement and sourceFile
 	var domElement = "#contentDiv";
-	//var sourceFile = "./public/TempData/iSight-incidents.json";
-	//var sourceFile = "./public/TempData/testData2.json";
-
 	var dataset = $.parseJSON(jsonString);
 	timeline(domElement)
 	.data(dataset)
@@ -39,24 +35,6 @@ var StixTimeline = function () {
 	.labels("naviBand")
 	.brush("naviBand", ["mainBand"])
 	.redraw();
-	
-
-	// Read in the data and construct the timeline
-	/*d3.json(sourceFile, function(dataset) {
-	    timeline(domElement)
-	    .data(dataset)
-	    .band("mainBand", 0.82)
-	    .band("naviBand", 0.08)
-	    .xAxis("mainBand")
-	    .tooltips("mainBand")
-	    .xAxis("naviBand")
-	    .labels("mainBand")
-	    .labels("naviBand")
-	    .brush("naviBand", ["mainBand"])
-	    .redraw();
-
-	});*/
-	
     }
 
 
@@ -132,65 +110,10 @@ var StixTimeline = function () {
 	    tracks = [];
 
 	    data.items = items;
-	    
-	    function showItems(n) {
-		var count = 0, n = n || 10;
-		//console.log("\n");
-		items.forEach(function (d) {
-		    count++;
-		    if (count > n) return;
-		    //console.log(toYear(d.start) + " - " + toYear(d.end) + ": " + d.label);
-		})
-	    }
 
-	    function compareAscending(item1, item2) {
-		// Every item must have two fields: 'start' and 'end'.
-		var result = item1.start - item2.start;
-		// earlier first
-		if (result < 0) {
-		    return -1;
-		}
-		if (result > 0) {
-		    return 1;
-		}
-		// longer first
-		result = item2.end - item1.end;
-		if (result < 0) {
-		    return -1;
-		}
-		if (result > 0) {
-		    return 1;
-		}
-		return 0;
-	    }
-
-	    function compareDescending(item1, item2) {
-		// Every item must have two fields: 'start' and 'end'.
-		var result = item1.start - item2.start;
-		// later first
-		if (result < 0) {
-		    return 1;
-		}
-		if (result > 0) {
-		    return -1;
-		}
-		// shorter first
-		result = item2.end - item1.end;
-		if (result < 0) {
-		    return 1;
-		}
-		if (result > 0) {
-		    return -1;
-		}
-		return 0;
-	    }
-
-	    function calculateTracks(items, sortOrder, timeOrder, groupOrder) {
+	    function calculateTracks(items) {
 		var i, track;
 
-		sortOrder = sortOrder || "descending"; // "ascending", "descending"
-		timeOrder = timeOrder || "backward";   // "forward", "backward"
-		groupOrder = groupOrder || "parentid";
 
 		function sortBackward() {
 		    // older items end deeper
@@ -233,6 +156,7 @@ var StixTimeline = function () {
 			{
 			    for (i = 0, track = 0; i < tracks.length; i++, track++) {
 				if (item.end < tracks[i]) {
+                                    
 				    break;
 				}
 			    }
@@ -249,27 +173,61 @@ var StixTimeline = function () {
 			
 		    });
 		}
+                
+                function sortForwardGrouped() {
+		    // younger items end deeper
+		    items.forEach(function (item) {
+                        if(item.track === undefined)
+                        {
+                            for (i = 0, track = 0; i < tracks.length; i++, track++) {
+                                if (item.start > tracks[i]) {
+                                    //item.track = track;
+                                    break;
+                                }
+                            }
+                            item.track = track;
+                            tracks[track] = item.end;
+                            //Find all the other items in this group
+                            items.forEach(function (it) {
+                                if(item.parentObjId === it.parentObjId && item !== it)
+                                {
+                                    it.track = item.track+1;
+                                    tracks[it.track] = it.end;
+                                    //TODO: find the largest end of this track and make all the tracks in this group have the same end.
+                                    //This way no other items can be printed within out group block
+                                }
+                            });
+                        }
+                        
+                        
+		    });
+                    
+                    //Figure out the starting track for each group
+                    items.forEach(function (item) {
+                        if(groupedData[item.parentObjId].track === undefined)
+                        {
+                            groupedData[item.parentObjId].track = item.track;
+                        }
+                        else{
+                            if(item.track < groupedData[item.parentObjId].track)
+                            {
+                                groupedData[item.parentObjId].track = item.track;
+                            }
+                        }
+                        
+                    });
+                    
+                    
+		}
 
-		
+		//Call the sort function
+                sortForwardGrouped();
 
-		if (sortOrder === "ascending")
-		    data.items.sort(compareAscending);
-		else
-		    data.items.sort(compareDescending);
-
-		if (timeOrder === "forward")
-		    sortForward();
-		else
-		    sortBackwardGrouped();
-		    //sortBackward();
-		
-		if(groupOrder === "parentid")
-		    sortGrouped();
 	    }
+            
+            //A bunch of math to figure out the scale of our data.
 	    var maxEnd = null; 
 	    var maxStart = null;
-	    
-	    //A bunch of math to figure out the scale of our data.
 	    data.items.forEach(function (item){
 		if(maxStart == null)
 		{
@@ -379,13 +337,9 @@ var StixTimeline = function () {
 		}
 	    }
 	    
-	    //calculateTracks(data.items);
-	    // Show patterns
-	    //calculateTracks(data.items, "ascending", "backward");
-	    //calculateTracks(data.items, "descending", "forward");
-	    // Show real data
+
 	    calculateTracks(data.items, "descending", "backward", "parentid");
-	    //calculateTracks(data.items, "ascending", "forward");
+
 	    data.nTracks = tracks.length;
 	    data.minDate = d3.min(data.items, function (d) {
 		return d.start;
@@ -414,8 +368,7 @@ var StixTimeline = function () {
 	    band.trackOffset = 4;
 	    // Prevent tracks from getting too high
 	    band.trackHeight = Math.min((band.h - band.trackOffset) / data.nTracks, 20);
-	    //band.trackHeight = band.trackHeight * maxGroupSize;
-	    band.itemHeight = band.trackHeight,// * (1 / maxGroupSize),
+	    band.itemHeight = band.trackHeight,
 	    band.parts = [],
 	    band.instantWidth = 100; // arbitray value
 	    band.xScale = d3.time.scale()
@@ -439,6 +392,7 @@ var StixTimeline = function () {
 
 	    
 	    // Items
+            //TODO: The groups should be the items passed it but unsure how this is processed
 	    var items = band.g.selectAll("g")
 	    .data(data.items)
 	    .enter().append("svg")
@@ -453,7 +407,7 @@ var StixTimeline = function () {
 		   numPrinted = printedGroupSize[d.parentObjId];
 		   printedGroupSize[d.parentObjId]++; 
 		}
-		return (band.yScale(d.track)+(numPrinted*band.itemHeight));
+                return (band.yScale(d.track));
 
 	    })
 	    .attr("height", band.itemHeight)
@@ -467,14 +421,12 @@ var StixTimeline = function () {
 	    .data(data.items)
 	    .enter().append("svg")
 	    .attr("y", function (d) {
-		//var numPrinted = printedGroupSize.hasOwnProperty(d.parentObjId);
-		return band.yScale(d.track);
+		return band.yScale(groupedData[d.parentObjId].track);
 
 	    })
 	    .attr("height", function (d) {
 		var numPrinted = printedGroupSize[d.parentObjId];
 		return band.trackHeight * numPrinted;
-		//alert(band.itemHeight);
 	    })
 	    .attr("class", "part grouping");
 	    	   
@@ -509,7 +461,7 @@ var StixTimeline = function () {
 	    .attr("x", 1)
 	    .attr("y", 10)
 	    .text(function (d) {
-		return htmlSectionMap[d.type];
+		return d.description.substring(0,20);
 	    });
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
@@ -526,7 +478,7 @@ var StixTimeline = function () {
 	    .attr("x", 15)
 	    .attr("y", 10)
 	    .text(function (d) {
-		return htmlSectionMap[d.type];
+                return d.description.substring(0,20);
 	    });
 
 	    band.addActions = function(actions) {
@@ -849,6 +801,7 @@ var StixTimeline = function () {
 		imgStr += "Parent ID: " + d.parentObjId + "<br>";
 		imgStr += "Description: " +d.description+ "<br>";
 		imgStr += "Event Type: " +htmlSectionMap[d.type];
+                imgStr += "<br>Track: " + d.track;
 	    }
 	    return imgStr;
 	}
