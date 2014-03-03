@@ -668,14 +668,16 @@ var StixGraph = function () {
 				ref.parents.push(nodes[parent]);
 				
 				if (node.relationship && parent) { 
-					addRelationship(nodes[parent], ref, node.relationship);
+					var relationship = node.relationship.split(':')[1] || node.relationship;
+					addRelationship(nodes[parent], ref, relationship);
 				}
 				
 			// If this is the first time we've seen this node, add it to the list
 			} else {//if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
 				nodes.push(node);
 				if (node.relationship && parent) {
-					addRelationship(nodes[parent],node,node.relationship);
+					var relationship = node.relationship.split(':')[1] || node.relationship;
+					addRelationship(nodes[parent],node,relationship);
 				}
 				pos = nodes.length-1;
 			}
