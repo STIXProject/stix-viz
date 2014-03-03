@@ -15,7 +15,7 @@ var StixTimeline = function () {
 	bottom: 20, 
 	left: 20
     },
-    outerWidth = 1150,
+    outerWidth = 1175,
     outerHeight = 650,
     width = outerWidth - margin.left - margin.right-150,
     height = outerHeight - margin.top - margin.bottom;
@@ -35,6 +35,14 @@ var StixTimeline = function () {
 	.labels("naviBand")
 	.brush("naviBand", ["mainBand"])
 	.redraw();
+    }
+    
+    
+    _self.resize = function () { 
+        outerWidth = 500;
+        outerHeight = 650;
+        var domElement = "#contentDiv";
+        timeline(domElement).redraw();
     }
 
 
@@ -721,7 +729,7 @@ var StixTimeline = function () {
 	 * @param data The node that was clicked
 	 */
 	    function showContextTimeline (data) {
-		position = d3.mouse(this);
+                position = d3.mouse(this);
 		offset = $(this).offset();
 		scrollTop = 10; 
 		showContext(data,(position[0]+offset.left+(10/2))+'px',(position[1]+offset.top-50+scrollTop)+'px');

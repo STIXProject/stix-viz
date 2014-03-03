@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 – The MITRE Corporation
+ * Copyright (c) 2014 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the functionality for determining relationships specified in the xml
@@ -242,7 +242,7 @@ function displayJson(jsonDataObj, viewType) {
  * @param d
  * @returns
  */
-function getId (d) { 
+function getId (d) {                
 	return d.nodeId ? d.nodeId : d.nodeIdRef ? d.nodeIdRef : d.parentObjId ? d.parentObjId :"";
 }
 
@@ -252,7 +252,13 @@ function getId (d) {
  */
 function showContext (node,left,top) {
 	contextNode = node;
-	var data = d3.select(node).datum();
+        if(d3.select(node).datum())
+        {
+            var data = d3.select(node).datum();
+        }else
+        {
+            var data = node;
+        }
 	if (getId(data) || htmlSectionMap[data.type]) {  // disable if the node has no ID or section header 
 		$('#showHtml').removeClass('disabled');
 	} else { 
@@ -273,7 +279,13 @@ function showContext (node,left,top) {
  * @param data The node selected to show HTML
  */
 function showHtmlByContext (node) {
-	var data = d3.select(node).datum();
+	if(d3.select(node).datum())
+        {
+            var data = d3.select(node).datum();
+        }else
+        {
+            var data = node;
+        }
 	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 		if (working == 0) { 
