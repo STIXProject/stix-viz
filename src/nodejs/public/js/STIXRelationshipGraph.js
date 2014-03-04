@@ -295,11 +295,12 @@ var StixGraph = function () {
 		
 		linkEnter.append('text')
 		.attr("class","linkLabel")
-		.attr('dx', 45)
 		.attr('dy', -5)
+		.attr('text-anchor','middle')
 		.append('textPath')
 		.attr('xlink:href',function (d) { 
 			return '#linkId_' + d.source.id + '_' + d.target.id; })
+		.attr('startOffset','50%')
 		.text(function (d) { 
 			return !relationships[d.source.id] ? "" : relationships[d.source.id][d.target.id] ; });
 		
@@ -492,6 +493,17 @@ var StixGraph = function () {
 		link.selectAll("path").attr("d", function (d) { 
 			return moveto(d) + lineto(d);
 		});
+		
+		link.selectAll("text").attr('transform',function (d) {
+			if (d.source.x > d.target.x) { 
+				var x = (d.source.x + d.target.x)/2;
+				var y = (d.source.y + d.target.y)/2;
+				return 'rotate(180 '+x+','+y+')';
+			} else { 
+				return 'rotate(0)';
+			}
+		});
+		
 
 		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 	}
