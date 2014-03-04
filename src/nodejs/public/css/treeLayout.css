@@ -116,5 +116,12 @@ marker.arrow.bold {
 	background-color: yellow;
 }
 
+#dragToPin {
+  float:right;
+  padding-right: 10px;	
+}
 
+#dragToPinInput { 
+	margin: 5px 2px;
+}
 

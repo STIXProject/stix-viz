@@ -20,16 +20,17 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	markerSize = 6,
 	labelHeight = 20;
 
 
+	var dragToPin = true;
+
+	
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
 	var report={},
 	svg=null,
 	node=[],
 	link=[],
-	label=[],
 	relationships={};
 
 
@@ -46,7 +47,10 @@ var StixGraph = function () {
 	function graphSize () { 
 		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
 	}
+	
+	
 
+	// Set context menu for nodes in graph view
 	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
 	
 	/**
@@ -82,7 +86,11 @@ var StixGraph = function () {
 	.on("dragend", function (d, i) {
 		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
 			force.resume();                     // were valid in "dragstart"
-			//d3.select(this).classed("fixed", d.fixed = true);
+			if (dragToPin) {
+				d3.select(this).classed("fixed", d.fixed = true);
+			} else {
+				d3.select(this).classed("fixed", d.fixed = false);
+			} 
 			tick();
 			dragInitiated = false;              // terminate drag gesture
 		}
@@ -138,7 +146,7 @@ var StixGraph = function () {
 
 
 			update();
-	}
+	};
 
 
 	/**
@@ -146,6 +154,12 @@ var StixGraph = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		// Set up drag to pin interaction. Turned on by default.
+		$('#contentDiv').append($('#graphToggleDragToPin').html());
+		$('#dragToPinInput').change(function () { 
+			dragToPin = $(this).prop('checked');
+		});
+		
 		
 		/**
 		 *  Append svg container for tree
