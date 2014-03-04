@@ -125,3 +125,12 @@ marker.arrow.bold {
 	margin: 5px 2px;
 }
 
+.node .pin {
+	fill: darkgray;
+	stroke: black;
+	display: none;
+}
+
+.node.fixed .pin {
+	display: inherit;
+}

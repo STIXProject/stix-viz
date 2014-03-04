@@ -20,7 +20,7 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	labelHeight = 20;
+	labelHeight = 40;
 
 
 	var dragToPin = true;
@@ -38,14 +38,14 @@ var StixGraph = function () {
 
 	/* Layout of tree within its div */
 	var margin = {
-			top : 20,
+			top : 15,
 			right : 20,
 			bottom : 35,
 			left : 10
 	};
 
 	function graphSize () { 
-		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
+		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight-labelHeight-margin.top];
 	}
 	
 	
@@ -57,7 +57,7 @@ var StixGraph = function () {
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkStrength(.6)
+	.linkStrength(.4)
 	.friction(.7)
 	.charge(Math.min.apply(Math,graphSize()) * -2)
 	.linkDistance(Math.min.apply(Math,graphSize())/5)
@@ -136,7 +136,7 @@ var StixGraph = function () {
 	_self.resize = function () { 
 
 			force
-			.linkStrength(.6)
+			.linkStrength(.4)
 			.size(graphSize())
 			.linkDistance(Math.min.apply(Math,graphSize())/5)
 			.gravity(function (d) { 
@@ -288,14 +288,14 @@ var StixGraph = function () {
 		
 		linkEnter.append("path")
 		.attr("id", function (d) { return "linkId_" + d.source.id + "_" + d.target.id; })
+		.attr("class", "to")
 		.attr("d", function (d) { 
 			return moveto(d) + lineto(d);
 		});
 		
-
 		linkEnter.append('text')
 		.attr("class","linkLabel")
-		.attr('dx', 40)
+		.attr('dx', 45)
 		.attr('dy', -5)
 		.append('textPath')
 		.attr('xlink:href',function (d) { 
@@ -353,6 +353,13 @@ var StixGraph = function () {
 			return !hasChildren(d);             
 		});
 
+		// Add circle indicating "pinned" status
+		nodeEnter.append('circle')
+		.attr("class","pin")
+		.attr("r", 5)
+		.attr("cx", -(nodeWidth/2)+10)
+		.attr("cy",-(nodeHeight/2)+10);
+		
 		// Add rounded rectangle "border" to all expandable parent nodes
 		nodeEnter.filter(".parent").append('rect')
 		.attr("height", String(nodeHeight+4)+"px")
