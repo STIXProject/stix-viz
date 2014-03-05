@@ -5,9 +5,6 @@
 var StixTimeline = function () { 
     var _self = this;
     
-    /* Id of the node that was last right-clicked */
-    var contextNode = null;
-    
     // chart geometry
     var margin = {
 	top: 20, 
@@ -19,12 +16,45 @@ var StixTimeline = function () {
     outerHeight = 650,
     width = outerWidth - margin.left - margin.right-150,
     height = outerHeight - margin.top - margin.bottom;
+    
+    
+    var typeColorMap = {
+        "Indicator-Sighting" :"#1abc9c",
+        "Incident-First_Malicious_Action" :"#95a5a6",
+        "Incident-Initial_Compromise" :"#2ecc71",
+        "Incident-First_Data_Exfiltration" :"#9b59b6",
+        "Incident-Incident_Discovery" :"#f1c40f",
+        "Incident-Incident_Opened" :"#775c2c",
+        "Incident-Containment_Achieved" :"#e74c3c",
+        "Incident-Restoration_Achieved" :"#e67e22",
+        "Incident-Incident_Reported" :"#0080ff",
+        "Incident-Incident_Closed" :"#34495e",
+        "Incident-COATaken" :"#27ae60"
+
+    };
+    
+    var legendMap = [
+            {type: "Indicator-Sighting", name: "Indicator-Sighting"}, 
+            {type:  "Incident-First_Malicious_Action",name: "First Malicious Action"}, 
+            {type: "Incident-Initial_Compromise",name: "Initial Compromise"}, 
+            {type: "Incident-First_Data_Exfiltration",name: "First Data Exfiltration"}, 
+            {type: "Incident-Incident_Discovery",name: "Incident Discovery"}, 
+            {type: "Incident-Incident_Opened",name: "Incident Opened"}, 
+            {type: "Incident-Containment_Achieved",name: "Containment Achieved"},
+            {type: "Incident-Restoration_Achieved",name: "Restoration Achieved"},
+            {type: "Incident-Incident_Reported",name: "Incident_Reported"},   
+            {type: "Incident-Incident_Closed",name: "Incident Closed"},
+            {type: "Incident-COATaken",name: "COATaken"}, 
+
+    ];
+    
+    var jString = "";
 
     _self.display = function (jsonString) {
-	// Define domElement and sourceFile
-	var domElement = "#contentDiv";
+        jString = jsonString;
+        
 	var dataset = $.parseJSON(jsonString);
-	timeline(domElement)
+	timeline("#contentDiv")
 	.data(dataset)
 	.band("mainBand", 0.82)
 	.band("naviBand", 0.08)
@@ -39,30 +69,35 @@ var StixTimeline = function () {
     
     
     _self.resize = function () { 
-        outerWidth = 500;
-        outerHeight = 650;
-        var domElement = "#contentDiv";
-        timeline(domElement).redraw();
+            /*outerWidth = $('#contentDiv').width();
+            outerHeight = $('#contentDiv').height();
+            width = outerWidth - margin.left - margin.right-150;
+            height = outerHeight - margin.top - margin.bottom;
+            
+            //d3.select('#contentDiv').remove();
+            //.exit().remove();
+            //var dataset = $.parseJSON(jString);
+            d3.select('#contentDiv')
+            .redraw();
+            
+            */
+            
+
+    }
+    
+    function drawTimeline(domElement)
+    {
+        var svg = d3.select(domElement).append("svg")
+	.attr("class", "svg")
+	.attr("id", "svg")
+	.attr("width", outerWidth)
+	.attr("height", outerHeight)
+	.append("g")
+	.attr("transform", "translate(" + margin.left + "," + margin.top +  ")");
     }
 
 
     function timeline(domElement) {
-
-	
-	var typeColorMap = {
-	    "Indicator-Sighting" :"#1abc9c",
-	    "Incident-First_Malicious_Action" :"#95a5a6",
-	    "Incident-Initial_Compromise" :"#2ecc71",
-	    "Incident-First_Data_Exfiltration" :"#9b59b6",
-	    "Incident-Incident_Discovery" :"#f1c40f",
-	    "Incident-Incident_Opened" :"#775c2c",
-	    "Incident-Containment_Achieved" :"#e74c3c",
-	    "Incident-Restoration_Achieved" :"#e67e22",
-	    "Incident-Incident_Reported" :"#0080ff",
-	    "Incident-Incident_Closed" :"#34495e",
-	    "Incident-COATaken" :"#27ae60"
-
-	}
 
 
 	//--------------------------------------------------------------------------
@@ -122,123 +157,57 @@ var StixTimeline = function () {
 	    function calculateTracks(items) {
 		var i, track;
 
-
-		function sortBackward() {
-		    // older items end deeper
-		    items.forEach(function (item) {
-			for (i = 0, track = 0; i < tracks.length; i++, track++) {
-			    if (item.end < tracks[i]) {
-				break;
-			    }
-			}
-			item.track = track;
-			tracks[track] = item.start;
-		    });
-		}
-		function sortForward() {
-		    // younger items end deeper
-		    items.forEach(function (item) {
-			for (i = 0, track = 0; i < tracks.length; i++, track++) {
-			    if (item.start > tracks[i]) {
-				break;
-			    }
-			}
-			item.track = track;
-			tracks[track] = item.end;
-		    });
-		}
-		function sortGrouped() {
-		    items.forEach(function (item) {
-			items.forEach(function (i) {
-			    if(item.parentObjId == i.parentObjId)
-			    {
-				i.track = (item.track+1);
-			    }
-			});
-		    });
-		}
-		function sortBackwardGrouped() {
-		    // older items end deeper
-		    items.forEach(function (item) {
-			if(!item.track)
-			{
-			    for (i = 0, track = 0; i < tracks.length; i++, track++) {
-				if (item.end < tracks[i]) {
-                                    
-				    break;
-				}
-			    }
-			    item.track = track;
-			    tracks[track] = item.start;
-			    items.forEach(function (it) {
-				if(item.parentObjId == it.parentObjId)
-				{
-				    it.track = (item.track+1);
-				    tracks[item.track+1] = item.start;
-				}
-			    });
-			}
-			
-		    });
-		}
                 
-                function sortForwardGrouped() {
-		    // younger items end deeper
-		    items.forEach(function (item) {
-                        if(item.track === undefined)
-                        {
-                            for (i = 0, track = 0; i < tracks.length; i++, track++) {
-                                if (item.start > tracks[i]) {
-                                    //item.track = track;
-                                    break;
+                // younger items end deeper
+                items.forEach(function (item) {
+                    if(item.track === undefined)
+                    {
+                        for (i = 0, track = 0; i < tracks.length; i++, track++) {
+                            if (item.start > tracks[i]) {
+                                //item.track = track;
+                                break;
+                            }
+                        }
+                        item.track = track;
+                        tracks[track] = item.end;
+                        //Find all the other items in this group
+                        items.forEach(function (it) {
+                            if(item.parentObjId === it.parentObjId && item !== it)
+                            {
+                                //THis assumes there is a max of 2 tracks in a group.
+                                //If there are more we need to find all tracks for that parent id and compare them
+                                it.track = item.track+1;
+                                if(it.end > tracks[item.track])
+                                {
+                                   tracks[it.track] = it.end;
+                                   tracks[item.track] = it.end;
+
+                                }
+                                else
+                                {
+                                    tracks[it.track] = item.end;
                                 }
                             }
-                            item.track = track;
-                            tracks[track] = item.end;
-                            //Find all the other items in this group
-                            items.forEach(function (it) {
-                                if(item.parentObjId === it.parentObjId && item !== it)
-                                {
-                                    //THis assumes there is a max of 2 tracks in a group.
-                                    //If there are more we need to find all tracks for that parent id and compare them
-                                    it.track = item.track+1;
-                                    if(it.end > tracks[item.track])
-                                    {
-                                       tracks[it.track] = it.end;
-                                       tracks[item.track] = it.end;
-                                        
-                                    }
-                                    else
-                                    {
-                                        tracks[it.track] = item.end;
-                                    }
-                                }
-                            });
-                        }
-                        
-                        
-		    });
-                    
-                    //Figure out the starting track for each group
-                    items.forEach(function (item) {
-                        if(groupedData[item.parentObjId].track === undefined)
+                        });
+                    }
+
+
+                });
+
+                //Figure out the starting track for each group
+                items.forEach(function (item) {
+                    if(groupedData[item.parentObjId].track === undefined)
+                    {
+                        groupedData[item.parentObjId].track = item.track;
+                    }
+                    else{
+                        if(item.track < groupedData[item.parentObjId].track)
                         {
                             groupedData[item.parentObjId].track = item.track;
                         }
-                        else{
-                            if(item.track < groupedData[item.parentObjId].track)
-                            {
-                                groupedData[item.parentObjId].track = item.track;
-                            }
-                        }
-                        
-                    });
-                    
-                    
-		}
+                    }
 
-		//Call the sort function
-                sortForwardGrouped();
+                });
 
 	    }
             
@@ -407,21 +376,7 @@ var StixTimeline = function () {
 	    .attr("height", band.h);
 	    
 
-        
-            var legendMap = [
-                    {type: "Indicator-Sighting", name: "Indicator-Sighting"}, 
-                    {type:  "Incident-First_Malicious_Action",name: "First Malicious Action"}, 
-                    {type: "Incident-Initial_Compromise",name: "Initial Compromise"}, 
-                    {type: "Incident-First_Data_Exfiltration",name: "First Data Exfiltration"}, 
-                    {type: "Incident-Incident_Discovery",name: "Incident Discovery"}, 
-                    {type: "Incident-Incident_Opened",name: "Incident Opened"}, 
-                    {type: "Incident-Containment_Achieved",name: "Containment Achieved"},
-                    {type: "Incident-Restoration_Achieved",name: "Restoration Achieved"},
-                    {type: "Incident-Incident_Reported",name: "Incident_Reported"},   
-                    {type: "Incident-Incident_Closed",name: "Incident Closed"},
-                    {type: "Incident-COATaken",name: "COATaken"}, 
-
-            ];
+       
 
              // add legend   
             var legend = svg.append("g")
@@ -690,16 +645,15 @@ var StixTimeline = function () {
 		// trigger, function
 		["mouseover", showTooltip],
 		["mouseout", hideTooltip],
-		["click", nodeClick],
 		["contextmenu", showContextTimeline]
 		]);
 
 	    function getHtml(element, d) {
 		var html;
-		if (element.attr("class") == "part interval") {
-		    html = getIcon(d) + "<br>" + displayDateLabel(d.start) + " - " + displayDateLabel(d.end);
+		if (element.attr("class") === "part interval") {
+		    html = getTooltip(d) + "<br>" + displayDateLabel(d.start) + " - " + displayDateLabel(d.end);
 		} else {
-		    html = getIcon(d) + "<br>" + displayDateLabel(d.start);
+		    html = getTooltip(d) + "<br>" + displayDateLabel(d.start);
 		}
 		return html;
 	    }
@@ -724,10 +678,10 @@ var StixTimeline = function () {
 		tooltip.style("visibility", "hidden");
 	    }
 	
-	/** Show the context menu for showing the HTML view when right clicking a node
-	 * 
-	 * @param data The node that was clicked
-	 */
+            /** Show the context menu for showing the HTML view when right clicking a node
+             * 
+             * @param data The node that was clicked
+             */
 	    function showContextTimeline (data) {
                 position = d3.mouse(this);
 		offset = $(this).offset();
@@ -736,10 +690,6 @@ var StixTimeline = function () {
 
 		
 	    }
-	    
-	    function nodeClick(data) {
-	    }
-
 	    return timeline;
 	};
 
@@ -812,6 +762,7 @@ var StixTimeline = function () {
 	//
 
 	timeline.redraw = function () {
+            
 	    components.forEach(function (component) {
 		component.redraw();
 	    })
@@ -831,10 +782,6 @@ var StixTimeline = function () {
 		return date;
 	    }
 	    
-	}
-	//not used except in console
-	function toYear(date, bcString) {
-	    return date.toLocaleDateString();
 	}
     
 	function displayDateLabel(date) {
@@ -857,20 +804,16 @@ var StixTimeline = function () {
 	    return month + "/" + day + "/" + year;
 	}
     
-	function getIcon(d) {
-	    if(d.type)
+	function getTooltip(d) {
+	    var ttStr = '';
+            if(d.type)
 	    {
-		var imgStr = '';
-		/*if(typeIconMap[d.type])
-		{
-		    imgStr += '<img src="./public/xslt/images/'+typeIconMap[d.type]+'.svg">';
-		}*/
-		imgStr += "Parent ID: " + d.parentObjId + "<br>";
-		imgStr += "Description: " +d.description+ "<br>";
-		imgStr += "Event Type: " +htmlSectionMap[d.type];
-                imgStr += "<br>Track: " + d.track;
+		ttStr += "Parent ID: " + d.parentObjId + "<br>";
+		ttStr += "Description: " +d.description+ "<br>";
+		ttStr += "Event Type: " +htmlSectionMap[d.type];
+                ttStr += "<br>Track: " + d.track;
 	    }
-	    return imgStr;
+	    return ttStr;
 	}
 	
 

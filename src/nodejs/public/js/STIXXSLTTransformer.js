@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  *
  * The STIXXSLTTransformer uses a simple Java RPC protocol to spawn requests
