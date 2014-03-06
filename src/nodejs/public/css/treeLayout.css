@@ -11,6 +11,17 @@
  */
 
 
+@font-face {
+    font-family: 'source_sans_proregular';
+    src: url('fonts/sourcesanspro-regular-webfont.eot');
+    src: url('fonts/sourcesanspro-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/sourcesanspro-regular-webfont.svg#source_sans_proregular') format('svg'),
+         url('fonts/sourcesanspro-regular-webfont.woff') format('woff'),
+         url('fonts/sourcesanspro-regular-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
 .NodeTypeLabel {
     font-size : 10px;
     fill: white;
@@ -54,22 +65,35 @@ user-select: none;
   font: 10px sans-serif;
 }
 
-.link {
-  fill: none;
+.link path {
+	fill: none;
   stroke: #ccc;
   stroke-width: 1.5px;
+	marker-end: url(#end-arrow);
 }
 
-.link.bold { 
-	stroke-width: 3px;
+.link.bold path {
+  stroke-width: 3px;
+	marker-end: url(#bold-arrow);
 }
 
-.link.bold.out { 
-	stroke: green;
+.link.bold.out path { 
+  stroke: green;
 }
 
-.link.bold.in { 
-	stroke: blue;
+.link.bold.in path { 
+  stroke: blue;
+}
+
+.link text.linkLabel {
+	display:none;
+	font-family: 'source_sans_proregular';
+	font-size: 12px;
+}
+
+.link.bold text.linkLabel {
+  display:inherit;
+  text-rendering: optimizeLegibility;	
 }
 
 marker.arrow { 
