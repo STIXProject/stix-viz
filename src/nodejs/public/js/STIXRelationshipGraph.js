@@ -20,38 +20,44 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	markerSize = 6,
-	labelHeight = 20;
+	labelHeight = 40;
+
+
+	var dragToPin = true;
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
 	var report={},
 	svg=null,
 	node=[],
-	link=[];
+	link=[],
+	relationships={};
 
 
 //	var xmlDocs = {}, docIndex = 0;
 
 	/* Layout of tree within its div */
 	var margin = {
-			top : 20,
+			top : 15,
 			right : 20,
 			bottom : 35,
 			left : 10
 	};
 
 	function graphSize () { 
-		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
+		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight-labelHeight-margin.top];
 	}
 
+	
+
+	// Set context menu for nodes in graph view
 	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
 	
 	/**
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkStrength(.6)
+	.linkStrength(.4)
 	.friction(.7)
 	.charge(Math.min.apply(Math,graphSize()) * -2)
 	.linkDistance(Math.min.apply(Math,graphSize())/5)
@@ -80,7 +86,11 @@ var StixGraph = function () {
 	.on("dragend", function (d, i) {
 		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
 			force.resume();                     // were valid in "dragstart"
-			d3.select(this).classed("fixed", d.fixed = true);
+			if (dragToPin) {
+				d3.select(this).classed("fixed", d.fixed = true);
+			} else {
+				d3.select(this).classed("fixed", d.fixed = false);
+			} 
 			tick();
 			dragInitiated = false;              // terminate drag gesture
 		}
@@ -126,7 +136,7 @@ var StixGraph = function () {
 	_self.resize = function () { 
 
 			force
-			.linkStrength(.6)
+			.linkStrength(.4)
 			.size(graphSize())
 			.linkDistance(Math.min.apply(Math,graphSize())/5)
 			.gravity(function (d) { 
@@ -136,7 +146,7 @@ var StixGraph = function () {
 
 
 			update();
-	}
+	};
 
 
 	/**
@@ -144,6 +154,11 @@ var StixGraph = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		// Set up drag to pin interaction. Turned on by default.
+		$('#contentDiv').append($('#graphToggleDragToPin').html());
+		$('#dragToPinInput').change(function () { 
+			dragToPin = $(this).prop('checked');
+		});
 		
 		/**
 		 *  Append svg container for tree
@@ -267,10 +282,29 @@ var StixGraph = function () {
 
 		link.exit().remove();
 
-		link.enter().insert("line", ".node")
-		.attr("class", "link")
-		.attr("marker-end","url(#end-arrow)");
+		var linkEnter = link.enter().insert("g",".node")
+		.attr("class","link");
 
+
+		linkEnter.append("path")
+		.attr("id", function (d) { return "linkId_" + d.source.id + "_" + d.target.id; })
+		.attr("class", "to")
+		.attr("d", function (d) { 
+			return moveto(d) + lineto(d);
+		});
+		
+		linkEnter.append('text')
+		.attr("class","linkLabel")
+		.attr('dy', -5)
+		.attr('text-anchor','middle')
+		.append('textPath')
+		.attr('xlink:href',function (d) { 
+			return '#linkId_' + d.source.id + '_' + d.target.id; })
+		.attr('startOffset','50%')
+		.text(function (d) { 
+			return !relationships[d.source.id] ? "" : relationships[d.source.id][d.target.id] ; });
+		
+		
 		// Update nodes.
 		node = node.data(nodes, function(d) { return d.id; });
 
@@ -319,6 +353,13 @@ var StixGraph = function () {
 			return !hasChildren(d);             
 		});
 
+		// Add circle indicating "pinned" status
+		nodeEnter.append('circle')
+		.attr("class","pin")
+		.attr("r", 5)
+		.attr("cx", -(nodeWidth/2)+10)
+		.attr("cy",-(nodeHeight/2)+10);
+		
 		// Add rounded rectangle "border" to all expandable parent nodes
 		nodeEnter.filter(".parent").append('rect')
 		.attr("height", String(nodeHeight+4)+"px")
@@ -333,6 +374,7 @@ var StixGraph = function () {
 		.attr("y", function(d) { return nodeHeight + 12; })
 		.attr("text-anchor", "middle")
 		.attr("transform","translate(0,"+ -nodeHeight/2 +")")
+		.attr("class","nodeLabel")
 		.text(getName)
 		.style("fill-opacity", 1);
 
@@ -351,12 +393,11 @@ var StixGraph = function () {
 			// Highlight related links
 			d3.selectAll('.link').filter(function (l) { return l.source === d; })
 			.classed("bold",true)
-			.classed("out",true)
-			.attr("marker-end","url(#bold-arrow)");
+			.classed("out",true);
+			
 			d3.selectAll('.link').filter(function (l) { return l.target === d; }).
 			classed("bold",true)
-			.classed("in",true)
-			.attr("marker-end","url(#bold-arrow)");
+			.classed("in",true);
 
 			
 			highlightHtml(nodeId);
@@ -370,8 +411,7 @@ var StixGraph = function () {
 			d3.selectAll('.link')
 			.classed("bold",false)
 			.classed("in",false)
-			.classed("out",false)
-			.attr("marker-end","url(#end-arrow)");
+			.classed("out",false);
 
 
 			$(".expandableContainer tr").removeClass("infocus");
@@ -379,7 +419,7 @@ var StixGraph = function () {
 
 
 		// wrap text description 
-		svg.selectAll('text').each(wraptext);
+		svg.selectAll('text.nodeLabel').each(wraptext);
 
 
 	}
@@ -393,6 +433,7 @@ var StixGraph = function () {
 	 */
 	function click(d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
+		if (!hasChildren(d)) return; // ignore leaf nodes
 		if (d._children && d._children.length > 0) {
 			d.children = d._children.concat(d.children);
 			d._children = [];
@@ -443,15 +484,38 @@ var StixGraph = function () {
 		});
 
 
-		link.attr("x1", function(d) { return d.source.x; })
-		.attr("y1", function(d) { return d.source.y; })
-		.attr("x2", function(d) { return d.target.x; })
-		.attr("y2", function(d) { return d.target.y; });
+//		link.attr("x1", function(d) { return d.source.x; })
+//		.attr("y1", function(d) { return d.source.y; })
+//		.attr("x2", function(d) { return d.target.x; })
+//		.attr("y2", function(d) { return d.target.y; });
+
+		link.selectAll("path").attr("d", function (d) { 
+			return moveto(d) + lineto(d);
+		});
+		
+
+		link.selectAll("text").attr('transform',function (d) {
+			if (d.source.x > d.target.x) { 
+				var x = (d.source.x + d.target.x)/2;
+				var y = (d.source.y + d.target.y)/2;
+				return 'rotate(180 '+x+','+y+')';
+			} else { 
+				return 'rotate(0)';
+			}
+		});
+		
 
 		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 	}
 
 
+	function moveto (d) {
+		return "M"+d.source.x+","+d.source.y;
+	}
+
+	function lineto (d) { 
+		return "L"+d.target.x+","+d.target.y;
+	}
 
 //	Resolves collisions between d and all other nodes.
 	function collide(alpha) {
@@ -636,9 +700,18 @@ var StixGraph = function () {
 
 				ref.parents.push(nodes[parent]);
 				
+				if (node.relationship && parent) { 
+					var relationship = node.relationship.split(':')[1] || node.relationship;
+					addRelationship(nodes[parent], ref, relationship);
+				}
+				
 			// If this is the first time we've seen this node, add it to the list
 			} else {//if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
 				nodes.push(node);
+				if (node.relationship && parent) {
+					var relationship = node.relationship.split(':')[1] || node.relationship;
+					addRelationship(nodes[parent],node,relationship);
+				}
 				pos = nodes.length-1;
 			}
 
@@ -652,6 +725,13 @@ var StixGraph = function () {
 		}
 		
 		recurse(root,0);
+	}
+
+	function addRelationship (parent,child,relationship) { 
+		if (!relationships[parent.id]) {
+			relationships[parent.id] = {};
+		}
+		relationships[parent.id][child.id] = relationship;
 	}
 
 
