@@ -75,17 +75,17 @@ function processCampaignObjs(caObjs, allBottomUpInfo) {
     var caId = "";
     $(caObjs).each(function (index, ca) {
     		caId = getObjIdStr(ca);
-            caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), "");
+            caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca));
             // children are related_ttps, related_incidents, related_indicators, attribution(threat actors)
             caChildren = [];
             var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
-            $.merge(caChildren, processChildTTPs(relatedTTPs, 'campaign:Related_TTP'));
+            $.merge(caChildren, processChildTTPs(relatedTTPs));
             var incidents = xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca);
-            $.merge(caChildren, processChildIncidents(incidents, 'campaign:Related_Incident'));
+            $.merge(caChildren, processChildIncidents(incidents));
             var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
-            $.merge(caChildren, processChildIndicators(indicators, 'campaign:Related_Indicator'));
+            $.merge(caChildren, processChildIndicators(indicators));
             var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
-            $.merge(caChildren, processChildThreatActors(attributedActors, 'campaign:Attributed_Threat_Acto'));
+            $.merge(caChildren, processChildThreatActors(attributedActors));
             if (caChildren.length > 0) {
                 caJson["children"] = caChildren;
             }
@@ -114,7 +114,7 @@ function processCoaObjs(coaObjs) {
 	var coaId = null;
 	$(coaObjs).each(function (index, coa) {
 		coaId = getObjIdStr(coa);
-		coaJson = createTopDownNode(coaId, STIXType.coa, getBestCourseOfActionName(coa), "");
+		coaJson = createTopDownNode(coaId, STIXType.coa, getBestCourseOfActionName(coa));
 		coaNodes.push(coaJson);
 	});
 	return coaNodes;
@@ -127,9 +127,9 @@ function processETObjs(etObjs, coaBottomUpInfo) {
 	var etChildren = null;
 	$(etObjs).each(function (index, et) {
 		etId = getObjIdStr(et);
-		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et), "");
+		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et));
         var coas = xpFind('.//et:Potential_COA', et);
-		etChildren = processChildCoas(coas, 'et:Potential_COA');
+		etChildren = processChildCoas(coas);
 		if (etChildren.length > 0) {
 			etJson["children"] = etChildren;
 		}
@@ -150,21 +150,21 @@ function processIncidentObjs(incidentObjs, allBottomUpInfo) {
     var incidentId = null;
     $(incidentObjs).each(function (index, incident) {
     	incidentId = getObjIdStr(incident);
-    	incidentJson = createTopDownNode(incidentId, STIXType.incident, getBestIncidentName(incident), "");
+    	incidentJson = createTopDownNode(incidentId, STIXType.incident, getBestIncidentName(incident));
     	// children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
     	incidentChildren = [];
     	var indicators = xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident);
-    	$.merge(incidentChildren, processChildIndicators(indicators, 'incident:Related_Indicator'));
+    	$.merge(incidentChildren, processChildIndicators(indicators));
     	var observables = xpFind('.//incident:Related_Observables//incident:Related_Observable', incident);
-    	$.merge(incidentChildren, processChildObservables(observables, 'incident:Related_Observable'));
+    	$.merge(incidentChildren, processChildObservables(observables));
     	var ttps = xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident);
-    	$.merge(incidentChildren, processChildTTPs(ttps, 'incident:Leveraged_TTP'));
+    	$.merge(incidentChildren, processChildTTPs(ttps));
     	var tas = xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident);
-    	$.merge(incidentChildren, processChildThreatActors(tas, 'incident:Threat_Actor'));
+    	$.merge(incidentChildren, processChildThreatActors(tas));
     	var coas = xpFind('./incident:COA_Requested', incident);	
-    	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Requested'));
+    	$.merge(incidentChildren, processChildCoas(coas));
     	coas = xpFind('./incident:COA_Taken', incident);    	
-    	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Taken'));
+    	$.merge(incidentChildren, processChildCoas(coas));
     	if (incidentChildren.length > 0) {
     		incidentJson["children"] = incidentChildren;
     	}
@@ -205,7 +205,7 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
 	$(indiObjs).each(function (index, indi) {	
 		subType = "not specified";
 		indiId = getObjIdStr(indi);
-	    var childJson = createTopDownNode(indiId, STIXType.indi, getBestIndicatorName(indi), "");
+	    var childJson = createTopDownNode(indiId, STIXType.indi, getBestIndicatorName(indi));
 	    var typeNode = xpFindSingle('.//indicator:Type', indi);
 	    if (typeNode != null) {
 	    	subType = $(typeNode).text();
@@ -213,12 +213,12 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
 	    addBottomUpInfoToChildren(childJson, allBottomUpInfo['indiBottomUpInfo']);
 		indiChildren = childJson["children"];
 		var coas = xpFind('.//indicator:Suggested_COA', indi);
-		$.merge(indiChildren, processChildCoas(coas, 'indicator:Suggested_COA'));
+		$.merge(indiChildren, processChildCoas(coas));
 		// children are Indicated_TTP, Observables
 	    var indicatedTTPs = xpFind('.//indicator:Indicated_TTP', indi);
-		$.merge(indiChildren, processChildTTPs(indicatedTTPs, 'indicator:Indicated_TTP'));
+		$.merge(indiChildren, processChildTTPs(indicatedTTPs));
 		var observables = xpFind('.//indicator:Observable', indi);
-		$.merge(indiChildren, processChildObservables(observables, 'indicator:Observable'));
+		$.merge(indiChildren, processChildObservables(observables));
 		if (indiId != "") {
 			$(coas).each(function (index, coa) {
 				addIndicatorToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
@@ -254,7 +254,7 @@ function processObservableObjs(obsObjs) {
 	var obsId = null;
 	$(obsObjs).each(function (index, obs) {
 		obsId = getObjIdStr(obs);
-		obsJson = createTopDownNode(obsId, STIXType.obs, getBestObservableName(obs), "");
+		obsJson = createTopDownNode(obsId, STIXType.obs, getBestObservableName(obs));
 		obsNodes.push(obsJson);
 	});
 	return obsNodes;
@@ -271,13 +271,13 @@ function processThreatActorObjs(taObjs, allBottomUpInfo) {
     var taId = null;
     $(taObjs).each(function (index, ta) {
     		taId = getObjIdStr(ta);
-            taJson = createTopDownNode(taId, STIXType.ta, getBestThreatActorName(ta), "");
+            taJson = createTopDownNode(taId, STIXType.ta, getBestThreatActorName(ta));
             // children are observed_ttps, associated_campaigns, <Incidents>
             taChildren = [];
             var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
-            $.merge(taChildren, processChildTTPs(relatedTTPs, 'threat-actor:Observed_TTP'));
+            $.merge(taChildren, processChildTTPs(relatedTTPs));
             var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
-            $.merge(taChildren, processChildCampaigns(campaigns, 'threat-actor:Associated_Campaign'));
+            $.merge(taChildren, processChildCampaigns(campaigns));
             if (taChildren.length > 0) {
                 taJson["children"] = taChildren;
             }
@@ -299,47 +299,47 @@ function processTTPObjs(ttpObjs, etBottomUpInfo) {
     var ttpNodes = [];
     var ttpJson = null;
     $(ttpObjs).each(function (index, ttp) {
-    	 ttpJson = createSingleTTPJson(ttp, etBottomUpInfo, "");
+    	 ttpJson = createSingleTTPJson(ttp, etBottomUpInfo);
          ttpNodes.push(ttpJson);
         });
     return ttpNodes;
 }
 
-function processChildTTPs(ttps, relationship) {
+function processChildTTPs(ttps) {
     var ttpNodes = [];
     var ttpJson = null;
     $(ttps).each(function (index, ttp) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ttp, ttp)));
             if (idRef != "") {
-                ttpJson = createTopDownIdRef(STIXType.ttp, idRef, relationship);
+                ttpJson = createTopDownIdRef(STIXType.ttp, idRef);
             }
             else {  // inline TTP
-            	ttpJson = createSingleTTPJson(ttp, relationship);
+            	ttpJson = createSingleTTPJson(ttp);
             }
             ttpNodes.push(ttpJson);
 	});
     return ttpNodes;
 }
 
-function processChildCampaigns(cas, relationship) {
+function processChildCampaigns(cas) {
     var caNodes = [];
     var caJson = null;
     var caId = null;
     $(cas).each(function (index, ca) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ca, ca)));
             if (idRef != "") {
-                caJson = createTopDownIdRef(STIXType.ca, idRef, relationship);
+                caJson = createTopDownIdRef(STIXType.ca, idRef);
             }
             else {  // inline specification
             	caId = getObjIdStr(ca);
-            	caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+            	caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca));
             }
             caNodes.push(caJson);
 	});
     return caNodes;
 }
 
-function processChildCoas(coas, relationship) {
+function processChildCoas(coas) {
 	var coaNodes = [];
 	var coa = null;
 	var coaJson = null;
@@ -352,11 +352,11 @@ function processChildCoas(coas, relationship) {
 		if (coa != null) {
 		    var idRef = getObjIdRefStr($(coa));
 	        if (idRef != "") {
-	        	coaJson = createTopDownIdRef(STIXType.coa, idRef, relationship);
+	        	coaJson = createTopDownIdRef(STIXType.coa, idRef);
 	        }	
 	        else {
 	        	coaId = getObjIdStr(coa);
-	        	coaJson = createTopDownNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        	coaJson = createTopDownNode(coaId, STIXType.coa,getBestCourseOfActionName(coa));
 	        }
 	        coaNodes.push(coaJson);
 		}
@@ -365,42 +365,42 @@ function processChildCoas(coas, relationship) {
 }
 
 // TODO first just handle idRefs, need to add inline processing
-function processChildThreatActors(actors, relationship) {
+function processChildThreatActors(actors) {
     var actorNodes = [];
     $(actors).each(function (index, actor) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ta, actor)));
 	    if (idRef != "") {
-	    	actorNodes.push(createTopDownIdRef(STIXType.ta, idRef, relationship));
+	    	actorNodes.push(createTopDownIdRef(STIXType.ta, idRef));
 	    }
 	});
     return actorNodes;
 }
 
 //TODO first just handle idRefs, need to add inline processing
-function processChildIncidents(incidents, relationship) {
+function processChildIncidents(incidents) {
     var incidentNodes = [];
     $(incidents).each(function (index, incident) {
     	var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.incident, incident)));
 		if (idRef != "") {
-			incidentNodes.push(createTopDownIdRef(STIXType.incident, idRef, relationship));
+			incidentNodes.push(createTopDownIdRef(STIXType.incident, idRef));
 		}
     });
     return incidentNodes;
 }
 
 //TODO first just handle idRefs, need to add inline processing
-function processChildIndicators(indis, relationship) {
+function processChildIndicators(indis) {
 	var indiNodes = [];
 	$(indis).each(function (index, indi) {
 		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.indi, indi)));
 		if (idRef != "") {
-			indiNodes.push(createTopDownIdRef(STIXType.indi, idRef, relationship));
+			indiNodes.push(createTopDownIdRef(STIXType.indi, idRef));
 		}
 	});
     return indiNodes;
 }
 
-function processChildObservables(observables, relationship) {
+function processChildObservables(observables) {
     var obsNodes = [];
     var obsId = null;
     $(observables).each(function (index, obs) {
@@ -409,11 +409,11 @@ function processChildObservables(observables, relationship) {
     		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.obs, obs)));
     	}
     	if (idRef != "") {
-    		obsNodes.push(createTopDownIdRef(STIXType.obs, idRef, relationship));
+    		obsNodes.push(createTopDownIdRef(STIXType.obs, idRef));
     	}
     	else {
     		obsId = getObjIdStr(obs);
-    		obsNodes.push(createTopDownNode(obsId, STIXType.obs,getBestObservableName(obs), relationship));
+    		obsNodes.push(createTopDownNode(obsId, STIXType.obs,getBestObservableName(obs)));
     	}
     });
     return obsNodes;
