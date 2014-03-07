@@ -57,19 +57,24 @@
 user-select: none;
 }
 
-.node image.leaf {
-/*   opacity: 0.6; */
-}
 
 .node text {
   font: 10px sans-serif;
 }
 
-.link path {
-	fill: none;
+/* For Tree view */
+path.link {
+  fill: none;
   stroke: #ccc;
   stroke-width: 1.5px;
-	marker-end: url(#end-arrow);
+}
+
+/* For graph view */
+.link path {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+  marker-end: url(#end-arrow);
 }
 
 .link.bold path {
@@ -108,5 +113,21 @@ marker.arrow.bold {
 	background-color: yellow;
 }
 
+#dragToPin {
+  float:right;
+  padding-right: 10px;	
+}
 
+#dragToPinInput { 
+	margin: 5px 2px;
+}
 
+.node .pin {
+	fill: darkgray;
+	stroke: black;
+	display: none;
+}
+
+.node.fixed .pin {
+	display: inherit;
+}

@@ -37,8 +37,6 @@
 <link rel="stylesheet" type="text/css" href="./public/css/timeline.css" />
 <link rel="stylesheet" type="text/css"href="./public/css/stixLayout.css" />
 
-<script type="text/javascript"
-	src="./public/js/Saxonce/Saxonce.nocache.js"></script>
 <script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
 <script type="text/javascript"
 	src="./public/js/jquery/jquery-1.10.2.min.js"></script>
@@ -108,14 +106,15 @@
 						</ul></li>
 
 					<li class="dropdown"><a href="#" class="dropdown-toggle"
-						data-toggle="dropdown" id="selectedView">Tree View<b class="caret"></b></a>
+						data-toggle="dropdown" id="selectedView">Graph View<b class="caret"></b></a>
 						<ul id="viewList" class="dropdown-menu">
+              <li id="selectView-graph"><a href="#">Graph
+                View</a></li>
 							<li id="selectView-tree"><a href="#">Tree
 								View</a></li>
-							<li id="selectView-graph"><a href="#">Graph
+							<li id="selectView-timeline"><a href="#">Timeline
 								View</a></li>
-                                                        <li id="selectView-timeline"><a href="#">Timeline
-								View</a></li>
+
 						</ul></li>
 
 				</ul>
@@ -129,6 +128,10 @@
   <script id="graphContextMenuTemplate" type="text/template">
       <li id="toggleFix"><a tabindex="-1" href="#"></a></li>
       <li id="hideNode"><a tabindex="-1" href="#">Hide Node</a></li>
+  </script>
+  
+  <script id="graphToggleDragToPin" type="text/template">
+    <div id="dragToPin"><input id="dragToPinInput" type="checkbox" checked><label for="dragToPinInput">Drag To Pin</label></div>
   </script>
 
 </body>

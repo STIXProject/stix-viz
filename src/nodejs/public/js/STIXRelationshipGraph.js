@@ -20,8 +20,10 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	markerSize = 6,
-	labelHeight = 20;
+	labelHeight = 40;
+
+
+	var dragToPin = true;
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
@@ -29,7 +31,6 @@ var StixGraph = function () {
 	svg=null,
 	node=[],
 	link=[],
-	label=[],
 	relationships={};
 
 
@@ -37,23 +38,27 @@ var StixGraph = function () {
 
 	/* Layout of tree within its div */
 	var margin = {
-			top : 20,
+			top : 15,
 			right : 20,
 			bottom : 35,
 			left : 10
 	};
 
 	function graphSize () { 
-		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight];
+		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight-labelHeight-margin.top];
 	}
 
+	
+
+	// Set context menu for nodes in graph view
 	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
+
 	
 	/**
 	 * Construct the force layout object 
 	 */
 	var force = d3.layout.force()
-	.linkStrength(.6)
+	.linkStrength(.4)
 	.friction(.7)
 	.charge(Math.min.apply(Math,graphSize()) * -2)
 	.linkDistance(Math.min.apply(Math,graphSize())/5)
@@ -82,7 +87,11 @@ var StixGraph = function () {
 	.on("dragend", function (d, i) {
 		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
 			force.resume();                     // were valid in "dragstart"
-			//d3.select(this).classed("fixed", d.fixed = true);
+			if (dragToPin) {
+				d3.select(this).classed("fixed", d.fixed = true);
+			} else {
+				d3.select(this).classed("fixed", d.fixed = false);
+			} 
 			tick();
 			dragInitiated = false;              // terminate drag gesture
 		}
@@ -128,7 +137,7 @@ var StixGraph = function () {
 	_self.resize = function () { 
 
 			force
-			.linkStrength(.6)
+			.linkStrength(.4)
 			.size(graphSize())
 			.linkDistance(Math.min.apply(Math,graphSize())/5)
 			.gravity(function (d) { 
@@ -138,7 +147,7 @@ var StixGraph = function () {
 
 
 			update();
-	}
+	};
 
 
 	/**
@@ -146,6 +155,11 @@ var StixGraph = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		// Set up drag to pin interaction. Turned on by default.
+		$('#contentDiv').append($('#graphToggleDragToPin').html());
+		$('#dragToPinInput').change(function () { 
+			dragToPin = $(this).prop('checked');
+		});
 		
 		/**
 		 *  Append svg container for tree
@@ -271,21 +285,23 @@ var StixGraph = function () {
 
 		var linkEnter = link.enter().insert("g",".node")
 		.attr("class","link");
-		
+
+
 		linkEnter.append("path")
 		.attr("id", function (d) { return "linkId_" + d.source.id + "_" + d.target.id; })
+		.attr("class", "to")
 		.attr("d", function (d) { 
 			return moveto(d) + lineto(d);
 		});
 		
-
 		linkEnter.append('text')
 		.attr("class","linkLabel")
-		.attr('dx', 40)
 		.attr('dy', -5)
+		.attr('text-anchor','middle')
 		.append('textPath')
 		.attr('xlink:href',function (d) { 
 			return '#linkId_' + d.source.id + '_' + d.target.id; })
+		.attr('startOffset','50%')
 		.text(function (d) { 
 			return !relationships[d.source.id] ? "" : relationships[d.source.id][d.target.id] ; });
 		
@@ -295,14 +311,16 @@ var StixGraph = function () {
 
 		node.exit().remove();
 		
-		
 		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
 
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
 		.classed("parent",function(d) { 
-			return hasChildren(d);
+			return hasChildren(d) && !isGroupingNode(d);
+		})
+		.classed("group", function (d) { 
+			return hasChildren(d) && isGroupingNode(d);
 		})
 		.on("click", click)
 		.on("contextmenu", function (d) {
@@ -324,21 +342,19 @@ var StixGraph = function () {
 		nodeEnter.append("svg:image")
 		.attr("height", String(nodeHeight)+"px")
 		.attr("width", String(nodeWidth)+"px")
-		        .attr("xlink:href",function (d) { 
-        	if (d.type == 'top') 
-        		return "./public/icons/report.png";
-        	else
-        		return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
-        	})
+		.attr("xlink:href",getImageUrl)
 		.attr("transform","translate("+ -nodeWidth/2 + "," + -nodeHeight/2 + ")")
-		.attr("class", function(d) { return d.type; })
 		.attr("filter",function (d) { 
 			return !hasChildren(d) ? "url(#lighten)" : "none";   // lighten the color of leaf nodes
-		})
-		.classed("leaf",function (d) { 
-			return !hasChildren(d);             
 		});
 
+		// Add circle indicating "pinned" status
+		nodeEnter.append('circle')
+		.attr("class","pin")
+		.attr("r", 5)
+		.attr("cx", -(nodeWidth/2)+10)
+		.attr("cy",-(nodeHeight/2)+10);
+		
 		// Add rounded rectangle "border" to all expandable parent nodes
 		nodeEnter.filter(".parent").append('rect')
 		.attr("height", String(nodeHeight+4)+"px")
@@ -347,6 +363,16 @@ var StixGraph = function () {
 		.attr("ry","10")
 		.attr("class","parentborder")
 		.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + ((-nodeHeight/2) - 2) + ")");
+		
+		// add layered icons for grouping nodes
+		for (var i = 0; i < 3; i++) { 
+			nodeEnter.filter('.group').insert("svg:image", ':first-child')
+			.attr("height", String(nodeHeight)+"px")
+			.attr("width", String(nodeWidth)+"px")
+			.attr("xlink:href",getImageUrl)
+			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
+		}
+		
 
 		// Append text label to each node
 		nodeEnter.append("text")
@@ -403,8 +429,14 @@ var StixGraph = function () {
 
 	}
 
+	function getImageUrl (d) {        	
+		if (d.type == 'top') 
+			return "./public/icons/report.png";
+		else
+			return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+	}
 
-	
+
 
 	/** 
 	 * Toggle node expansion on click
@@ -467,10 +499,22 @@ var StixGraph = function () {
 //		.attr("y1", function(d) { return d.source.y; })
 //		.attr("x2", function(d) { return d.target.x; })
 //		.attr("y2", function(d) { return d.target.y; });
-		
+
 		link.selectAll("path").attr("d", function (d) { 
 			return moveto(d) + lineto(d);
 		});
+		
+
+		link.selectAll("text").attr('transform',function (d) {
+			if (d.source.x > d.target.x) { 
+				var x = (d.source.x + d.target.x)/2;
+				var y = (d.source.y + d.target.y)/2;
+				return 'rotate(180 '+x+','+y+')';
+			} else { 
+				return 'rotate(0)';
+			}
+		});
+		
 
 		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 	}
@@ -479,7 +523,7 @@ var StixGraph = function () {
 	function moveto (d) {
 		return "M"+d.source.x+","+d.source.y;
 	}
-	
+
 	function lineto (d) { 
 		return "L"+d.target.x+","+d.target.y;
 	}
@@ -588,6 +632,13 @@ var StixGraph = function () {
 	function hasChildren (d) { 
 		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0); 
 	}
+	
+	/** 
+	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
+	 */
+	function isGroupingNode(d) { 
+		return d.depth === 1;
+	}
 
 	/**
 	 * Given a nodeId, find the node in the tree that has that value for its nodeId attribute
@@ -693,7 +744,7 @@ var StixGraph = function () {
 		
 		recurse(root,0);
 	}
-	
+
 	function addRelationship (parent,child,relationship) { 
 		if (!relationships[parent.id]) {
 			relationships[parent.id] = {};

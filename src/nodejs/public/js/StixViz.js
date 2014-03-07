@@ -126,8 +126,8 @@ $(function () {
 		} 			
 	});
 	
-	viewType = "selectView-tree";   // Default to tree view
-	view = new StixTree();  
+	viewType = "selectView-graph";   // Default to tree view
+	view = new StixGraph();  
 	
 
 	/**
@@ -230,7 +230,8 @@ function addXmlDoc (f) {
 function displayJson(jsonDataObj, viewType) {
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
-	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
+	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
+		$('#contextMenu li:gt(0)').remove();  // remove anything that was added to the context menu
 		view.display(relationshipData);
 	} else if (viewType === 'selectView-timeline'){
 		view.display(timelineData);
