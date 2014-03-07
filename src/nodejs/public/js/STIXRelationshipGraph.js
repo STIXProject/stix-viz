@@ -52,6 +52,7 @@ var StixGraph = function () {
 
 	// Set context menu for nodes in graph view
 	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
+
 	
 	/**
 	 * Construct the force layout object 
@@ -316,7 +317,10 @@ var StixGraph = function () {
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
 		.classed("parent",function(d) { 
-			return hasChildren(d);
+			return hasChildren(d) && !isGroupingNode(d);
+		})
+		.classed("group", function (d) { 
+			return hasChildren(d) && isGroupingNode(d);
 		})
 		.on("click", click)
 		.on("contextmenu", function (d) {
@@ -338,19 +342,10 @@ var StixGraph = function () {
 		nodeEnter.append("svg:image")
 		.attr("height", String(nodeHeight)+"px")
 		.attr("width", String(nodeWidth)+"px")
-		        .attr("xlink:href",function (d) { 
-        	if (d.type == 'top') 
-        		return "./public/icons/report.png";
-        	else
-        		return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
-        	})
+		.attr("xlink:href",getImageUrl)
 		.attr("transform","translate("+ -nodeWidth/2 + "," + -nodeHeight/2 + ")")
-		.attr("class", function(d) { return d.type; })
 		.attr("filter",function (d) { 
 			return !hasChildren(d) ? "url(#lighten)" : "none";   // lighten the color of leaf nodes
-		})
-		.classed("leaf",function (d) { 
-			return !hasChildren(d);             
 		});
 
 		// Add circle indicating "pinned" status
@@ -368,6 +363,16 @@ var StixGraph = function () {
 		.attr("ry","10")
 		.attr("class","parentborder")
 		.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + ((-nodeHeight/2) - 2) + ")");
+		
+		// add layered icons for grouping nodes
+		for (var i = 0; i < 3; i++) { 
+			nodeEnter.filter('.group').insert("svg:image", ':first-child')
+			.attr("height", String(nodeHeight)+"px")
+			.attr("width", String(nodeWidth)+"px")
+			.attr("xlink:href",getImageUrl)
+			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
+		}
+		
 
 		// Append text label to each node
 		nodeEnter.append("text")
@@ -424,8 +429,14 @@ var StixGraph = function () {
 
 	}
 
+	function getImageUrl (d) {        	
+		if (d.type == 'top') 
+			return "./public/icons/report.png";
+		else
+			return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+	}
 
-	
+
 
 	/** 
 	 * Toggle node expansion on click
@@ -620,6 +631,13 @@ var StixGraph = function () {
 	 */
 	function hasChildren (d) { 
 		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0); 
+	}
+	
+	/** 
+	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
+	 */
+	function isGroupingNode(d) { 
+		return d.depth === 1;
 	}
 
 	/**
