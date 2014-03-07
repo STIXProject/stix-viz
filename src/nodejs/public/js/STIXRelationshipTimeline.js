@@ -5,6 +5,8 @@
 var StixTimeline = function () { 
     var _self = this;
     
+    //var svg;
+    
     // chart geometry
     var margin = {
 	top: 20, 
@@ -17,7 +19,7 @@ var StixTimeline = function () {
     width = outerWidth - margin.left - margin.right-150,
     height = outerHeight - margin.top - margin.bottom;
     
-    
+
     var typeColorMap = {
         "Indicator-Sighting" :"#1abc9c",
         "Incident-First_Malicious_Action" :"#95a5a6",
@@ -69,22 +71,33 @@ var StixTimeline = function () {
     
     
     _self.resize = function () { 
-            /*outerWidth = $('#contentDiv').width();
-            outerHeight = $('#contentDiv').height();
-            width = outerWidth - margin.left - margin.right-150;
-            height = outerHeight - margin.top - margin.bottom;
-            
-            //d3.select('#contentDiv').remove();
-            //.exit().remove();
-            //var dataset = $.parseJSON(jString);
-            d3.select('#contentDiv')
-            .redraw();
-            
-            */
+        var newWidth = $('#contentDiv').width();
+        var newHeight = $('#contentDiv').height();
+        outerWidth = newWidth;
+        outerHeight = newHeight;
+        width = outerWidth - margin.left - margin.right-150,
+        height = outerHeight - margin.top - margin.bottom;
+        
+       d3.select("svg")
+       .remove();
+        
+        var dataset = $.parseJSON(jString);
+	timeline("#contentDiv")
+	.data(dataset)
+	.band("mainBand", 0.82)
+	.band("naviBand", 0.08)
+	.xAxis("mainBand")
+	.tooltips("mainBand")
+	.xAxis("naviBand")
+	.labels("mainBand")
+	.labels("naviBand")
+	.brush("naviBand", ["mainBand"])
+	.redraw();
             
 
     }
     
+
     function drawTimeline(domElement)
     {
         var svg = d3.select(domElement).append("svg")
@@ -762,10 +775,9 @@ var StixTimeline = function () {
 	//
 
 	timeline.redraw = function () {
-            
 	    components.forEach(function (component) {
 		component.redraw();
-	    })
+	    });
 	};
 
 	//--------------------------------------------------------------------------
@@ -811,7 +823,7 @@ var StixTimeline = function () {
 		ttStr += "Parent ID: " + d.parentObjId + "<br>";
 		ttStr += "Description: " +d.description+ "<br>";
 		ttStr += "Event Type: " +htmlSectionMap[d.type];
-                ttStr += "<br>Track: " + d.track;
+                //ttStr += "<br>Track: " + d.track;
 	    }
 	    return ttStr;
 	}
