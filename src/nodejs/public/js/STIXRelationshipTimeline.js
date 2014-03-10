@@ -174,30 +174,77 @@ var StixTimeline = function () {
                     if(item.track === undefined)
                     {
                         for (i = 0, track = 0; i < tracks.length; i++, track++) {
-                            if (item.start > tracks[i]) {
-                                //item.track = track;
+                            if (item.start > tracks[i].end) {
+                                break;
+                            }
+                            if(item.end < tracks[i].start)
+                            {
                                 break;
                             }
                         }
-                        item.track = track;
-                        tracks[track] = item.end;
+                        if(tracks[track])
+                        {
+                            //If there are already items in this track we add them to the track
+                            item.track = track;
+                            if(item.end > tracks[track].end)
+                            {
+                                tracks[track].end = item.end;
+                            }
+                            if(item.start < tracks[track].start)
+                            {
+                                tracks[track].start = item.start;
+                            }
+                        }
+                        else
+                        {
+                            //if this is the first item in the track, create new track then add it
+                            item.track = track;
+
+                            var newTrack={};
+                            newTrack.end = item.end;
+                            newTrack.start = item.start;
+                            tracks[track] = newTrack;
+                        }
+                        
+                        
+                        
                         //Find all the other items in this group
                         items.forEach(function (it) {
                             if(item.parentObjId === it.parentObjId && item !== it)
                             {
-                                //THis assumes there is a max of 2 tracks in a group.
-                                //If there are more we need to find all tracks for that parent id and compare them
-                                it.track = item.track+1;
-                                if(it.end > tracks[item.track])
-                                {
-                                   tracks[it.track] = it.end;
-                                   tracks[item.track] = it.end;
 
+                                it.track = item.track+1;
+                                if(tracks[it.track] == null)
+                                {
+                                    //If we are adding the grouped item to a new track
+                                    //Create the track and add it to it
+                                    var newTrack={};
+                                    newTrack.end = it.end;
+                                    newTrack.start = it.start;
+                                    tracks[it.track] = newTrack;
+                                }
+                                if(it.end > tracks[item.track].end)
+                                {
+                                   //This assumes there is a max of 2 tracks in a group.
+                                   //If there are more we need to find all tracks for that parent id and compare them
+                                   tracks[it.track].end = it.end;
+                                   tracks[item.track].end = it.end;
                                 }
                                 else
                                 {
-                                    tracks[it.track] = item.end;
+                                    tracks[it.track].end = item.end;
                                 }
+                                
+                                if(it.start < tracks[item.track].start)
+                                {
+                                   tracks[it.track].start = it.start;
+                                   tracks[item.track].start = it.start;
+                                }
+                                else
+                                {
+                                    tracks[it.track].start = item.start;
+                                }
+
                             }
                         });
                     }
@@ -821,7 +868,7 @@ var StixTimeline = function () {
 		ttStr += "Parent ID: " + d.parentObjId + "<br>";
 		ttStr += "Description: " +d.description+ "<br>";
 		ttStr += "Event Type: " +htmlSectionMap[d.type];
-                //ttStr += "<br>Track: " + d.track;
+                ttStr += "<br>Track: " + d.track;
 	    }
 	    return ttStr;
 	}

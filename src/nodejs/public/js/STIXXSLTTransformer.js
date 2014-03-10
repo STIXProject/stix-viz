@@ -33,14 +33,14 @@ $(function () {
 
 instance.on('message', function(msg){
     console.log('Received a message...');
-    console.log(msg);
+    //console.log(msg);
     console.log("");
 
 });
 
 instance.on('sent', function(msg){
     console.log('Sent a message...');
-    console.log(msg);
+    //console.log(msg);
     console.log("");
 });
 
