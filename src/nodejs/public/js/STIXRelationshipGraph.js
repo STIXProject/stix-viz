@@ -81,6 +81,26 @@ var StixGraph = function () {
 			d.py += d3.event.dy;
 			d.x += d3.event.dx;
 			d.y += d3.event.dy;
+
+			if (d.x >= force.size()[0] - 60) {
+				window.resizeBy(5,0);
+				_self.resize();
+			} else if (d.x <= 60) {
+				window.moveBy(-5,0);
+				window.resizeBy(5,0);
+				_self.resize();
+			}
+			
+			if (d.y >= force.size()[1] - 60) { 
+				window.resizeBy(0,5);
+				_self.resize();
+			} else if (d.y <= 60) { 
+				window.moveBy(0,-5);
+				window.resizeBy(0,5);
+				_self.resize();
+			}
+
+			
 			tick();
 		}
 	})
@@ -136,17 +156,20 @@ var StixGraph = function () {
 
 	_self.resize = function () { 
 
-			force
-			.linkStrength(.4)
-			.size(graphSize())
-			.linkDistance(Math.min.apply(Math,graphSize())/5)
-			.gravity(function (d) { 
-				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-				})
-			.charge(Math.min.apply(Math,graphSize()) * -2);
+		if (!node || node.length == 0) return;
 
 
-			update();
+		force
+		.linkStrength(.4)
+		.size(graphSize())
+		.linkDistance(Math.min.apply(Math,graphSize())/5)
+		.gravity(function (d) { 
+			return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+		})
+		.charge(Math.min.apply(Math,graphSize()) * -2);
+
+
+		update();
 	};
 
 
@@ -484,7 +507,7 @@ var StixGraph = function () {
 	 * Reposition nodes and links on each tick
 	 */
 	function tick(e) {
-
+		
 	    // avoid node collisions
 		node.each(collide(0.5));
 		
