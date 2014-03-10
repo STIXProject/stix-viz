@@ -5,8 +5,6 @@
 var StixTimeline = function () { 
     var _self = this;
     
-    //var svg;
-    
     // chart geometry
     var margin = {
 	top: 20, 
@@ -55,22 +53,36 @@ var StixTimeline = function () {
     _self.display = function (jsonString) {
         jString = jsonString;
         
-	var dataset = $.parseJSON(jsonString);
-	timeline("#contentDiv")
-	.data(dataset)
-	.band("mainBand", 0.82)
-	.band("naviBand", 0.08)
-	.xAxis("mainBand")
-	.tooltips("mainBand")
-	.xAxis("naviBand")
-	.labels("mainBand")
-	.labels("naviBand")
-	.brush("naviBand", ["mainBand"])
-	.redraw();
+        drawTimeline();
     }
     
     
     _self.resize = function () { 
+        //Function exists to avoid errors but if we actually resize here 
+        //we will get tons of resize events during a drag resize.
+    }
+    
+    $(window).resize(function () {
+        waitForFinalEvent(function(){
+          drawTimeline();
+        }, 500, "some unique string");
+    });
+    
+    var waitForFinalEvent = (function () {
+        var timers = {};
+        return function (callback, ms, uniqueId) {
+          if (!uniqueId) {
+            uniqueId = "Don't call this twice without a uniqueId";
+          }
+          if (timers[uniqueId]) {
+            clearTimeout (timers[uniqueId]);
+          }
+          timers[uniqueId] = setTimeout(callback, ms);
+        };
+      })();
+
+    function drawTimeline()
+    {
         var newWidth = $('#contentDiv').width();
         var newHeight = $('#contentDiv').height();
         outerWidth = newWidth;
@@ -93,20 +105,6 @@ var StixTimeline = function () {
 	.labels("naviBand")
 	.brush("naviBand", ["mainBand"])
 	.redraw();
-            
-
-    }
-    
-
-    function drawTimeline(domElement)
-    {
-        var svg = d3.select(domElement).append("svg")
-	.attr("class", "svg")
-	.attr("id", "svg")
-	.attr("width", outerWidth)
-	.attr("height", outerHeight)
-	.append("g")
-	.attr("transform", "translate(" + margin.left + "," + margin.top +  ")");
     }
 
 
