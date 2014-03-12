@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the CSS for the Stix tree display
+ * 
+ * created 2013
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+ 
+ @font-face {
+    font-family: 'source_sans_proregular';
+    src: url('fonts/sourcesanspro-regular-webfont.eot');
+    src: url('fonts/sourcesanspro-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/sourcesanspro-regular-webfont.svg#source_sans_proregular') format('svg'),
+         url('fonts/sourcesanspro-regular-webfont.woff') format('woff'),
+         url('fonts/sourcesanspro-regular-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+#graphDiv {
+	height: 100%;
+	width: 100%;
+	display: table;
+}
+
+
+#dragToPin {
+  display: table-row;
+  height: 20px;
+}
+
+#graphSVGRow {
+	display: table-row;
+	height: 100%;
+}
+
+#graphSVGContainer {
+	overflow:auto;
+	height: 100%;
+	display:block;
+}
+
+#graphSVG { 
+	display:block;
+}
+
+#dragToPinInput { 
+  margin: 5px 2px;
+}
+
+.node .pin {
+  fill: darkgray;
+  stroke: black;
+  display: none;
+}
+
+.node.fixed .pin {
+  display: inherit;
+}
+
+/* For graph view */
+.link path {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+  marker-end: url(#end-arrow);
+}
+
+.link.bold path {
+  stroke-width: 3px;
+  marker-end: url(#bold-arrow);
+}
+
+.link.bold.out path { 
+  stroke: green;
+}
+
+.link.bold.in path { 
+  stroke: blue;
+}
+
+.link text.linkLabel {
+  display:none;
+  font-family: 'source_sans_proregular';
+  font-size: 12px;
+}
+
+.link.bold text.linkLabel {
+  display:inherit;
+  text-rendering: optimizeLegibility; 
+}
+
+marker.arrow { 
+  fill: #bbb;
+}
+
+marker.arrow.bold {
+  fill: #333;
+}

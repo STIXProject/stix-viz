@@ -42,13 +42,13 @@ var StixTree = function () {
 	height = 1200 - margin.top- margin.bottom;
 	
 	function treeWidth () { 
-		return $('#contentDiv').width() - nodeWidth;
+		return $('#treeDiv').width() - nodeWidth;
 	}
 
 	/**
 	 * Construct the tree layout object 
 	 */
-	var tree = d3.layout.tree().nodeSize([ nodeWidth, nodeHeight ]).size([treeWidth(),height]);
+	var tree = d3.layout.tree();
 
 	/**
 	 * Diagonal for drawing links between nodes
@@ -80,11 +80,13 @@ var StixTree = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		$('#contentDiv').append('<div id="treeDiv"/>');
+		tree.nodeSize([ nodeWidth, nodeHeight ]).size([treeWidth(),height]);
 		
 		/**
 		 *  Append svg container for tree
 		 */
-		svg = d3.select("#contentDiv").append("svg")
+		svg = d3.select("#treeDiv").append("svg")
 	    .append("g")
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
@@ -193,7 +195,7 @@ var StixTree = function () {
 			if (d.y > maxY) maxY = d.y;
 		});
 
-		$('#contentDiv svg').height(maxY+margin.top+margin.bottom+(2*nodeHeight)+nodeSep);
+		$('#treeDiv svg').height(maxY+margin.top+margin.bottom+(2*nodeHeight)+nodeSep);
 
 
 		// Enter any new nodes at the parent's previous position.

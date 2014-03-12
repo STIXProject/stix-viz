@@ -231,7 +231,6 @@ function displayJson(jsonDataObj, viewType) {
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
-		$('#contextMenu li:gt(0)').remove();  // remove anything that was added to the context menu
 		view.display(relationshipData);
 	} else if (viewType === 'selectView-timeline'){
 		view.display(timelineData);
@@ -419,6 +418,8 @@ function reset (context) {
 	}
 	// In all contexts, empty the view div
 	$('#contentDiv').empty();
+	$('#contextMenu li:gt(0)').remove();  // remove anything that was added to the context menu
+	$('#viewControls').empty(); // remove view-specific controls
 }
 
 /**

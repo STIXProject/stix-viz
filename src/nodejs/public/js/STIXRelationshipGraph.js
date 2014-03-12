@@ -20,10 +20,12 @@ var StixGraph = function () {
 	
 	var nodeWidth = 60,
 	nodeHeight = 60,
-	labelHeight = 40;
+	labelHeight = 35;
 
 
-	var dragToPin = true;
+	var dragToPin = true,
+	dragInitiated = false;
+	
 
 
 	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
@@ -45,28 +47,14 @@ var StixGraph = function () {
 	};
 
 	function graphSize () { 
-		return [$('#contentDiv').width() - nodeWidth,$('#contentDiv').height()-nodeHeight-labelHeight-margin.top];
+		return [$('#graphSVG').width() - nodeWidth,$('#graphSVG').height()-nodeHeight-labelHeight];
 	}
 
-	
-
-	// Set context menu for nodes in graph view
-	$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
-
-	
+		
 	/**
 	 * Construct the force layout object 
 	 */
-	var force = d3.layout.force()
-	.linkStrength(.4)
-	.friction(.7)
-	.charge(Math.min.apply(Math,graphSize()) * -2)
-	.linkDistance(Math.min.apply(Math,graphSize())/5)
-	.gravity(function (d) { 
-		return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-	})
-	.size(graphSize())
-	.on("tick", tick);
+	var force = d3.layout.force().on("tick", tick);
 
 
 	var drag = force.drag()
@@ -81,6 +69,26 @@ var StixGraph = function () {
 			d.py += d3.event.dy;
 			d.x += d3.event.dx;
 			d.y += d3.event.dy;
+
+			if (d.x >= force.size()[0] - 60) {
+				$('#graphSVG').width($('#graphSVG').width()+5);
+				_self.resize();
+			} else if (d.x <= 60) {
+				$('#graphSVG').width($('#graphSVG').width()+5);
+				report.x = report.x+5;
+				_self.resize();
+			}
+			
+			if (d.y >= force.size()[1] ) { 
+				$('#graphSVG').height($('#graphSVG').height()+5);
+				_self.resize();
+			} else if (d.y <= 20) { 
+				$('#graphSVG').height($('#graphSVG').height()+5);
+				report.y = report.y+5;
+				_self.resize();
+			}
+
+			
 			tick();
 		}
 	})
@@ -89,8 +97,6 @@ var StixGraph = function () {
 			force.resume();                     // were valid in "dragstart"
 			if (dragToPin) {
 				d3.select(this).classed("fixed", d.fixed = true);
-			} else {
-				d3.select(this).classed("fixed", d.fixed = false);
 			} 
 			tick();
 			dragInitiated = false;              // terminate drag gesture
@@ -106,19 +112,12 @@ var StixGraph = function () {
 	}
 	
 	
-	// Handlers for right-click context menu on nodes
-	
-	$('#toggleFix a').click(function () { toggleFix(contextNode); });
-	
-
 	function toggleFix (node) {
 		d3.select(node).classed("fixed", function (d) { 
 			return d.fixed = !d.fixed;
 		});
 		force.resume();
 	}
-
-	$('#hideNode a').click(function () { hideNode(contextNode); });
 
 	function hideNode (node) { 
 		var d = d3.select(node).datum();
@@ -136,17 +135,12 @@ var StixGraph = function () {
 
 	_self.resize = function () { 
 
-			force
-			.linkStrength(.4)
-			.size(graphSize())
-			.linkDistance(Math.min.apply(Math,graphSize())/5)
-			.gravity(function (d) { 
-				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-				})
-			.charge(Math.min.apply(Math,graphSize()) * -2);
+		if (!node || node.length == 0) return;
 
+		updateForce();
+		
+		update();
 
-			update();
 	};
 
 
@@ -155,19 +149,43 @@ var StixGraph = function () {
 	 */
 	_self.display = function (jsonString) {
 
+		// Set context menu for nodes in graph view
+		$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
+		
+		// Handlers for right-click context menu on nodes
+		$('#toggleFix a').click(function () { toggleFix(contextNode); });
+		$('#hideNode a').click(function () { hideNode(contextNode); });
+
+		
+
+		
 		// Set up drag to pin interaction. Turned on by default.
-		$('#contentDiv').append($('#graphToggleDragToPin').html());
+		$('#viewControls').append($('#graphControlsTemplate').html());
+		
 		$('#dragToPinInput').change(function () { 
 			dragToPin = $(this).prop('checked');
 		});
 		
+		$('#resetGraphButton').click(function () { 
+			$('#graphSVG').height('100%');
+			$('#graphSVG').width('100%');
+			_self.resize();
+		});
+
+		
+		// Add graph container element
+		$('#contentDiv').append($('#graphTemplate').html());
+		
 		/**
 		 *  Append svg container for tree
 		 */
-		svg = d3.select("#contentDiv").append("svg")
+		svg = d3.select("#graphSVGContainer").append("svg")
+		.attr("id","graphSVG")
 	    .append("g")
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
+		updateForce();
+		
 		/**
 		 *  define color filter for lightening non-expandable nodes
 		 */
@@ -259,6 +277,19 @@ var StixGraph = function () {
 		}
 	}
 
+	function updateForce () { 
+		force
+		.linkStrength(.4)
+		.friction(.7)
+		.size(graphSize())
+		.linkDistance(Math.min.apply(Math,graphSize())/3)
+		.gravity(function (d) { 
+			return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+		})
+		.charge(Math.min.apply(Math,graphSize()) * -2);
+
+
+	}
 
 	/** 
 	 * Update the tree display starting at node "source"
@@ -316,6 +347,7 @@ var StixGraph = function () {
 
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
+		.classed("fixed", function (d) { return d.fixed; })
 		.classed("parent",function(d) { 
 			return hasChildren(d) && !isGroupingNode(d);
 		})
@@ -484,7 +516,7 @@ var StixGraph = function () {
 	 * Reposition nodes and links on each tick
 	 */
 	function tick(e) {
-
+		
 	    // avoid node collisions
 		node.each(collide(0.5));
 		
