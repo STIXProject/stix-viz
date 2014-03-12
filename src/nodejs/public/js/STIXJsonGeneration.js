@@ -15,7 +15,6 @@ var jsonObj = {};
 var jsonRelationshipObj = {"type": "top",
 	       "name": "",
 	       "children": []};
-var jsonTimelineObj = {};
 
 /** 
  * main function for creating JSON to be displayed in each of the 
@@ -51,7 +50,6 @@ function generateJsonForFiles(inputFiles, viewType, callback) {
 	        
 	        // gather top level objects from xml
 	        relTopLevelObjects = gatherRelationshipTopLevelObjs(xml, relTopLevelObjects);
-	        timeTopLevelObjects = gatherTimelineTopLevelObjs(xml, timeTopLevelObjects);
 	        
 	        deferred.resolve();
 	    };
@@ -80,10 +78,8 @@ function generateJsonForFiles(inputFiles, viewType, callback) {
 
 				// create the json for the relationship views (tree and graph)
 				jsonRelationshipObj = createRelationshipJson(jsonRelationshipObj, relTopLevelNodes, relTopNodeName);
-				jsonTimelineObj = createTimelineJson(timeTopLevelObjects);
 				
 				jsonObj["relationshipData"] = jsonRelationshipObj;
-				jsonObj["timelineData"] = jsonTimelineObj;
 				
 				// displays Json to web page for debugging
 				//$('#jsonOutput').text(JSON.stringify(jsonRelationshipObj, null, 2));  
