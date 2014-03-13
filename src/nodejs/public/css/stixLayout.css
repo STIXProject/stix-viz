@@ -75,6 +75,11 @@ nav.navbar {
 	padding: 0;
 }
 
+.nav-divider { 
+	color: #bbb;
+	font-size: large;
+}
+
 .ui-layout-pane-north { 
 	border:none;
 }

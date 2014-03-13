@@ -887,10 +887,14 @@ var StixGraph = function () {
 		
 		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;
 		resizeGraph = function (widthDiff, heightDiff) {
-			$('#graphSVG').height($('#graphSVG').height()+heightDiff);
-			$('#graphSVG').width($('#graphSVG').width()+widthDiff);
-			report.y = report.y-(heightDiff/2);
-			report.x = report.x-(widthDiff/2);
+			if (widthDiff > 0) { 
+				$('#graphSVG').width($('#graphSVG').width()+widthDiff);
+				report.x = report.x-(widthDiff/2);
+			}
+			if (heightDiff > 0) {
+				$('#graphSVG').height($('#graphSVG').height()+heightDiff);
+				report.y = report.y-(heightDiff/2);
+			}
 			_self.resize();
 			holdTimer = setTimeout(function () { resizeGraph(widthDiff,heightDiff); },delay);
 			if (delay > 20) delay = delay * 0.7;
