@@ -273,7 +273,7 @@ var StixGraph = function () {
 
 	function updateForce () { 
 		force
-		.linkStrength(.4)
+		.linkStrength(.9)
 		.friction(.7)
 		.size(graphSize())
 		.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
@@ -887,11 +887,11 @@ var StixGraph = function () {
 		
 		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;
 		resizeGraph = function (widthDiff, heightDiff) {
-			if (widthDiff > 0) { 
+			if (widthDiff !== 0) { 
 				$('#graphSVG').width($('#graphSVG').width()+widthDiff);
 				report.x = report.x-(widthDiff/2);
 			}
-			if (heightDiff > 0) {
+			if (heightDiff !== 0) {
 				$('#graphSVG').height($('#graphSVG').height()+heightDiff);
 				report.y = report.y-(heightDiff/2);
 			}
