@@ -34,7 +34,10 @@
 <link rel="stylesheet" type="text/css" href="./public/xslt/common.css" />
 <link rel="stylesheet" type="text/css" href="./public/xslt/theme_default.css" />
 <link rel="stylesheet" type="text/css" href="./public/css/treeLayout.css" />
+<link rel="stylesheet" type="text/css" href="./public/css/timeline.css" />
 <link rel="stylesheet" type="text/css"href="./public/css/stixLayout.css" />
+<link rel="stylesheet" type="text/css" href="./public/css/graphLayout.css" />
+
 
 <script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
 <script type="text/javascript"
@@ -53,9 +56,11 @@
 <script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipGraph.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipTimeline.js"></script>
 <script type="text/javascript" src="./public/js/STIXViz.js"></script>
 <script type="text/javascript" src="./public/js/STIXJsonGeneration.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipJson.js"></script>
+<script type="text/javascript" src="./public/js/STIXTimelineJson.js"></script>
 <script type="text/javascript" src="./public/js/STIXTTPProcessing.js"></script>
 <script type="text/javascript" src="./public/js/STIXXSLTTransformer.js"></script>
 
@@ -103,15 +108,22 @@
 						</ul></li>
 
 					<li class="dropdown"><a href="#" class="dropdown-toggle"
-						data-toggle="dropdown" id="selectedView">Tree View<b class="caret"></b></a>
+						data-toggle="dropdown" id="selectedView">Graph View<b class="caret"></b></a>
 						<ul id="viewList" class="dropdown-menu">
+              <li id="selectView-graph"><a href="#">Graph
+                View</a></li>
 							<li id="selectView-tree"><a href="#">Tree
 								View</a></li>
-							<li id="selectView-graph"><a href="#">Graph
+							<li id="selectView-timeline"><a href="#">Timeline
 								View</a></li>
-						</ul></li>
 
 				</ul>
+					</li>
+					
+				</ul>
+				<div class="navbar-right" id="viewControls" />
+
+				
 			</div>
 		</nav>
 	</div>
@@ -123,6 +135,23 @@
       <li id="toggleFix"><a tabindex="-1" href="#"></a></li>
       <li id="hideNode"><a tabindex="-1" href="#">Hide Node</a></li>
   </script>
+
+  <script id="graphTemplate" type="text/template">
+    <div id="graphSVGContainer"></div>
+  </script>
+  
+  <script id="graphControlsTemplate" type="text/template">
+    <form class="navbar-form">
+    <div class="form-group">
+      <div class="form-control">
+        <input id="dragToPinInput" type="checkbox" checked><label for="dragToPinInput">Drag To Pin</label>
+      </div>
+    </div>
+    <button id="resetGraphButton" type="button" class="btn btn-default">Reset Graph Size</button>
+    </form>
+  </script>
+  
+ 
 
 </body>
 </html>

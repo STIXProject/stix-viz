@@ -10,6 +10,11 @@
  * 
  */
 
+#treeDiv {
+	height: 100%;
+	width: 100%;
+	overflow:auto;
+}
 
 .NodeTypeLabel {
     font-size : 10px;
@@ -46,43 +51,23 @@
 user-select: none;
 }
 
-.node image.leaf {
-/*   opacity: 0.6; */
-}
+
 
 .node text {
   font: 10px sans-serif;
 }
 
-.link {
+/* For Tree view */
+path.link {
   fill: none;
   stroke: #ccc;
   stroke-width: 1.5px;
 }
 
-.link.bold { 
-	stroke-width: 3px;
-}
 
-.link.bold.out { 
-	stroke: green;
-}
-
-.link.bold.in { 
-	stroke: blue;
-}
-
-marker.arrow { 
-	fill: #bbb;
-}
-
-marker.arrow.bold {
-	fill: #333;
-}
 
 .infocus { 
 	background-color: yellow;
 }
-
 
 

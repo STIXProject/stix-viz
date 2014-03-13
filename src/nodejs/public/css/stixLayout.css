@@ -18,14 +18,18 @@ body.loading {
 	cursor:wait !important;
 }
 
-svg { 
-	height: 99%;
-}
+
 
 body {
   cursor:default;
   margin: 0;
   padding: 0;
+}
+
+
+.itemCategoryIcon svg {
+	height: 100%;
+	width: 100%;
 }
 
 
@@ -35,7 +39,7 @@ body {
 
 #contentDiv { 
 /* 	width: 100%; */
-	overflow: auto;
+	overflow: hidden;
 }
 
 #initialInstructions {
@@ -69,7 +73,6 @@ nav.navbar {
 #menubar { 
 	overflow:visible;
 	padding: 0;
-	color: lightsteelblue;
 }
 
 .ui-layout-pane-north { 
