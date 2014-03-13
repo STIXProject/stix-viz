@@ -20,6 +20,7 @@ var view = null,
 viewType = null,
 jsonDataObj = null,  // json returned from generateJson
 relationshipData=null,  // stringified relationship json
+timelineData = null,   // stringified timeline json
 layout=null;
 
 /**
@@ -162,6 +163,12 @@ $(function () {
 			if (relationshipData) { 
 				view.display(relationshipData);
 			};
+		} else if (viewType === 'selectView-timeline'){
+			$('#viewName').text('STIX Timeline View');
+			view = new StixTimeline();
+			if (timelineData) {
+				view.display(timelineData);
+			}
 		};
 
 	});
@@ -222,8 +229,11 @@ function addXmlDoc (f) {
 //    child json is stringified into global vars for later use when switching views
 function displayJson(jsonDataObj, viewType) {
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
+	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
 		view.display(relationshipData);
+	} else if (viewType === 'selectView-timeline'){
+		view.display(timelineData);
 	}
 }
 
@@ -460,7 +470,9 @@ function handleFileSelect(fileinput) {
     	/*
     	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) { 
     		generateTreeJson(files,displayRelationshipJSON);
-		} 
+		} else if (viewType === 'selectView-timeline'){
+    		generateTimelineJson(files,displayTimelineJSON);
+		}
 		*/
     }
 
