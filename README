@@ -1,6 +1,6 @@
 ****************************************************
 
-      STIX Viz v1alpha3
+      STIX Viz v1alpha4
 
  Copyright (c) 2014 - The MITRE Corporation
  All rights reserved. See LICENSE.txt for complete terms.
@@ -122,7 +122,7 @@ in the HTML view as well. To do this, click right on the node and select 'Show H
 This is a work in progress.  Feedback is most welcome!
 
 requirements:
- - node webkit framework including mime module from node.js (currently tested with node-webkit v0.6.2) 
+ - node webkit framework including mime module from node.js (currently tested with node-webkit v0.9.2) 
  - node.js (currently tested with version 0.10.13)
  - bootstrap.js (v3.0)
  - d3.js (v3)
