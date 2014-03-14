@@ -133,10 +133,26 @@ $(function () {
 	/**
 	 * When the window is resized, resize and update the tree 
 	 */
-	$(window).resize(function (e) { 
-		view.resize();
-	});
+	$(window).resize(function () {
+        waitForFinalEvent(function(){
+          view.resize();
+        }, 500, "some unique string");
+    });
+    
+    var waitForFinalEvent = (function () {
+        var timers = {};
+        return function (callback, ms, uniqueId) {
+          if (!uniqueId) {
+            uniqueId = "Don't call this twice without a uniqueId";
+          }
+          if (timers[uniqueId]) {
+            clearTimeout (timers[uniqueId]);
+          }
+          timers[uniqueId] = setTimeout(callback, ms);
+        };
+      })();	
 	
+
 	
 	/**
 	 * Handler for Show HTML context menu

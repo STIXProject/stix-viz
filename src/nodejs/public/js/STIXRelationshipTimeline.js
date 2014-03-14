@@ -58,28 +58,10 @@ var StixTimeline = function () {
     
     
     _self.resize = function () { 
-        //Function exists to avoid errors but if we actually resize here 
-        //we will get tons of resize events during a drag resize.
+    	drawTimeline();
     }
     
-    $(window).resize(function () {
-        waitForFinalEvent(function(){
-          drawTimeline();
-        }, 500, "some unique string");
-    });
     
-    var waitForFinalEvent = (function () {
-        var timers = {};
-        return function (callback, ms, uniqueId) {
-          if (!uniqueId) {
-            uniqueId = "Don't call this twice without a uniqueId";
-          }
-          if (timers[uniqueId]) {
-            clearTimeout (timers[uniqueId]);
-          }
-          timers[uniqueId] = setTimeout(callback, ms);
-        };
-      })();
 
     function drawTimeline()
     {
@@ -150,7 +132,7 @@ var StixTimeline = function () {
 	var tooltip = d3.select("body")
 	.append("div")
 	.attr("class", "tooltip")
-	.style("visibility", "visible");
+	.style("visibility", "none");
 
 
 	//--------------------------------------------------------------------------

@@ -168,7 +168,7 @@ var StixGraph = function () {
 		configureNav();
 		
 		// Add graph container element
-		$('#contentDiv').append($('#graphTemplate').html());
+		$('#contentDiv').html($('#graphTemplate').html());
 		
 		/**
 		 *  Append svg container for tree
