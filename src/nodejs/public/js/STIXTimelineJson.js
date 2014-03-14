@@ -17,7 +17,7 @@ function getIndicatorNodes(indiObjs) {
 	var node = {};
 	$(indiObjs).each(function (index, indi) {
 		node = {'type':'Indicator-Sighting'};
-		parentIndi = $(indi).parent();
+		parentIndi = $(indi).parent().get(0);
 		indiId = getObjIdStr(parentIndi);
 		node['parentObjId'] = indiId;
 		node['description'] = getBestIndicatorName(parentIndi);
