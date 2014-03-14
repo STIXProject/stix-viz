@@ -449,7 +449,7 @@ function handleFileSelect(fileinput) {
         // Read in the JSON file as text
         reader.readAsText(files[0]);
 
-    } else { // When one or more XML files are selected
+    } else if (files.length > 0) { // When one or more XML files are selected
 
     	reset('all');     	// remove old xml docs and reset display
     	
