@@ -14,7 +14,7 @@ THE STIX VIZ APPLICATION.
 For more information, please refer to the terms.txt file.
 
 #################################################################
-StixViz v1.0 alpha3
+StixViz v1.0 alpha4
 Compatible with STIX v1.0.1
 
 This is a proof of concept prototype to visualize a set of STIX documents 
@@ -27,10 +27,35 @@ application runtime which is based on the Chromium rendering engine and node.js.
 To use STIXViz, first select a set of related XML files using the
 'Choose Files' menu.  
 
-STIXViz v1.0.1 includes two different views of STIX documents: Tree View and
-Graph View. These views show the same information using different layouts. 
+STIXViz v1.0a4 includes three different views of STIX documents: Graph View,
+Tree View and Timeline View. These views show the same information using different layouts. 
 To switch between views, use the drop-down menu at the top of the 
-window. On startup, the default view is Tree View.  
+window. On startup, the default view is Graph View.  
+
+
+Graph View
+
+Graph View displays the same entities as tree view, but in a fully connected
+graph layout. The graph view uses a force-directed graph layout in order to 
+dynamically position the nodes. Nodes may be dragged into a new position, 
+in which case the layout will dynamically reconfigure itself. 
+
+Nodes in the Graph View are expandable. The display begins with all but the top two 
+levels collapsed. To view the underlying structure of a node, single-click on the node 
+and it will expand. Single-click again and the node will collapse. Leaf nodes
+are nodes with no children, and are represented by a washed-out color scheme and 
+no dark border. 
+
+Hovering over a node in graph view highlights the links with other nodes. In-links
+are shown in blue and out-links in green. 
+
+Nodes may be fixed in position using the right-button context menu on each 
+node. If a node is fixed, it may be dragged to a new position and it will stay 
+where it was placed. Nodes may be un-fixed again using the context menu. 
+
+Nodes may also be hidden using the context menu. To re-display a hidden node, 
+click on its parent node. 
+
 
 
 Tree View
@@ -65,28 +90,24 @@ tree, hiding other branches from view.   Double click on the root node
 again to walk back up the tree.
 
 
-Graph View
 
-Graph View displays the same entities as tree view, but in a fully connected
-graph layout. The graph view uses a force-directed graph layout in order to 
-dynamically position the nodes. Nodes may be dragged into a new position, 
-in which case the layout will dynamically reconfigure itself. 
+Timeline View: 
 
-Nodes in the Graph View are expandable. The display begins with all but the top two 
-levels collapsed. To view the underlying structure of a node, single-click on the node 
-and it will expand. Single-click again and the node will collapse. Leaf nodes
-are nodes with no children, and are represented by a washed-out color scheme and 
-no dark border. 
+The timeline view shows timestamped entities within a STIX document, such as 
+incidents and their associated activities. Events that occur at a single point
+in time are represented by a dot, and events that occur over a period of time (with a
+start and end time) are represented by a horizontal bar. Different types of 
+events are displayed with different colors, as denoted by the legend at the
+upper right of the timeline view. 
 
-Hovering over a node in graph view highlights the links with other nodes. In-links
-are shown in blue and out-links in green. 
+The timeline can be zoomed and scrolled. When a new STIX file is loaded, it will 
+initially display the full extent of the time period represented in the file. To zoom in on 
+a specific period of time within the file, you can click and drag on the Overview bar
+below the main timeline display. When a region of time in the overview bar is selected, 
+the main timeline will zoom in on that region of time. You can then scroll the selected
+area within the overview bar and the main display will scroll to show the corresponding
+time interval.  
 
-Nodes may be fixed in position using the right-button context menu on each 
-node. If a node is fixed, it may be dragged to a new position and it will stay 
-where it was placed. Nodes may be un-fixed again using the context menu. 
-
-Nodes may also be hidden using the context menu. To re-display a hidden node, 
-click on its parent node. 
 
 
 HTML Transform
@@ -139,6 +160,8 @@ LICENSE.txt
         STIXTTPProcessing.js: Process TTPs into Json
         STIXXSLTTransformer.js: Converts XML to HTML
         STIXUtilities.js: Utilities for XML to JSON conversion
+        STIXRelationshipTimeline.js: Displays the Timeline view
+        STIXTimelineJson.js: converts STIX to JSON Format for timeline
         -bootstrap
           bootstrap.min.js
         -d3
@@ -164,7 +187,10 @@ LICENSE.txt
         theme_default.css
         
      -css
+      stixLayout.css: common styles used by all views
       treeLayout.css: Stylesheet for tree display
+      graphLayout.css: Stylesheet for graph view
+      timeline.css: Stylesheet for timeline view
       -bootstrap
         bootstrap.min.css
       -jquery-ui
