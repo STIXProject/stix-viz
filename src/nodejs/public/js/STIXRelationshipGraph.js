@@ -914,22 +914,10 @@ var StixGraph = function () {
 		$('#widthPlus').mousedown(function () { resizeGraph(5,0);});
 		$('#widthMinus').mousedown(function () { resizeGraph(-5,0); });
 		
-		$('#freeze').click(toggleFreeze);
+		$('#freeze').click(function () { force.stop(); });
 		
 	}
 	
 
-	
-	function toggleFreeze () {
-		if ($(this).hasClass('freeze')) { 
-			force.stop();
-			$(this).removeClass('freeze');
-			$(this).text('Restart Graph');
-		} else { 
-			force.start();
-			$(this).addClass('freeze');
-			$(this).text('Freeze Graph');
-		}
-	}
 
 };
