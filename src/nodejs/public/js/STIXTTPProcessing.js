@@ -10,14 +10,22 @@
 // used by processTTPObjs and processChildTTPs
 function createSingleTTPJson(ttp, etBottomUpInfo, relationship) {
 	var ttpId = getObjIdStr(ttp);
-    var ttpJson = createTopDownNode(ttpId, STIXType.ttp, getBestTTPName(ttp), relationship);
+	var ttpJson = null;
+	if (relationship == 'ttp:Related_TTP') {
+		ttpJson = createSiblingNode(ttpId, STIXType.ttp, getBestTTPName(ttp), relationship);
+	}
+	else {
+		ttpJson = createTopDownNode(ttpId, STIXType.ttp, getBestTTPName(ttp), relationship);
+	}
     // children can be INDICATORS (from indicator file), RESOURCES, 
     // BEHAVIORS, or Victim_Targeting
     var ttpChildren = [];
     $.merge(ttpChildren, processTTPBehaviors(ttp));
     $.merge(ttpChildren, processTTPResources(ttp));
     $.merge(ttpChildren, processTTPVictimTargeting(ttp));
-    $.merge(ttpChildren, processChildExploitTargets(ttp, etBottomUpInfo));
+    $.merge(ttpChildren, processTTPChildExploitTargets(ttp, etBottomUpInfo));
+    var relatedTTPs = xpFind('.//ttp:Related_TTP', ttp);
+    $.merge(ttpChildren, processChildTTPs(relatedTTPs, 'ttp:/Related_TTP'));
     if (ttpChildren.length > 0) {
         ttpJson["children"] = ttpChildren;
     }
@@ -108,7 +116,7 @@ function processTTPVictimTargeting(ttp) {
     return targets;
 }
 
-function processChildExploitTargets(ttp, etBottomUpInfo) {
+function processTTPChildExploitTargets(ttp, etBottomUpInfo) {
 	var etNodes = [];
     var etSection = xpFindSingle('.//ttp:Exploit_Targets', ttp);
     if (etSection != null) {

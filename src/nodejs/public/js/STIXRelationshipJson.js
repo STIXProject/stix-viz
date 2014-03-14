@@ -85,7 +85,9 @@ function processCampaignObjs(caObjs, allBottomUpInfo) {
             var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
             $.merge(caChildren, processChildIndicators(indicators, 'campaign:Related_Indicator'));
             var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
-            $.merge(caChildren, processChildThreatActors(attributedActors, 'campaign:Attributed_Threat_Acto'));
+            $.merge(caChildren, processChildThreatActors(attributedActors, 'campaign:Attributed_Threat_Actor'));
+            var associatedCampaigns = xpFind('.//campaign:Associated_Campaign', ca);
+            $.merge(caChildren, processChildCampaigns(associatedCampaigns, 'campaign:Associated_Campaign'));
             if (caChildren.length > 0) {
                 caJson["children"] = caChildren;
             }
@@ -115,6 +117,9 @@ function processCoaObjs(coaObjs) {
 	$(coaObjs).each(function (index, coa) {
 		coaId = getObjIdStr(coa);
 		coaJson = createTopDownNode(coaId, STIXType.coa, getBestCourseOfActionName(coa), "");
+		var relatedCoas = xpFind('.//coa:Related_COA', coa);
+		var coaChildren = processChildCoas(relatedCoas, 'coa:Related_COA');
+		coaJson["children"] = coaChildren;
 		coaNodes.push(coaJson);
 	});
 	return coaNodes;
@@ -130,6 +135,8 @@ function processETObjs(etObjs, coaBottomUpInfo) {
 		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et), "");
         var coas = xpFind('.//et:Potential_COA', et);
 		etChildren = processChildCoas(coas, 'et:Potential_COA');
+		var ets = xpFind('.//et:Related_Exploit_Target', et);
+		$.merge(etChildren, processChildExploitTargets(ets, 'et:Related_Exploit_Target'));
 		if (etChildren.length > 0) {
 			etJson["children"] = etChildren;
 		}
@@ -165,6 +172,8 @@ function processIncidentObjs(incidentObjs, allBottomUpInfo) {
     	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Requested'));
     	coas = xpFind('./incident:COA_Taken', incident);    	
     	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Taken'));
+    	var relatedIncidents = xpFind('./incident:Related_Incident', incident);
+    	$.merge(incidentChildren, processChildIncidents(relatedIncidents, 'incident:Related_Incident'));
     	if (incidentChildren.length > 0) {
     		incidentJson["children"] = incidentChildren;
     	}
@@ -219,6 +228,8 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
 		$.merge(indiChildren, processChildTTPs(indicatedTTPs, 'indicator:Indicated_TTP'));
 		var observables = xpFind('.//indicator:Observable', indi);
 		$.merge(indiChildren, processChildObservables(observables, 'indicator:Observable'));
+		var relatedIndicators = xpFind('.//indicator:Related_Indicator', indi);
+		$.merge(indiChildren, processChildIndicators(relatedIndicators, 'indicator:Related_Indicator'));
 		if (indiId != "") {
 			$(coas).each(function (index, coa) {
 				addIndicatorToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
@@ -248,6 +259,7 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
     return indiNodes;
 }
 
+// NOT including sub-observables for now
 function processObservableObjs(obsObjs) {
 	var obsNodes = [];
 	var obsJson = null;
@@ -278,6 +290,8 @@ function processThreatActorObjs(taObjs, allBottomUpInfo) {
             $.merge(taChildren, processChildTTPs(relatedTTPs, 'threat-actor:Observed_TTP'));
             var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
             $.merge(taChildren, processChildCampaigns(campaigns, 'threat-actor:Associated_Campaign'));
+            var relatedActors = xpFind('.//threat-actor:Associated_Actor', ta);
+            $.merge(taChildren, processChildThreatActors(relatedActors, 'threat-actor:Associated_Actor'));
             if (taChildren.length > 0) {
                 taJson["children"] = taChildren;
             }
@@ -311,7 +325,12 @@ function processChildTTPs(ttps, relationship) {
     $(ttps).each(function (index, ttp) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ttp, ttp)));
             if (idRef != "") {
-                ttpJson = createTopDownIdRef(STIXType.ttp, idRef, relationship);
+            	if (relationship == 'ttp:Related_TTP') {
+            		ttpJson = createSiblingIdRef(STIXType.ttp, idRef, relationship);
+            	}
+            	else {
+            		ttpJson = createTopDownIdRef(STIXType.ttp, idRef, relationship);
+            	}
             }
             else {  // inline TTP
             	ttpJson = createSingleTTPJson(ttp, relationship);
@@ -328,11 +347,21 @@ function processChildCampaigns(cas, relationship) {
     $(cas).each(function (index, ca) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ca, ca)));
             if (idRef != "") {
-                caJson = createTopDownIdRef(STIXType.ca, idRef, relationship);
+            	if (relationship == 'campaign:Associated_Campaign') {
+            		caJson = createSiblingIdRef(STIXType.ca, idRef, relationship);
+            	}
+            	else {
+            		caJson = createTopDownIdRef(STIXType.ca, idRef, relationship);
+            	}
             }
             else {  // inline specification
             	caId = getObjIdStr(ca);
-            	caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+            	if (relationship == 'campaign:Associated_Campaign') {
+            		caJson = createSiblingNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+            	}
+            	else {
+            		caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+            	}
             }
             caNodes.push(caJson);
 	});
@@ -352,16 +381,42 @@ function processChildCoas(coas, relationship) {
 		if (coa != null) {
 		    var idRef = getObjIdRefStr($(coa));
 	        if (idRef != "") {
-	        	coaJson = createTopDownIdRef(STIXType.coa, idRef, relationship);
+	        	if (relationship == 'coa:Related_COA') {
+	        		coaJson = createSiblingIdRef(STIXType.coa, idRef, relationship);
+	        	}
+	        	else {
+	        		coaJson = createTopDownIdRef(STIXType.coa, idRef, relationship);
+	        	}
 	        }	
 	        else {
 	        	coaId = getObjIdStr(coa);
-	        	coaJson = createTopDownNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        	if (relationship == 'coa:Related_COA') {
+	        		coaJson = createSiblingNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        	}
+	        	else {
+	        		coaJson = createTopDownNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        	}
 	        }
 	        coaNodes.push(coaJson);
 		}
 	});
 	return coaNodes;
+}
+
+function processChildExploitTargets(ets, relationship) {
+	var etNodes = [];
+	$(ets).each(function(index, etObj) {
+		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.et, etObj)));
+	    if (idRef != "") {
+	    	if (relationship == 'et:Related_Exploit_Target') {
+	    		etNodes.push(createSiblingIdRef(STIXType.et, idRef, relationship));
+	    	}
+	    	else {
+	    		etNodes.push(createTopDownIdRef(STIXType.et, idRef, relationship));
+	    	}
+	    }
+	});
+    return etNodes;
 }
 
 // TODO first just handle idRefs, need to add inline processing
@@ -370,7 +425,12 @@ function processChildThreatActors(actors, relationship) {
     $(actors).each(function (index, actor) {
 	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ta, actor)));
 	    if (idRef != "") {
-	    	actorNodes.push(createTopDownIdRef(STIXType.ta, idRef, relationship));
+	    	if (relationship == 'threat-actor:Associated_Actor') {
+	    		actorNodes.push(createSiblingIdRef(STIXType.ta, idRef, relationship));
+	    	}
+	    	else {
+	    		actorNodes.push(createTopDownIdRef(STIXType.ta, idRef, relationship));
+	    	}
 	    }
 	});
     return actorNodes;
@@ -382,7 +442,12 @@ function processChildIncidents(incidents, relationship) {
     $(incidents).each(function (index, incident) {
     	var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.incident, incident)));
 		if (idRef != "") {
-			incidentNodes.push(createTopDownIdRef(STIXType.incident, idRef, relationship));
+			if (relationship == 'incident:Related_Incident') {
+				incidentNodes.push(createSiblingIdRef(STIXType.incident, idRef, relationship));
+			}
+			else {
+				incidentNodes.push(createTopDownIdRef(STIXType.incident, idRef, relationship));
+			}
 		}
     });
     return incidentNodes;
@@ -394,7 +459,12 @@ function processChildIndicators(indis, relationship) {
 	$(indis).each(function (index, indi) {
 		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.indi, indi)));
 		if (idRef != "") {
-			indiNodes.push(createTopDownIdRef(STIXType.indi, idRef, relationship));
+			if (relationship == 'indicator:Related_Indicator') {
+				indiNodes.push(createSiblingIdRef(STIXType.indi, idRef, relationship));
+			}
+			else {
+				indiNodes.push(createTopDownIdRef(STIXType.indi, idRef, relationship));
+			}
 		}
 	});
     return indiNodes;

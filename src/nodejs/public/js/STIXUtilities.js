@@ -129,6 +129,11 @@ function createNode(id, type, name, direction, relationship) {
 	return json;	
 }
 
+// json object with linkType sibling
+function createSiblingNode(id, type, name, relationship) {
+	return createNode(id, type, name, "sibling", relationship);	
+}
+
 // json object with linkType topDown
 function createTopDownNode(id, type, name, relationship) {
 	return createNode(id, type, name, "topDown", relationship);	
@@ -137,6 +142,11 @@ function createTopDownNode(id, type, name, relationship) {
 // json object with linkType bottomUp
 function createBottomUpNode(id, type, name) {
 	return createNode(id, type, name, "bottomUp");
+}
+
+// json for sibling idRef
+function createSiblingIdRef(type, idRef, relationship) {
+	return {"type": type, "nodeIdRef":idRef, "linkType":"sibling", "relationship":relationship};
 }
 
 // json for topDown idRef
