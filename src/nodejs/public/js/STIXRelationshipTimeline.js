@@ -442,7 +442,10 @@ var StixTimeline = function () {
               .attr("x", outerWidth -180)
               .attr("y", 25)
               .attr("height", 100)
-              .attr("width", 100);
+              .attr("width", 100)
+              .style("border-color", "black")
+              .style("border-width", "3px")
+              .style("border-style", "solid");
 
 
 
@@ -457,7 +460,22 @@ var StixTimeline = function () {
                     .attr("y", i*15)
                     .attr("width", 10)
                     .attr("height", 10)
-                    .style("fill", typeColorMap[d.type]);
+                    .attr("name", "rules")
+                    .style("fill", typeColorMap[d.type])
+                    .on("click", function(){
+                        var b = d3.selectAll("#" + d.type);
+                        b.style("display", function(d){
+                            var e = d3.select(this).style('display');
+                            if(e === 'none')
+                            {
+                                return 'block';
+                            }
+                            else
+                            {
+                                return 'none';
+                            }
+                        });
+                  });
 
                   g.append("text")
                     .attr("x", outerWidth - 170)
@@ -468,8 +486,7 @@ var StixTimeline = function () {
                     .text(d.name);
 
                 });
-
-
+                
             
 	    // Items
             //TODO: The groups should be the items passed it but unsure how this is processed
@@ -534,7 +551,10 @@ var StixTimeline = function () {
 		return typeColorMap[d.type];
 	    })
 	    .attr("width", "100%")
-	    .attr("height", "90%");
+	    .attr("height", "90%")
+            .attr("id", function(d){
+              return d.type;  
+            });
 	    
 	    intervals.append("text")
 	    .attr("class", "intervalLabel")
@@ -542,7 +562,10 @@ var StixTimeline = function () {
 	    .attr("y", 10)
 	    .text(function (d) {
 		return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
 	    instants.append("circle")
@@ -551,7 +574,10 @@ var StixTimeline = function () {
 	    })
 	    .attr("cx", band.itemHeight / 2)
 	    .attr("cy", band.itemHeight / 2)
-	    .attr("r", 5);
+	    .attr("r", 5)
+            .attr("id", function(d){
+              return d.type;  
+            });
 	    
 	    instants.append("text")
 	    .attr("class", "instantLabel")
@@ -559,7 +585,10 @@ var StixTimeline = function () {
 	    .attr("y", 10)
 	    .text(function (d) {
                 return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
             
 	    band.addActions = function(actions) {
 		// actions - array: [[trigger, function], ...]
