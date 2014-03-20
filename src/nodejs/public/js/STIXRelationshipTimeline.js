@@ -443,11 +443,17 @@ var StixTimeline = function () {
               .attr("y", 25)
               .attr("height", 100)
               .attr("width", 100)
-              .style("border-color", "black")
-              .style("border-width", "3px")
-              .style("border-style", "solid");
 
-
+         
+         var borderPath = svg.append("rect")
+              .attr("x", outerWidth -185)
+              .attr("y", 0)
+              .attr("height", 190)
+              .attr("width", 160)
+            .style("stroke", "black")
+            .style("fill", "none")
+            .style("stroke-width", 1);
+            
 
             legend.selectAll('g')
                 .data(legendMap)
@@ -457,12 +463,16 @@ var StixTimeline = function () {
                   var g = d3.select(this);
                   g.append("rect")
                     .attr("x", outerWidth - 180)
-                    .attr("y", i*15)
+                    .attr("y", i*15+25)
                     .attr("width", 10)
                     .attr("height", 10)
-                    .attr("name", "rules")
                     .style("fill", typeColorMap[d.type])
                     .on("click", function(){
+                        var t = d3.select(this);    
+                        if(t.style("fill") === "#000000")
+                            d3.select(this).style("fill", typeColorMap[d.type]);
+                        else
+                            d3.select(this).style("fill", "#000000");
                         var b = d3.selectAll("#" + d.type);
                         b.style("display", function(d){
                             var e = d3.select(this).style('display');
@@ -479,13 +489,22 @@ var StixTimeline = function () {
 
                   g.append("text")
                     .attr("x", outerWidth - 170)
-                    .attr("y", i * 15+9)
+                    .attr("y", i * 15+34)
                     .attr("height",30)
                     .attr("width",100)
                     .style("fill", typeColorMap[d.type])
                     .text(d.name);
 
                 });
+                
+
+                legend.append("text")                    
+                .attr("x", outerWidth -180)
+                .attr("y", 15)
+                .attr("height", 100)
+                .attr("width", 100)
+                .style("fill", "black")
+                .text("Click to hide types");
                 
             
 	    // Items
