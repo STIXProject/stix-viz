@@ -159,7 +159,6 @@ $(function () {
 			};
 		} else if (viewType === 'selectView-graph') {
 			$('#viewName').text('STIX Graph View');
-			$('#contextMenu li:gt(0)').remove();  // remove anything that was added to the context menu
 			view = new StixGraph();
 			if (relationshipData) { 
 				view.display(relationshipData);
@@ -419,6 +418,8 @@ function reset (context) {
 	}
 	// In all contexts, empty the view div
 	$('#contentDiv').empty();
+	$('#contextMenu li:gt(0)').remove();  // remove anything that was added to the context menu
+	$('#viewControls').empty(); // remove view-specific controls
 }
 
 /**

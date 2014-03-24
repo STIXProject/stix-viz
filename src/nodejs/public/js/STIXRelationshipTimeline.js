@@ -174,30 +174,77 @@ var StixTimeline = function () {
                     if(item.track === undefined)
                     {
                         for (i = 0, track = 0; i < tracks.length; i++, track++) {
-                            if (item.start > tracks[i]) {
-                                //item.track = track;
+                            if (item.start > tracks[i].end) {
+                                break;
+                            }
+                            if(item.end < tracks[i].start)
+                            {
                                 break;
                             }
                         }
-                        item.track = track;
-                        tracks[track] = item.end;
+                        if(tracks[track])
+                        {
+                            //If there are already items in this track we add them to the track
+                            item.track = track;
+                            if(item.end > tracks[track].end)
+                            {
+                                tracks[track].end = item.end;
+                            }
+                            if(item.start < tracks[track].start)
+                            {
+                                tracks[track].start = item.start;
+                            }
+                        }
+                        else
+                        {
+                            //if this is the first item in the track, create new track then add it
+                            item.track = track;
+
+                            var newTrack={};
+                            newTrack.end = item.end;
+                            newTrack.start = item.start;
+                            tracks[track] = newTrack;
+                        }
+                        
+                        
+                        
                         //Find all the other items in this group
                         items.forEach(function (it) {
                             if(item.parentObjId === it.parentObjId && item !== it)
                             {
-                                //THis assumes there is a max of 2 tracks in a group.
-                                //If there are more we need to find all tracks for that parent id and compare them
-                                it.track = item.track+1;
-                                if(it.end > tracks[item.track])
-                                {
-                                   tracks[it.track] = it.end;
-                                   tracks[item.track] = it.end;
 
+                                it.track = item.track+1;
+                                if(tracks[it.track] == null)
+                                {
+                                    //If we are adding the grouped item to a new track
+                                    //Create the track and add it to it
+                                    var newTrack={};
+                                    newTrack.end = it.end;
+                                    newTrack.start = it.start;
+                                    tracks[it.track] = newTrack;
+                                }
+                                if(it.end > tracks[item.track].end)
+                                {
+                                   //This assumes there is a max of 2 tracks in a group.
+                                   //If there are more we need to find all tracks for that parent id and compare them
+                                   tracks[it.track].end = it.end;
+                                   tracks[item.track].end = it.end;
                                 }
                                 else
                                 {
-                                    tracks[it.track] = item.end;
+                                    tracks[it.track].end = item.end;
                                 }
+                                
+                                if(it.start < tracks[item.track].start)
+                                {
+                                   tracks[it.track].start = it.start;
+                                   tracks[item.track].start = it.start;
+                                }
+                                else
+                                {
+                                    tracks[it.track].start = item.start;
+                                }
+
                             }
                         });
                     }
@@ -395,9 +442,18 @@ var StixTimeline = function () {
               .attr("x", outerWidth -180)
               .attr("y", 25)
               .attr("height", 100)
-              .attr("width", 100);
+              .attr("width", 100)
 
-
+         
+         var borderPath = svg.append("rect")
+              .attr("x", outerWidth -185)
+              .attr("y", 0)
+              .attr("height", 190)
+              .attr("width", 160)
+            .style("stroke", "black")
+            .style("fill", "none")
+            .style("stroke-width", 1);
+            
 
             legend.selectAll('g')
                 .data(legendMap)
@@ -407,22 +463,49 @@ var StixTimeline = function () {
                   var g = d3.select(this);
                   g.append("rect")
                     .attr("x", outerWidth - 180)
-                    .attr("y", i*15)
+                    .attr("y", i*15+25)
                     .attr("width", 10)
                     .attr("height", 10)
-                    .style("fill", typeColorMap[d.type]);
+                    .style("fill", typeColorMap[d.type])
+                    .on("click", function(){
+                        var t = d3.select(this);    
+                        if(t.style("fill") === "#000000")
+                            d3.select(this).style("fill", typeColorMap[d.type]);
+                        else
+                            d3.select(this).style("fill", "#000000");
+                        var b = d3.selectAll("#" + d.type);
+                        b.style("display", function(d){
+                            var e = d3.select(this).style('display');
+                            if(e === 'none')
+                            {
+                                return 'block';
+                            }
+                            else
+                            {
+                                return 'none';
+                            }
+                        });
+                  });
 
                   g.append("text")
                     .attr("x", outerWidth - 170)
-                    .attr("y", i * 15+9)
+                    .attr("y", i * 15+34)
                     .attr("height",30)
                     .attr("width",100)
                     .style("fill", typeColorMap[d.type])
                     .text(d.name);
 
                 });
+                
 
-
+                legend.append("text")                    
+                .attr("x", outerWidth -180)
+                .attr("y", 15)
+                .attr("height", 100)
+                .attr("width", 100)
+                .style("fill", "black")
+                .text("Click to hide types");
+                
             
 	    // Items
             //TODO: The groups should be the items passed it but unsure how this is processed
@@ -487,7 +570,10 @@ var StixTimeline = function () {
 		return typeColorMap[d.type];
 	    })
 	    .attr("width", "100%")
-	    .attr("height", "90%");
+	    .attr("height", "90%")
+            .attr("id", function(d){
+              return d.type;  
+            });
 	    
 	    intervals.append("text")
 	    .attr("class", "intervalLabel")
@@ -495,7 +581,10 @@ var StixTimeline = function () {
 	    .attr("y", 10)
 	    .text(function (d) {
 		return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
 	    instants.append("circle")
@@ -504,7 +593,10 @@ var StixTimeline = function () {
 	    })
 	    .attr("cx", band.itemHeight / 2)
 	    .attr("cy", band.itemHeight / 2)
-	    .attr("r", 5);
+	    .attr("r", 5)
+            .attr("id", function(d){
+              return d.type;  
+            });
 	    
 	    instants.append("text")
 	    .attr("class", "instantLabel")
@@ -512,7 +604,10 @@ var StixTimeline = function () {
 	    .attr("y", 10)
 	    .text(function (d) {
                 return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
             
 	    band.addActions = function(actions) {
 		// actions - array: [[trigger, function], ...]
@@ -821,7 +916,7 @@ var StixTimeline = function () {
 		ttStr += "Parent ID: " + d.parentObjId + "<br>";
 		ttStr += "Description: " +d.description+ "<br>";
 		ttStr += "Event Type: " +htmlSectionMap[d.type];
-                //ttStr += "<br>Track: " + d.track;
+                ttStr += "<br>Track: " + d.track;
 	    }
 	    return ttStr;
 	}
