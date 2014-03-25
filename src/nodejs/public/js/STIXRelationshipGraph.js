@@ -24,7 +24,10 @@ var StixGraph = function () {
 
 
 	var dragToPin = true,
-	dragInitiated = false;
+	dragInitiated = false,
+	x0 = 0, // Initial position at start of drag
+	y0 = 0, 
+	epsilon = 0.1;
 	
 
 
@@ -59,8 +62,11 @@ var StixGraph = function () {
 
 	var drag = force.drag()
 	.on("dragstart", function (d, i) {
-		if (d3.event.sourceEvent.which == 1) // initiate on left mouse button only
+		if (d3.event.sourceEvent.which == 1) {// initiate on left mouse button only
 			dragInitiated = true;               // -> set dragInitiated to true
+			x0 = d.x;
+			y0 = d.y;
+		}
 		force.stop();
 	})
 	.on("drag", function (d, i) { 
@@ -95,7 +101,9 @@ var StixGraph = function () {
 	.on("dragend", function (d, i) {
 		if (d3.event.sourceEvent.which == 1) { //  only take gestures into account that
 			force.resume();                     // were valid in "dragstart"
-			if (dragToPin) {
+			// Only pin the node if the position changed. Stops a plain click from causing a pin. 
+			if (dragToPin && 
+					(Math.abs(d.x - x0) > epsilon || Math.abs(d.y - y0) > epsilon)) {
 				d3.select(this).classed("fixed", d.fixed = true);
 			} 
 			tick();
@@ -157,24 +165,10 @@ var StixGraph = function () {
 		$('#hideNode a').click(function () { hideNode(contextNode); });
 
 		
-
-		
-		// Set up drag to pin interaction. Turned on by default.
-		$('#viewControls').append($('#graphControlsTemplate').html());
-		
-		$('#dragToPinInput').change(function () { 
-			dragToPin = $(this).prop('checked');
-		});
-		
-		$('#resetGraphButton').click(function () { 
-			$('#graphSVG').height('100%');
-			$('#graphSVG').width('100%');
-			_self.resize();
-		});
-
+		configureNav();
 		
 		// Add graph container element
-		$('#contentDiv').append($('#graphTemplate').html());
+		$('#contentDiv').html($('#graphTemplate').html());
 		
 		/**
 		 *  Append svg container for tree
@@ -279,10 +273,10 @@ var StixGraph = function () {
 
 	function updateForce () { 
 		force
-		.linkStrength(.4)
+		.linkStrength(.9)
 		.friction(.7)
 		.size(graphSize())
-		.linkDistance(Math.min.apply(Math,graphSize())/3)
+		.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
 		.gravity(function (d) { 
 			return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 		})
@@ -474,14 +468,19 @@ var StixGraph = function () {
 	 * Toggle node expansion on click
 	 * @param d The node that was clicked
 	 */
-	function click(d) {
+	function click (d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
+
+		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 		if (!hasChildren(d)) return; // ignore leaf nodes
 		if (d._children && d._children.length > 0) {
 			d.children = d._children.concat(d.children);
 			d._children = [];
-			// Expand other nodes that share children in common with the clicked node
 			d.children.forEach(function (c) {
+				// Start at the same position as the parent
+				c.x = d.x + Math.random();
+				c.y = d.y + Math.random();
+				// Expand other nodes that share children in common with the clicked node
 				c.parents.forEach(function (n) {
 					if (n._children) {
 						pos = n._children.indexOf(c);
@@ -510,6 +509,7 @@ var StixGraph = function () {
 		} 
 		update();
 		$(this).mouseenter();
+		d3.select('body').classed('loading',false);
 	}	
 
 	/** 
@@ -858,6 +858,66 @@ var StixGraph = function () {
 		.attr("class","nodeborder")
 		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + ((-nodeHeight/2) - 5) + ")");
 	};
+
+	
+	function configureNav () {
+		
+		// Set up drag to pin interaction. Turned on by default.
+		$('#viewControls').append($('#graphControlsTemplate').html());
+		
+		$('#dragToPinInput').change(function () { 
+			dragToPin = $(this).prop('checked');
+		});
+		
+		$('#resetGraphButton').click(function () { 
+			$('#graphSVG').height('100%');
+			$('#graphSVG').width('100%');
+			_self.resize();
+		});
+		
+		$('#unpinAllButton').click(function () {
+			d3.selectAll('.node').classed("fixed", function (d) { 
+				if ( d.id !== 0 ) { 
+					return d.fixed = false;
+				} else {
+					return d.fixed;
+				}
+			});
+		});
+		
+		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;
+		resizeGraph = function (widthDiff, heightDiff) {
+			if (widthDiff !== 0) { 
+				$('#graphSVG').width($('#graphSVG').width()+widthDiff);
+				report.x = report.x-(widthDiff/2);
+			}
+			if (heightDiff !== 0) {
+				$('#graphSVG').height($('#graphSVG').height()+heightDiff);
+				report.y = report.y-(heightDiff/2);
+			}
+			_self.resize();
+			holdTimer = setTimeout(function () { resizeGraph(widthDiff,heightDiff); },delay);
+			if (delay > 20) delay = delay * 0.7;
+			if (!timerIsRunning) { 
+				$('body').mouseup(function () {
+					clearTimeout(holdTimer);
+					$('body').off('mouseup');
+					timerIsRunning = false; 
+					delay = 500;
+				});
+				timerIsRunning = true;
+			}
+			
+		};
+		$('#heightPlus').mousedown(function () { resizeGraph(0,5); });
+		$('#heightMinus').mousedown(function () { resizeGraph(0,-5); });
+		$('#widthPlus').mousedown(function () { resizeGraph(5,0);});
+		$('#widthMinus').mousedown(function () { resizeGraph(-5,0); });
+		
+		$('#freeze').click(function () { force.stop(); });
+		
+	}
+	
 
 
 };
