@@ -35,8 +35,7 @@ var StixGraph = function () {
 	var report={},
 	svg=null,
 	node=[],
-	link=[],
-	relationships={};
+	link=[];
 
 
 //	var xmlDocs = {}, docIndex = 0;
@@ -328,7 +327,7 @@ var StixGraph = function () {
 			return '#linkId_' + d.source.id + '_' + d.target.id; })
 		.attr('startOffset','50%')
 		.text(function (d) { 
-			return !relationships[d.source.id] ? "" : relationships[d.source.id][d.target.id] ; });
+			return !d.relationship ? "" : d.relationship ; });
 		
 		
 		// Update nodes.
@@ -481,7 +480,8 @@ var StixGraph = function () {
 				c.x = d.x + Math.random();
 				c.y = d.y + Math.random();
 				// Expand other nodes that share children in common with the clicked node
-				c.parents.forEach(function (n) {
+				$.each(c.parents, function (id,properties) {
+					n = properties.node;
 					if (n._children) {
 						pos = n._children.indexOf(c);
 						if (pos > -1) {
@@ -496,7 +496,8 @@ var StixGraph = function () {
 			d.children = [];
 			// collapse other nodes that have children in common with the clicked node
 			d._children.forEach(function (c) { 
-				c.parents.forEach(function (n) {
+				$.each(c.parents,function (id,properties) {
+					n = properties.node;
 					if (n.children) {
 						pos = n.children.indexOf(c);
 						if (pos > -1) {
@@ -669,7 +670,7 @@ var StixGraph = function () {
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
 	 */
 	function isGroupingNode(d) { 
-		return d.depth === 1;
+		return d.depth === 1 || d.grouping;
 	}
 
 	/**
@@ -719,7 +720,22 @@ var StixGraph = function () {
 			if (!node.id && !ref) { 
 				node.id = nodeid++;
 				node.depth = depth;
-				node.parents = [nodes[parent]]; // the parent list is initialized to a list containing the current parent
+				
+				nodes.push(node);
+
+				var relationship = null;
+				if (node.relationship && parent) {
+					relationship = node.relationship.split(':')[1] || node.relationship;
+				}
+
+				node.parents = {};
+				
+				// the parent list is initialized to a list containing the current parent, if there is one
+				if (nodes[parent]) {
+					node.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType}; 
+				}
+
+				pos = nodes.length-1;
 			}
 			// If there is a pre-existing node, merge it with the new node and then replace the new node with the old one in 
 			// the new node's parent's list of children (creating a true graph rather than a tree)
@@ -748,22 +764,16 @@ var StixGraph = function () {
 					nodes[parent].children.splice(childPos,1,ref);
 				}
 
-				ref.parents.push(nodes[parent]);
-				
+				var relationship = null;
 				if (node.relationship && parent) { 
-					var relationship = node.relationship.split(':')[1] || node.relationship;
-					addRelationship(nodes[parent], ref, relationship);
+					relationship = node.relationship.split(':')[1] || node.relationship;
 				}
-				
-			// If this is the first time we've seen this node, add it to the list
-			} else {//if (nodes.filter(function (n) { return n.id === node.id; }).length == 0) {
-				nodes.push(node);
-				if (node.relationship && parent) {
-					var relationship = node.relationship.split(':')[1] || node.relationship;
-					addRelationship(nodes[parent],node,relationship);
+
+				if (nodes[parent]) {
+					ref.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType};
 				}
-				pos = nodes.length-1;
-			}
+
+			} 
 
 			// Recurse on the children of the new node, since we might not have seen them before
 			if (node.children) { 
@@ -775,13 +785,6 @@ var StixGraph = function () {
 		}
 		
 		recurse(root,0);
-	}
-
-	function addRelationship (parent,child,relationship) { 
-		if (!relationships[parent.id]) {
-			relationships[parent.id] = {};
-		}
-		relationships[parent.id][child.id] = relationship;
 	}
 
 
@@ -814,7 +817,9 @@ var StixGraph = function () {
 			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
-					links.push({source:parent,target:pos});
+					relationship = node.parents[nodes[parent].id].relationship;
+					linkType = node.parents[nodes[parent].id].linkType;
+					links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 				}
 			// If it's the root node, fix it in the middle of the window
 			} else { 
@@ -864,6 +869,8 @@ var StixGraph = function () {
 		
 		// Set up drag to pin interaction. Turned on by default.
 		$('#viewControls').append($('#graphControlsTemplate').html());
+		
+		$('#dragToPinInput').prop('checked',dragToPin);
 		
 		$('#dragToPinInput').change(function () { 
 			dragToPin = $(this).prop('checked');
