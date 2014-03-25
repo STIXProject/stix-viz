@@ -257,11 +257,11 @@ var StixGraph = function () {
 	 */
 	function removeBottomUp(d) {
 		if (d.children) { 
-			d.children = d.children.filter(function(c) { return c.linkType === 'topDown'; });
+			d.children = d.children.filter(function(c) { return ((c.linkType === 'topDown') || (c.linkType === 'sibling')); });
 			d.children.forEach(removeBottomUp);
 		}
 		if (d._children) { 
-			d._children = d._children.filter(function (c) { return c.linkType === 'topDown'; });
+			d._children = d._children.filter(function (c) { return ((c.linkType === 'topDown') || (c.linkType === 'sibling')) ; });
 			d._children.forEach(removeBottomUp);
 		}
 	}

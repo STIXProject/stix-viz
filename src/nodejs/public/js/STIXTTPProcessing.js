@@ -25,7 +25,7 @@ function createSingleTTPJson(ttp, etBottomUpInfo, relationship) {
     $.merge(ttpChildren, processTTPVictimTargeting(ttp));
     $.merge(ttpChildren, processTTPChildExploitTargets(ttp, etBottomUpInfo));
     var relatedTTPs = xpFind('.//ttp:Related_TTP', ttp);
-    $.merge(ttpChildren, processChildTTPs(relatedTTPs, 'ttp:/Related_TTP'));
+    $.merge(ttpChildren, processChildTTPs(relatedTTPs, 'ttp:Related_TTP'));
     if (ttpChildren.length > 0) {
         ttpJson["children"] = ttpChildren;
     }
