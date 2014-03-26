@@ -38,8 +38,29 @@ body {
 }
 
 #contentDiv { 
-/* 	width: 100%; */
+	align: right;
 	overflow: hidden;
+}
+
+#filterDiv {
+	float: left;
+	height:100%;
+	border-style: solid;
+	border-width: 2px;
+	font: 12px sans-serif;
+	font-weight: bold;
+}
+
+.entityFilter {
+	display: block;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+.relationshipFilter {
+	display: block;
+	margin-top: 3px;
+	margin-left: 15px;
 }
 
 #initialInstructions {

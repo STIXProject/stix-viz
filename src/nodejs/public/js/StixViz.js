@@ -167,6 +167,7 @@ $(function () {
 		viewType = $(this).attr('id');
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
 		reset('view');
+		$(filterDiv).show();
 		if (viewType === 'selectView-tree') { 
 			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
@@ -244,6 +245,7 @@ function addXmlDoc (f) {
 //  jsonDataObj created by generateJson contains a child for each type of view
 //    child json is stringified into global vars for later use when switching views
 function displayJson(jsonDataObj, viewType) {
+	$(filterDiv).show();
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
@@ -424,6 +426,8 @@ function expandSection (node) {
  *  Reset the display when new XML files are loaded
  */
 function reset (context) {
+	$(filterDiv).hide();
+	
 	// If the context is 'all', reset everything because we are loading new XML files
 	if (context === 'all') { 
 		xmlDocs = {};

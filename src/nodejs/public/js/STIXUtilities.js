@@ -38,6 +38,17 @@ function vizNSResolver(prefix) {
     return nsMap[prefix] || null;
 }
 
+var entityRelationshipMap = {
+		'Campaign' : ['Associated_Campaign', 'Attributed_Threat_Actor', 'Related_TTP', 'Related_Incident', 'Related_Indicator'],
+		'Course_Of_Action' : ['Related_COA'],
+		'Exploit_Target' : ['Potential_COA', 'Related_Exploit_Target'],
+		'Incident' : ['COA_Requested', 'COA_Taken', 'Leveraged_TTP', 'Related_Incident', 'Related_Indicator', 'Related_Observable', 'Threat_Actor'],
+		'Indicator' : ['Indicated_TTP', 'Observable', 'Related_Indicator', 'Suggested_COA'],
+		'Observable' : [],
+		'Threat_Actor' : ['Associated_Actor', 'Associated_Campaign', 'Observed_TTP'],
+		'TTP' : ['Attack_Pattern', 'Exploit_Targets', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
+}
+
 // single node types
 var STIXType = {
 		'ca' : 'campaign', 
