@@ -18,6 +18,7 @@ $(function () {
 
 function toggleEntityFilter(entity) {
 	var relationships = entityRelationshipMap[entity];
+	removeNodesOfEntityType(entity);
 	$.each(relationships, function(index, r) {
 		var filter = "#" + r + 'Filter';
 		$(filter).prop('checked', !($(filter).is(':checked')));

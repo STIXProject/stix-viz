@@ -245,6 +245,20 @@ var StixGraph = function () {
 		}
 	}
 	
+	/* 
+	 * Used for filtering - take in entity name, look up STIXType for node and return all that aren't that node
+	 * 
+	 */
+	function removeNodesOfEntityType(entity) {
+		var d = report;
+		if (d.children) {
+			d.children = d.children.filter(function(c) { return (c.Type != getEntityStixType(entity)); });
+		}
+		if (d._children) { 
+			d._children = d._children.filter(function (c) { return (c.Type != getEntityStixType(entity)); });
+		}
+	}
+	
 	/**
 	 * Remove links that are "bottom up" since they are only needed for tree view
 	 */

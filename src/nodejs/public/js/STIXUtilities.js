@@ -61,6 +61,37 @@ var STIXType = {
 		'ttp' : 'ObservedTTP'
 };
 
+
+//this is ugly - getting from entity name to STIXType, think of a better way later
+function getEntityStixType(entity) {
+	var typeStr = "";
+	if (entity === 'Campaign') {
+		typeStr = STIXType.ca;
+	}
+	else if (entity === 'Course_Of_Action') {
+		typeStr = STIXType.coa;
+	}
+	else if (entity === 'Exploit_Target') {
+		typeStr = STIXType.et;
+	}
+	else if (entity === 'Incident') {
+		typeStr = STIXType.incident;
+	}
+	else if (entity === 'Indicator') {
+		typeStr = STIXType.indi;
+	}
+	else if (entity === 'Observable') {
+		typeStr = STIXType.obs;
+	}
+	else if (entity === 'Threat_Actor') {
+		typeStr = STIXType.ta;
+	}
+	else if (entity === 'TTP') {
+		typeStr = STIXType.ttp;
+	}
+	return typeStr; 
+}
+
 // grouping node types
 var STIXGroupings = {
 	'ca' : 'Campaigns',
