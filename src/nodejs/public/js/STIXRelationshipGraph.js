@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the top level invocation of STIXViz.   It is invoked when the file is loaded by
@@ -22,6 +22,7 @@ var StixGraph = function () {
 	nodeHeight = 60,
 	labelHeight = 35;
 
+        var nodeWarnThresh = 10;
 
 	var dragToPin = true,
 	dragInitiated = false,
@@ -468,49 +469,62 @@ var StixGraph = function () {
 	 * @param d The node that was clicked
 	 */
 	function click (d) {
-		if (d3.event.defaultPrevented) return; // ignore drag
+                    if (d3.event.defaultPrevented) return; // ignore drag
 
-		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
-		if (!hasChildren(d)) return; // ignore leaf nodes
-		if (d._children && d._children.length > 0) {
-			d.children = d._children.concat(d.children);
-			d._children = [];
-			d.children.forEach(function (c) {
-				// Start at the same position as the parent
-				c.x = d.x + Math.random();
-				c.y = d.y + Math.random();
-				// Expand other nodes that share children in common with the clicked node
-				$.each(c.parents, function (id,properties) {
-					n = properties.node;
-					if (n._children) {
-						pos = n._children.indexOf(c);
-						if (pos > -1) {
-							n.children.push(c);
-							n._children.splice(pos,1);
-						}
-					}
-				});
-			});
-		} else {
-			d._children = d.children.concat(d._children);
-			d.children = [];
-			// collapse other nodes that have children in common with the clicked node
-			d._children.forEach(function (c) { 
-				$.each(c.parents,function (id,properties) {
-					n = properties.node;
-					if (n.children) {
-						pos = n.children.indexOf(c);
-						if (pos > -1) {
-							n._children.push(c);
-							n.children.splice(pos,1); // remove node from other node's children
-						}
-					}
-				});
-			});
-		} 
-		update();
-		$(this).mouseenter();
-		d3.select('body').classed('loading',false);
+                    d3.select('body').classed('loading',true);  // Set wait cursor while expanding
+                    if (!hasChildren(d)) return; // ignore leaf nodes
+
+                    var numChildren = getChildCount(d);
+                    if(numChildren >=  nodeWarnThresh)
+                    {
+                        var r=confirm("This node has "+numChildren+" children nodes! Do you still want to expand this node?");
+                    }
+                    else
+                    {
+                        r = true;
+                    }
+                    if (r===true)
+                    {
+                        if (d._children && d._children.length > 0) {
+                                d.children = d._children.concat(d.children);
+                                d._children = [];
+                                d.children.forEach(function (c) {
+                                        // Start at the same position as the parent
+                                        c.x = d.x + Math.random();
+                                        c.y = d.y + Math.random();
+                                        // Expand other nodes that share children in common with the clicked node
+                                        $.each(c.parents, function (id,properties) {
+                                                n = properties.node;
+                                                if (n._children) {
+                                                        pos = n._children.indexOf(c);
+                                                        if (pos > -1) {
+                                                                n.children.push(c);
+                                                                n._children.splice(pos,1);
+                                                        }
+                                                }
+                                        });
+                                });
+                        } else {
+                                d._children = d.children.concat(d._children);
+                                d.children = [];
+                                // collapse other nodes that have children in common with the clicked node
+                                d._children.forEach(function (c) { 
+                                        $.each(c.parents,function (id,properties) {
+                                                n = properties.node;
+                                                if (n.children) {
+                                                        pos = n.children.indexOf(c);
+                                                        if (pos > -1) {
+                                                                n._children.push(c);
+                                                                n.children.splice(pos,1); // remove node from other node's children
+                                                        }
+                                                }
+                                        });
+                                });
+                        } 
+                        update();
+                        $(this).mouseenter();
+                        d3.select('body').classed('loading',false);
+                    }
 	}	
 
 	/** 
@@ -665,6 +679,24 @@ var StixGraph = function () {
 	function hasChildren (d) { 
 		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0); 
 	}
+        
+        /**
+	 * Returns the count of unique children a node has
+	 * @param d
+	 * @returns
+	 */
+        function getChildCount(d){
+            var counter = {};
+            var uniqureCount = 0;
+            d._children.forEach(function (cc) {
+                if(!counter[cc.id])
+                {
+                    counter[cc.id] = cc.id;
+                    uniqureCount++;
+                }
+            });
+            return uniqureCount;
+        }
 	
 	/** 
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
