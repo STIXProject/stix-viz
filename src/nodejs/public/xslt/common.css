@@ -3,6 +3,14 @@ body
   font-family: Arial,Helvetica,sans-serif;
 }
 
+.description
+{
+  /* if the descriptions are "preformatted text" use "pre-line" or "pre" */
+  /* the better thing to do is to pass in the stylesheet parameter "enablePreformattedDescriptions" and set it to true */
+  
+  /* white-space: pre-line; */
+}
+
 td, th
 {
   vertical-align: top;
@@ -330,6 +338,11 @@ td.compositionTableOperand
   padding: 0.7em;
 }
 
+.containerIndicator .compositionTableOperand > tbody > tr > td > div
+{
+  background-color: tan;
+}
+
 /* make DL look like a table */
 dl.table-display
 {
@@ -588,4 +601,100 @@ tbody.expandableSeparate.expandableContainer.collapsed > tr > td > .expandableCo
 .documentContentsItem
 {
   display: inline;
+}
+
+.stixSectionTitle,
+.stixCommonValue
+{
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+
+.stixCommonDescription
+{
+  font-style: italic;
+}
+
+.stixSectionContents
+{
+}
+
+.windowsRegistryTable
+{
+  border-style: solid;
+  border-width: 1px;
+  border-color: black;
+  border-collapse: collapse;
+}
+
+.windowsRegistryTable > thead > tr,
+.windowsRegistryTable > tbody > tr
+{
+  text-align: left;
+}
+.windowsRegistryTable > thead > tr,
+.windowsRegistryTable > tbody > tr > th
+{
+  background-color: hsla(0, 0%, 40%, 1.0);
+  color: hsla(0, 0%, 80%, 1.0);
+}
+.windowsRegistryTable > thead > tr > td
+{
+  color: hsla(0, 0%, 80%, 1.0);
+}
+.windowsRegistryTable > thead > tr > th,
+.windowsRegistryTable > thead > tr > td
+{
+  vertical-align: middle;
+}
+
+.windowsRegistryTable > thead > tr > th,
+.windowsRegistryTable > thead > tr > td,
+.windowsRegistryTable > tbody > tr > th,
+.windowsRegistryTable > tbody > tr > td
+{
+/*
+  border-bottom-style: solid;
+  border-bottom-color: hsl(0, 0%, 80%);
+  border-bottom-width: 1px;
+*/
+  border-style: solid;
+  /*border-color: hsl(0, 0%, 80%); */
+  border-color: black;
+  border-width: 1px;
+}
+
+.httpRequestResponseTable
+{
+  border-style: solid;
+  border-width: 1px;
+  border-color: black;
+  border-collapse: collapse;
+}
+
+.httpRequestResponseTable > thead > tr> th,
+.httpRequestResponseTable > thead > tr> td,
+.httpRequestResponseTable > tbody > tr> th,
+.httpRequestResponseTable > tbody > tr> td
+{
+  border-style: solid;
+  /*border-color: hsl(0, 0%, 80%); */
+  border-color: gray;
+  border-width: 1px;
+}
+.requestResponseHeaderRow
+{
+  background-color: black;
+  color: white;
+}
+
+.conditionClause
+{
+  margin-top: 1em;
+  margin-left: 1em;
+}
+
+.documentContentsList > a
+{
+  text-decoration: none;
 }

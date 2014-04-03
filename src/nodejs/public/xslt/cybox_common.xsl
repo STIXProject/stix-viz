@@ -42,6 +42,7 @@ ikirillov@mitre.org
     
     xmlns:indicator="http://stix.mitre.org/Indicator-2"
     xmlns:incident="http://stix.mitre.org/Incident-1"
+    xmlns:threat-actor='http://stix.mitre.org/ThreatActor-1'
     
     xmlns:coa="http://stix.mitre.org/CourseOfAction-1"
     
@@ -55,6 +56,8 @@ ikirillov@mitre.org
     xmlns:et="http://stix.mitre.org/ExploitTarget-1"
     xmlns:stix='http://stix.mitre.org/stix-1'
     
+    xmlns:campaign="http://stix.mitre.org/Campaign-1"
+    
     xmlns:AddressObject='http://cybox.mitre.org/objects#AddressObject-2'
     xmlns:URIObject='http://cybox.mitre.org/objects#URIObject-2'
     xmlns:EmailMessageObj="http://cybox.mitre.org/objects#EmailMessageObject-2"
@@ -62,6 +65,10 @@ ikirillov@mitre.org
 
 
     <xsl:output method="html" omit-xml-declaration="yes" indent="yes" media-type="text/html" version="4.0" />
+  
+    <!-- <xsl:include href="cybox_util.xsl" /> -->
+    <xsl:include href="cybox_objects.xsl" />
+    <xsl:include href="cybox_objects__customized.xsl" />
   
 
     <!--
@@ -119,7 +126,7 @@ ikirillov@mitre.org
                 <xsl:value-of select="$output" />
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'ThreatActorType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/indicator:Title) then $actualItem/indicator:Title/text() else ('[ThreatActor, no Title]')" />
+                <xsl:variable name="output" select="if ($actualItem/threat-actor:Title) then $actualItem/threat-actor:Title/text() else ('[ThreatActor, no Title]')" />
                 <xsl:value-of select="$output" />
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'TTPType')]"  xml:space="preserve">
@@ -132,6 +139,14 @@ ikirillov@mitre.org
             </xsl:when>
             <xsl:when test="$actualItem[contains(@xsi:type,'IncidentType')]"  xml:space="preserve">
                 <xsl:variable name="output" select="if ($actualItem/coa:Type) then $actualItem/coa:Type/text() else ('[Incident, no Type]')" />
+                <xsl:value-of select="$output" />
+            </xsl:when>
+            <xsl:when test="$actualItem[self::stix:Campaign]">
+                <xsl:variable name="output" select="if ($actualItem/campaign:Names/campaign:Name) then $actualItem[self::stix:Campaign]/campaign:Names/campaign:Name/text() else ('[Other Campaign]')" />
+                <xsl:value-of select="$output" />
+            </xsl:when>
+            <xsl:when test="$actualItem[self::stixCommon:Kill_Chain]">
+                <xsl:variable name="output" select="if ($actualItem/@name) then fn:data($actualItem/@name) else ('[Other Kill Chain]')" />
                 <xsl:value-of select="$output" />
             </xsl:when>
             <!-- /stix -->
@@ -238,10 +253,14 @@ ikirillov@mitre.org
                 <td>
                     <div class="expandableToggle objectReference" onclick="embedObject()toggle(this.parentNode.parentNode.parentNode)">
                         <xsl:attribute name="onclick">embedObject(this.parentNode.parentNode.parentNode, '<xsl:value-of select="$id"/>','<xsl:value-of select="$expandedContentId"/>');</xsl:attribute>
-                        <xsl:call-template name="calculateColumn1Content">
-                            <xsl:with-param name="reference" select="$reference" />
-                            <xsl:with-param name="actualItem" select="$actualItem" />
-                        </xsl:call-template>
+                        <xsl:variable name="column1Content">
+                          <xsl:call-template name="calculateColumn1Content">
+                              <xsl:with-param name="reference" select="$reference" />
+                              <xsl:with-param name="actualItem" select="$actualItem" />
+                          </xsl:call-template>
+                        </xsl:variable>
+                        <xsl:text> </xsl:text>
+                        <xsl:value-of select="fn:normalize-space($column1Content)" />
                     </div>
                 </td>
                     <xsl:call-template name="calculateColumn2Content">
@@ -436,59 +455,31 @@ ikirillov@mitre.org
   
   <xsl:template name="processObservableContents">
     <xsl:if test="cybox:Title">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>Title</td>
-                        <td>
-                            <xsl:for-each select="cybox:Title">
-                                <xsl:value-of select="."/>
-                            </xsl:for-each>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>              
-    <xsl:if test="not(cybox:Observable_Composition)">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>
-                            <xsl:apply-templates select="cybox:Object|cybox:Event"></xsl:apply-templates>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>
+      <xsl:variable name="contents">
+        <xsl:apply-templates select="cybox:Title" />
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('Title', $contents)" />
+    </xsl:if>  
+    <xsl:if test="cybox:Description">
+      <xsl:variable name="contents">
+        <xsl:apply-templates select="cybox:Description" />
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
+    </xsl:if>  
+    <xsl:if test="cybox:Object|cybox:Event">
+      <xsl:variable name="contents">
+        <xsl:apply-templates select="cybox:Object|cybox:Event" />
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('', $contents)" />
+    </xsl:if>  
     <xsl:if test="cybox:Observable_Composition">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>Observable Composition</td>
-                        <td>
-                            <xsl:for-each select="cybox:Observable_Composition">
-                                <xsl:call-template name="processObservableCompositionSimple" />
-                            </xsl:for-each>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>
+      <xsl:variable name="contents">
+        <xsl:for-each select="cybox:Observable_Composition">
+          <xsl:call-template name="processObservableCompositionSimple" />
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('Observable Composition', $contents)" />
+    </xsl:if>  
   </xsl:template>
     
     <!--
@@ -1107,61 +1098,18 @@ ikirillov@mitre.org
         </div>
     </xsl:template>
   
+    <!--
+      template for formatting any Descriptions that contain HTML5 text
+      
+      the original html content is written to a data-* attribute on a div, and
+      then later on when the page is loaded the html content is parsed and
+      inserted into the page's dom.
+    -->
     <xsl:template match="text()[../self::*:Description[@structuring_format='HTML5']]" mode="cyboxProperties">
       <xsl:variable name="content" select="fn:data(.)" />
       <div class="htmlContainer" data-stix-content="{$content}" />
     </xsl:template>
   
-    <!--
-      Output hash value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="Common:Hash" mode="cyboxProperties">
-        <div class="container cyboxPropertiesContainer cyboxProperties">
-            <span class="cyboxPropertiesName"><xsl:value-of select="local-name()"/> </span>
-            <span class="cyboxPropertiesValue">
-                <xsl:value-of select="./Common:Type"/> = 
-                <xsl:value-of select="./Common:Simple_Hash_Value|./Common:Fuzzy_Hash_Value"/>
-            </span>            
-        </div>
-    </xsl:template>
-
-    <!--
-      Output URI & Link value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="cybox:Properties[contains(@xsi:type,'URIObjectType')]|cybox:Properties[contains(@xsi:type,'LinkObjectType')]">
-        <fieldset>
-            <legend>URI</legend>
-            <div class="container cyboxPropertiesContainer cyboxProperties">
-                <div class="heading cyboxPropertiesHeading cyboxProperties">
-                    <xsl:apply-templates select="URIObject:Value" mode="cyboxProperties" />
-                </div>
-            </div>
-        </fieldset>
-    </xsl:template>
-    <xsl:template match="URIObject:Value" mode="cyboxProperties">
-        Value <xsl:value-of select="Common:Defanged(@is_defanged, @defanging_algorithm_ref)" />
-        <xsl:choose>
-            <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-            <xsl:otherwise> = </xsl:otherwise>
-        </xsl:choose>
-        <xsl:value-of select="." />
-    </xsl:template>
-
-    <!--
-      Output Port value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="*:Port[contains(@xsi:type,'PortObjectType')]|*:Port[./*:Port_Value]" mode="cyboxProperties">
-        <div class="container cyboxPropertiesContainer cyboxProperties">
-            <div class="heading cyboxPropertiesHeading cyboxProperties">
-                Port <xsl:choose>
-                    <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-                    <xsl:otherwise> = </xsl:otherwise>
-                </xsl:choose>
-                <xsl:value-of select="." />
-            </div>
-        </div>
-    </xsl:template>
-    
     <!--
       Output Address value without unnecessary nested schema tree structure
     -->
@@ -1208,27 +1156,6 @@ ikirillov@mitre.org
         </xsl:choose>
         <xsl:value-of select="." />
     </xsl:template>
-    <xsl:function name="Common:ConditionType">
-        <xsl:param name="condition" />
-        <xsl:choose>
-            <xsl:when test="$condition='Equals'"> = </xsl:when>
-            <xsl:when test="$condition='DoesNotEqual'"> != </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$condition" />: 
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:function>
-    <xsl:function name="Common:Defanged">
-        <xsl:param name="is_defanged" />
-        <xsl:param name="defanging_algorithm_ref" />
-        <xsl:if test="$is_defanged='true'">
-            (defanged 
-            <xsl:if test="$defanging_algorithm_ref!=''">
-                with <xsl:value-of select="$defanging_algorithm_ref" />
-            </xsl:if>
-            )
-        </xsl:if>
-    </xsl:function>
     
     <!--
       default template for outputting hierarchical cybox:Properties names/values/constraints
@@ -1327,12 +1254,16 @@ ikirillov@mitre.org
     <div class="nameValueTable">
       <table class="one-column-emphasis indicator-sub-table">
         <colgroup>
-          <col class="oce-first-obs heading-column" />
+          <xsl:if test="$title">
+            <col class="oce-first-obs heading-column" />
+          </xsl:if>
           <col class="details-column" />
         </colgroup>
         <tbody>
           <tr>
-            <td><xsl:value-of select="$title" /></td>
+            <xsl:if test="$title">
+              <td><xsl:value-of select="$title" /></td>
+            </xsl:if>
             <td>
               <xsl:copy-of select="$value"/>
             </td>
@@ -1341,5 +1272,6 @@ ikirillov@mitre.org
       </table> 
     </div>
   </xsl:function>
+    
   
 </xsl:stylesheet>
