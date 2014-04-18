@@ -82,7 +82,10 @@
 				      <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
 			</ul>
 		</div>
-		<div id="filterDiv">Nodes/Relationships Included</div>
+		<div id="filterDiv">
+			<div id="filterDivTitle">Filter by Nodes/Relationships<a data-toggle="collapse" + data-target="#filterDivMenu" class="expandCollapse"> -</a></div>
+			<div class="collapse in" id="filterDivMenu" ></div>
+		</div>
 		<div id="contentDiv">
 			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
 			<!--  leave for debugging purposes -->

@@ -37,6 +37,7 @@ var StixGraph = function () {
 	node=[],
 	link=[];
 
+	report.hiddenRelationships = {};
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -221,6 +222,7 @@ var StixGraph = function () {
 		node = svg.selectAll(".node");
 
 		report = $.parseJSON(jsonString);
+		report.hiddenRelationships = {};
 		
 		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
@@ -246,19 +248,53 @@ var StixGraph = function () {
 	}
 	
 	/* 
-	 * Used for filtering - take in entity name, look up STIXType for node and return all that aren't that node
-	 * 
-	 */
-	function removeNodesOfEntityType(entity) {
+	 * Remove and add node functions are used for filtering
+	 * Calls update after filtering is complete
+	*/
+	_self.removeNodesOfEntityType = function(entityType) {
 		var d = report;
+		var nodesRemoved = [];
 		if (d.children) {
-			d.children = d.children.filter(function(c) { return (c.Type != getEntityStixType(entity)); });
+			nodesRemoved = d.children.filter(function(node) {return (node.type === entityType + 's')});
+			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
+			d.hiddenChildren = nodesRemoved;
+			$(nodesRemoved).each(function(i, node) {node.filterType = true;});
 		}
-		if (d._children) { 
-			d._children = d._children.filter(function (c) { return (c.Type != getEntityStixType(entity)); });
-		}
+		update();
 	}
 	
+	_self.addNodesOfEntityType = function(entityType) {
+		var d = report;
+		var nodesToAdd = [];
+		if (d._children) {
+			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's')});
+			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's')});
+			d.children = d.children.concat(nodesToAdd);
+			$(nodesToAdd).each(function(i, node) {node.filterType = false;})
+		}
+		update();
+	}
+	
+	_self.showLinksOfType = function(entity, r) {
+		//entity = entity.toLowerCase();
+		if (entity in report.hiddenRelationships) {
+			delete report.hiddenRelationships[entity][r];
+		}
+		update();
+	}
+	
+	_self.hideLinksOfType= function(entity, r) {
+		//entity = entity.toLowerCase();
+		if (entity in report.hiddenRelationships) {
+			report.hiddenRelationships[entity][r] = true;
+		}
+		else {
+			report.hiddenRelationships[entity] = {};
+			report.hiddenRelationships[entity][r] = true;
+		}
+		update();
+	}
+
 	/**
 	 * Remove links that are "bottom up" since they are only needed for tree view
 	 */
@@ -813,18 +849,21 @@ var StixGraph = function () {
 		function recurse(node,parent) {
 
 			var pos = 0;
+			var entity = null;
 
 			// Recurse on the node's children
 			// If we have seen this node before, use the position in the node list
 			if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
 			} else { 			// Otherwise, add the node to the list
-				nodes.push(node);
-				pos = nodes.length-1;
-				if (node.children) { 
-					node.children.forEach(function (n) { 
-						recurse(n,pos);
-					});
+				if (! node.filterType) {
+					nodes.push(node);
+					pos = nodes.length-1;
+					if (node.children) { 
+						node.children.forEach(function (n) { 
+							recurse(n,pos);
+						});
+					}
 				}
 			}
 
@@ -833,7 +872,12 @@ var StixGraph = function () {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
 					relationship = node.parents[nodes[parent].id].relationship;
 					linkType = node.parents[nodes[parent].id].linkType;
-					links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
+					// don't push if report.hiddenRelationships[entity][relationships]==true
+					entity = node.parents[nodes[parent].id].node.type;
+					if (!(entity in report.hiddenRelationships) ||
+						!(relationship in report.hiddenRelationships[entity])) {
+						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
+					}
 				}
 			// If it's the root node, fix it in the middle of the window
 			} else { 

@@ -38,6 +38,31 @@ function vizNSResolver(prefix) {
     return nsMap[prefix] || null;
 }
 
+
+//single node types
+var STIXType = {
+		'ca' : 'Campaign', 
+		'coa' : 'Course_Of_Action',
+		'et' : 'Exploit_Target',
+		'incident' : 'Incident',
+		'indi': 'Indicator',
+		'obs' : 'Observable',
+		'ta' : 'Threat_Actor',
+		'ttp' : 'TTP'
+};
+
+//  Same as STIXTypes, with 's' on the end
+var STIXGroupings = {
+	'ca' : 'Campaigns',
+	'coa' : 'Course_Of_Actions',
+	'et' : 'Exploit_Targets',
+	'incident' : 'Incidents',
+	'indi' : 'Indicators',
+	'obs' : 'Observables',
+	'ta' : 'Threat_Actors',
+	'ttp' : 'TTPs'
+};
+
 var entityRelationshipMap = {
 		'Campaign' : ['Associated_Campaign', 'Attributed_Threat_Actor', 'Related_TTP', 'Related_Incident', 'Related_Indicator'],
 		'Course_Of_Action' : ['Related_COA'],
@@ -48,61 +73,6 @@ var entityRelationshipMap = {
 		'Threat_Actor' : ['Associated_Actor', 'Associated_Campaign', 'Observed_TTP'],
 		'TTP' : ['Attack_Pattern', 'Exploit_Targets', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
 }
-
-// single node types
-var STIXType = {
-		'ca' : 'campaign', 
-		'coa' : 'CourseOfAction',
-		'et' : 'ExploitTarget',
-		'incident' : 'Incident',
-		'indi': 'Indicator',
-		'obs' : 'Observable',
-		'ta' : 'threatActor',
-		'ttp' : 'ObservedTTP'
-};
-
-
-//this is ugly - getting from entity name to STIXType, think of a better way later
-function getEntityStixType(entity) {
-	var typeStr = "";
-	if (entity === 'Campaign') {
-		typeStr = STIXType.ca;
-	}
-	else if (entity === 'Course_Of_Action') {
-		typeStr = STIXType.coa;
-	}
-	else if (entity === 'Exploit_Target') {
-		typeStr = STIXType.et;
-	}
-	else if (entity === 'Incident') {
-		typeStr = STIXType.incident;
-	}
-	else if (entity === 'Indicator') {
-		typeStr = STIXType.indi;
-	}
-	else if (entity === 'Observable') {
-		typeStr = STIXType.obs;
-	}
-	else if (entity === 'Threat_Actor') {
-		typeStr = STIXType.ta;
-	}
-	else if (entity === 'TTP') {
-		typeStr = STIXType.ttp;
-	}
-	return typeStr; 
-}
-
-// grouping node types
-var STIXGroupings = {
-	'ca' : 'Campaigns',
-	'coa' : 'CoursesOfAction',
-	'et' : 'ExploitTargets',
-	'incident' : 'Incidents',
-	'indi' : 'Indicators',
-	'obs' : 'Observables',
-	'ta' : 'ThreatActors',
-	'ttp' : 'TTPs'
-};
 
 var STIXPattern = {
 		'ca' : './/stixCommon:Campaign', 
