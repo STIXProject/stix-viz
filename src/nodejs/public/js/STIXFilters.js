@@ -4,7 +4,7 @@ $(function () {
 	$.map(entityRelationshipMap, function(relationships, entity) {
 		filterText = '<span class="entityFilter"><label><input type="checkbox" id="' + entity + 'EFilter" onChange="toggleEntityFilter(\'' + entity + '\')"; checked> ' + entity + '</label>';
 		if ($(relationships).length > 0) {
-			filterText += '<a data-toggle="collapse" + data-target="#' + entity + 'Relationships" class="expandCollapse"> +</a></span>';
+			filterText += '<a data-toggle="collapse" + data-target="#' + entity + 'Relationships" class="expandCollapse">+</a></span>';
 			filterText += '<div class="collapse" id="' + entity + 'Relationships">'
 			$.each(relationships, function(index, r) {
 				filterText += '<span class="relationshipFilter"><label><input type="checkbox" id="' + entity + r + 'RFilter" onChange="toggleRelationshipFilter(\'' + entity + '\',\''+ r + '\')"; checked> ' + r + '</label></span>';
@@ -14,9 +14,19 @@ $(function () {
 		$('#filterDivMenu').append(filterText);
 	});
 	
+	$('#filterDivMenu').on('hide.bs.collapse', function () {
+		$('#filterDivTitleText').text('F');
+		view.resize();
+	});
+	$('#filterDivMenu').on('show.bs.collapse', function () {
+		$('#filterDivTitleText').text('Filter by Nodes/Relationships');
+		view.resize();
+	});
+
+	
 	$('.expandCollapse').click(function(){ 
 			$(this).text(function(i,old){
-				return old==' +' ?  ' -' : ' +';
+				return old=='+' ?  '-' : '+';
 			});
 		});
 	});
