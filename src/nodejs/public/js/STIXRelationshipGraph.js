@@ -38,6 +38,7 @@ var StixGraph = function () {
 	link=[];
 
 	report.hiddenRelationships = {};
+	report.hiddenNodes = {};
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -223,6 +224,7 @@ var StixGraph = function () {
 
 		report = $.parseJSON(jsonString);
 		report.hiddenRelationships = {};
+		report.hiddenNodes = {};
 		
 		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
@@ -259,11 +261,13 @@ var StixGraph = function () {
 			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
 			d.hiddenChildren = nodesRemoved;
 			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
-			_self.markNodesToRemove(nodesRemoved);
+			//_self.markNodesToRemove(nodesRemoved);
+			report.hiddenNodes[entityType] = true;
 		}
 		update();
 	}
 	
+	/*
 	_self.markNodesToRemove = function(nodes){
 		$(nodes).each(function(i, node) {
 			node.filterType = true;
@@ -272,7 +276,7 @@ var StixGraph = function () {
 			}
 		});
 	}
-	
+	*/
 	_self.addNodesOfEntityType = function(entityType) {
 		var d = report;
 		var nodesToAdd = [];
@@ -281,11 +285,13 @@ var StixGraph = function () {
 			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's')});
 			d.children = d.children.concat(nodesToAdd);
 			//$(nodesToAdd).each(function(i, node) {node.filterType = false;})
-			_self.markNodesToAdd(nodesToAdd);
+			//_self.markNodesToAdd(nodesToAdd);
+			report.hiddenNodes[entityType] = false;
 		}
 		update();
 	}
 	
+	/*
 	_self.markNodesToAdd = function(nodes) {
 		$(nodes).each(function(i, node) {
 			node.filterType = false;
@@ -294,6 +300,7 @@ var StixGraph = function () {
 			}
 		});
 	}
+	*/
 	
 	_self.showLinksOfType = function(entity, r) {
 		//entity = entity.toLowerCase();
@@ -876,7 +883,7 @@ var StixGraph = function () {
 			if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
 			} else { 			// Otherwise, add the node to the list
-				if (! node.filterType) {
+				if (! report.hiddenNodes[node.type]) {
 					nodes.push(node);
 					pos = nodes.length-1;
 					if (node.children) { 
