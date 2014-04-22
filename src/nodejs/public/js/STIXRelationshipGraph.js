@@ -258,9 +258,19 @@ var StixGraph = function () {
 			nodesRemoved = d.children.filter(function(node) {return (node.type === entityType + 's')});
 			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
 			d.hiddenChildren = nodesRemoved;
-			$(nodesRemoved).each(function(i, node) {node.filterType = true;});
+			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
+			_self.markNodesToRemove(nodesRemoved);
 		}
 		update();
+	}
+	
+	_self.markNodesToRemove = function(nodes){
+		$(nodes).each(function(i, node) {
+			node.filterType = true;
+			if ((node.depth === 1) && (node.children)) {
+				_self.markNodesToRemove(node.children);
+			}
+		});
 	}
 	
 	_self.addNodesOfEntityType = function(entityType) {
@@ -270,9 +280,19 @@ var StixGraph = function () {
 			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's')});
 			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's')});
 			d.children = d.children.concat(nodesToAdd);
-			$(nodesToAdd).each(function(i, node) {node.filterType = false;})
+			//$(nodesToAdd).each(function(i, node) {node.filterType = false;})
+			_self.markNodesToAdd(nodesToAdd);
 		}
 		update();
+	}
+	
+	_self.markNodesToAdd = function(nodes) {
+		$(nodes).each(function(i, node) {
+			node.filterType = false;
+			if ((node.depth === 1) && (node.children)) {
+				_self.markNodesToAdd(node.children);
+			}
+		});
 	}
 	
 	_self.showLinksOfType = function(entity, r) {

@@ -15,7 +15,7 @@ $(function () {
 	});
 	
 	$('#filterDivMenu').on('hide.bs.collapse', function () {
-		$('#filterDivTitleText').text('F');
+		$('#filterDivTitleText').text('Filter');
 		view.resize();
 	});
 	$('#filterDivMenu').on('show.bs.collapse', function () {
