@@ -51,55 +51,56 @@ function getCOADescription(coaTaken) {
 
 //incident objs are all incidents - check to see if have time, coataken
 function getIncidentNodes(incidentObjs) {
-	var incidentNodes = [];
-	var incidentId = "";
-	var node = {};
-	var timeObj = null;
-	var timeTypeObj = null;
-	var coaTakenTime = null;
-	var startTime = null;
-	var endTime = null;
-	$(incidentObjs).each(function (index, incident) {
-		incidentId = getObjIdStr(incident);
-		timeObj = xpFindSingle('./incident:Time', incident);
-		if (timeObj != null) {
-			node = {}
-			node["parentObjId"] = incidentId;
-			node["description"] = getBestIncidentName(incident);
-			node['timeRange'] = false;
-			//timeTypeObj = xpFindSingle('./incident:First_Malicious_Action', timeObj);
-			// there are many different time types: First_Malicious_Action, Initial_Compromise, First_Data_Exfiltration,  Incident_Discovery, Incident_Opened, Containment_Achieved,        
-			//		     Restoration_Achieved, Incident_Reported, Incident_Closed
-			timeTypeObj = timeObj.firstElementChild;
-			if (timeTypeObj != null) {
-				//node['type'] = 'Incident-First-Malicious-Action';
-				node['type'] = 'Incident-' + timeTypeObj.localName;
-				node['start'] = $(timeTypeObj).text();
-				incidentNodes.push(node);
-			}
-			
-		}
-		coaTakenTime = xpFindSingle('./incident:COA_Taken/incident:Time', incident);
-		if (coaTakenTime != null) {
-			node = {}
-			node["parentObjId"] = incidentId;
-			var coaTaken = xpFindSingle('./incident:COA_Taken/incident:Course_Of_Action', incident);
-			node["description"] = getCOADescription(coaTaken);
-			node['timeRange'] = true;
-			node['type'] = 'Incident-COATaken';
-			startTime = xpFindSingle('./incident:Start', coaTakenTime);
-			if (startTime != null) {
-				node['start'] = $(startTime).text();
-			}
-			endTime = xpFindSingle('./incident:End', coaTakenTime);
-			if (endTime != null) {
-				node['end'] = $(endTime).text();
-			}
-			incidentNodes.push(node);
-		}
+var incidentNodes = [];
+    var incidentId = "";
+    var node = {};
+    var timeObj = null;
+    var timeTypeObj = null;
+    var coaTakenTime = null;
+    var startTime = null;
+    var endTime = null;
+    $(incidentObjs).each(function (index, incident) {
+        incidentId = getObjIdStr(incident);
+        timeObj = xpFindSingle('./incident:Time', incident);
+        if (timeObj != null) {
+                    $(timeObj.children).each(function(i, timeTypeObj) {
+            node = {}
+            node["parentObjId"] = incidentId;
+            node["description"] = getBestIncidentName(incident);
+            node['timeRange'] = false;
+            //timeTypeObj = xpFindSingle('./incident:First_Malicious_Action', timeObj);
+            // there are many different time types: First_Malicious_Action, Initial_Compromise, First_Data_Exfiltration,  Incident_Discovery, Incident_Opened, Containment_Achieved,        
+            //             Restoration_Achieved, Incident_Reported, Incident_Closed
+            //timeTypeObj = timeObj.firstElementChild;
+            if (timeTypeObj != null) {
+                //node['type'] = 'Incident-First-Malicious-Action';
+                node['type'] = 'Incident-' + timeTypeObj.localName;
+                node['start'] = $(timeTypeObj).text();
+                incidentNodes.push(node);
+            }
+                    });
+        }
+        coaTakenTime = xpFindSingle('./incident:COA_Taken/incident:Time', incident);
+        if (coaTakenTime != null) {
+            node = {}
+            node["parentObjId"] = incidentId;
+            var coaTaken = xpFindSingle('./incident:COA_Taken/incident:Course_Of_Action', incident);
+            node["description"] = getCOADescription(coaTaken);
+            node['timeRange'] = true;
+            node['type'] = 'Incident-COATaken';
+            startTime = xpFindSingle('./incident:Start', coaTakenTime);
+            if (startTime != null) {
+                node['start'] = $(startTime).text();
+            }
+            endTime = xpFindSingle('./incident:End', coaTakenTime);
+            if (endTime != null) {
+                node['end'] = $(endTime).text();
+            }
+            incidentNodes.push(node);
+        }
 
-	});
-	return incidentNodes;
+    });
+    return incidentNodes;
 }
 
 function createTimelineJson(topLevelObjs) {
