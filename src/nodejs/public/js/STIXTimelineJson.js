@@ -63,21 +63,21 @@ function getIncidentNodes(incidentObjs) {
 		incidentId = getObjIdStr(incident);
 		timeObj = xpFindSingle('./incident:Time', incident);
 		if (timeObj != null) {
-			node = {}
-			node["parentObjId"] = incidentId;
-			node["description"] = getBestIncidentName(incident);
-			node['timeRange'] = false;
-			//timeTypeObj = xpFindSingle('./incident:First_Malicious_Action', timeObj);
-			// there are many different time types: First_Malicious_Action, Initial_Compromise, First_Data_Exfiltration,  Incident_Discovery, Incident_Opened, Containment_Achieved,        
-			//		     Restoration_Achieved, Incident_Reported, Incident_Closed
-			timeTypeObj = timeObj.firstElementChild;
-			if (timeTypeObj != null) {
-				//node['type'] = 'Incident-First-Malicious-Action';
-				node['type'] = 'Incident-' + timeTypeObj.localName;
-				node['start'] = $(timeTypeObj).text();
-				incidentNodes.push(node);
-			}
-			
+			$(timeObj.children).each(function(i, timeTypeObj) {
+				node = {}
+				node["parentObjId"] = incidentId;
+				node["description"] = getBestIncidentName(incident);
+				node['timeRange'] = false;
+				//timeTypeObj = xpFindSingle('./incident:First_Malicious_Action', timeObj);
+				// there are many different time types: First_Malicious_Action, Initial_Compromise, First_Data_Exfiltration,  Incident_Discovery, Incident_Opened, Containment_Achieved,        
+				//		     Restoration_Achieved, Incident_Reported, Incident_Closed
+				//timeTypeObj = timeObj.firstElementChild;
+				if (timeTypeObj != null) {
+					node['type'] = 'Incident-' + timeTypeObj.localName;
+					node['start'] = $(timeTypeObj).text();
+					incidentNodes.push(node);
+				}
+			});	
 		}
 		coaTakenTime = xpFindSingle('./incident:COA_Taken/incident:Time', incident);
 		if (coaTakenTime != null) {
