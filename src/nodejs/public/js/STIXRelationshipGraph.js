@@ -260,23 +260,11 @@ var StixGraph = function () {
 			nodesRemoved = d.children.filter(function(node) {return (node.type === entityType + 's')});
 			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
 			d.hiddenChildren = nodesRemoved;
-			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
-			//_self.markNodesToRemove(nodesRemoved);
 			report.hiddenNodes[entityType] = true;
 		}
 		update();
 	}
 	
-	/*
-	_self.markNodesToRemove = function(nodes){
-		$(nodes).each(function(i, node) {
-			node.filterType = true;
-			if ((node.depth === 1) && (node.children)) {
-				_self.markNodesToRemove(node.children);
-			}
-		});
-	}
-	*/
 	_self.addNodesOfEntityType = function(entityType) {
 		var d = report;
 		var nodesToAdd = [];
@@ -284,26 +272,12 @@ var StixGraph = function () {
 			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's')});
 			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's')});
 			d.children = d.children.concat(nodesToAdd);
-			//$(nodesToAdd).each(function(i, node) {node.filterType = false;})
-			//_self.markNodesToAdd(nodesToAdd);
 			report.hiddenNodes[entityType] = false;
 		}
 		update();
 	}
 	
-	/*
-	_self.markNodesToAdd = function(nodes) {
-		$(nodes).each(function(i, node) {
-			node.filterType = false;
-			if ((node.depth === 1) && (node.children)) {
-				_self.markNodesToAdd(node.children);
-			}
-		});
-	}
-	*/
-	
 	_self.showLinksOfType = function(entity, r) {
-		//entity = entity.toLowerCase();
 		if (entity in report.hiddenRelationships) {
 			delete report.hiddenRelationships[entity][r];
 		}
@@ -311,7 +285,6 @@ var StixGraph = function () {
 	}
 	
 	_self.hideLinksOfType= function(entity, r) {
-		//entity = entity.toLowerCase();
 		if (entity in report.hiddenRelationships) {
 			report.hiddenRelationships[entity][r] = true;
 		}
@@ -883,7 +856,7 @@ var StixGraph = function () {
 			if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
 			} else { 			// Otherwise, add the node to the list
-				if (! report.hiddenNodes[node.type]) {
+				if (! report.hiddenNodes[node.type] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
 					pos = nodes.length-1;
 					if (node.children) { 
@@ -949,6 +922,22 @@ var StixGraph = function () {
 		.attr("transform","translate("+ -(nodeWidth+10)/2 + "," + ((-nodeHeight/2) - 5) + ")");
 	};
 
+	// true if all links coming into the node are currently hidden
+	function isOrphan(node, hiddenRelationships) {
+		var orphan = true;
+		var parentType = null;
+		var linkType = null;
+		if (node.type == "top") {return false;}  // root node is not an orphan
+		$.each(node.parents,function (id,parentProperties) {
+			parentType = parentProperties.node.type;
+			relationship = parentProperties.relationship;
+			if (!(parentType in hiddenRelationships) ||
+					!(relationship in hiddenRelationships[parentType])) {
+ 				orphan = false;
+			}
+		});
+		return orphan;
+	}
 	
 	function configureNav () {
 		

@@ -170,20 +170,22 @@ $(function () {
 		viewType = $(this).attr('id');
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
 		reset('view');
-		$(filterDiv).show();
 		if (viewType === 'selectView-tree') { 
+			$(filterDiv).hide();
 			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
 			if (relationshipData) { 
 				view.display(relationshipData);
 			};
 		} else if (viewType === 'selectView-graph') {
+			$(filterDiv).show();
 			$('#viewName').text('STIX Graph View');
 			view = new StixGraph();
 			if (relationshipData) { 
 				view.display(relationshipData);
 			};
 		} else if (viewType === 'selectView-timeline'){
+			$(filterDiv).hide();
 			$('#viewName').text('STIX Timeline View');
 			view = new StixTimeline();
 			if (timelineData) {

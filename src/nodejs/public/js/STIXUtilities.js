@@ -71,7 +71,7 @@ var entityRelationshipMap = {
 		'Indicator' : ['Indicated_TTP', 'Observable', 'Related_Indicator', 'Suggested_COA'],
 		'Observable' : [],
 		'Threat_Actor' : ['Associated_Actor', 'Associated_Campaign', 'Observed_TTP'],
-		'TTP' : ['Attack_Pattern', 'Exploit_Targets', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
+		'TTP' : ['Attack_Pattern', 'Exploit_Target', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
 }
 
 var STIXPattern = {
