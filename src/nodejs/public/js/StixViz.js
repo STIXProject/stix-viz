@@ -250,6 +250,7 @@ function addXmlDoc (f) {
 //  jsonDataObj created by generateJson contains a child for each type of view
 //    child json is stringified into global vars for later use when switching views
 function displayJson(jsonDataObj, viewType) {
+	$.fn.filterDivReset();
 	$(filterDiv).show();
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);

@@ -1,6 +1,7 @@
 $(function () { 
 	var filterText = "";
-    $(filterDiv).hide();
+    //$(filterDiv).hide();
+	$('#filterDiv').hide();
 	$.map(entityRelationshipMap, function(relationships, entity) {
 		filterText = '<span class="entityFilter"><label><input type="checkbox" id="' + entity + 'EFilter" onChange="toggleEntityFilter(\'' + entity + '\')"; checked> ' + entity + '</label>';
 		if ($(relationships).length > 0) {
@@ -22,14 +23,24 @@ $(function () {
 		$('#filterDivTitleText').text('Filter by Nodes/Relationships');
 		view.resize();
 	});
-
 	
 	$('.expandCollapse').click(function(){ 
 			$(this).text(function(i,old){
 				return old=='+' ?  '-' : '+';
 			});
 		});
+});
+
+// check all checkboxes for entities and relationships, collapse entities
+$.fn.filterDivReset = function() {
+	$.map(entityRelationshipMap, function(relationships, entity) {
+		$('#' + entity + 'EFilter').prop('checked', true);    // reset entities 
+		$('#' + entity + relationships).removeClass('in');   // collapse relationship lists
+		$.each(relationships, function(index, r) {
+			$('#' + entity + r + 'RFilter').prop('checked', true);   // reset relationships
+		});
 	});
+}
 
 function toggleEntityFilter(entity) {
 	var relationships = entityRelationshipMap[entity];
