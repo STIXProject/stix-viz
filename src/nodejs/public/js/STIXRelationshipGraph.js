@@ -130,12 +130,12 @@ var StixGraph = function () {
 
 	function hideNode (node) { 
 		var d = d3.select(node).datum();
-		d.parents.forEach(function (p) { 
-				if (p._children.indexOf(d) === -1) { 
-					p._children.push(d);
+		$.each(d.parents, function (pid, p) {
+				if (p.node._children.indexOf(d) === -1) { 
+					p.node._children.push(d);
 				}
-				pos = p.children.indexOf(d);
-				p.children.splice(pos,1);
+				pos = p.node.children.indexOf(d);
+				p.node.children.splice(pos,1);
 			});
 		update();
 	}
