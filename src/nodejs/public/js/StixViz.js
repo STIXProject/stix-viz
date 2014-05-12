@@ -176,6 +176,7 @@ $(function () {
 			view = new StixTree();
 			if (relationshipData) { 
 				view.display(relationshipData);
+				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-graph') {
 			$(filterDiv).show();
@@ -183,6 +184,7 @@ $(function () {
 			view = new StixGraph();
 			if (relationshipData) { 
 				view.display(relationshipData);
+				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-timeline'){
 			$(filterDiv).hide();
@@ -190,6 +192,7 @@ $(function () {
 			view = new StixTimeline();
 			if (timelineData) {
 				view.display(timelineData);
+				layout.resizeAll();
 			}
 		};
 
@@ -256,8 +259,10 @@ function displayJson(jsonDataObj, viewType) {
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
 		view.display(relationshipData);
+		layout.resizeAll();
 	} else if (viewType === 'selectView-timeline'){
 		view.display(timelineData);
+		layout.resizeAll();
 	}
 }
 

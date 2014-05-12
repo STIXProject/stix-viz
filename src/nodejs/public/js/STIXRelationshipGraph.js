@@ -260,6 +260,8 @@ var StixGraph = function () {
 			nodesRemoved = d.children.filter(function(node) {return (node.type === entityType + 's')});
 			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
 			d.hiddenChildren = nodesRemoved;
+			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
+			//_self.markNodesToRemove(nodesRemoved);
 			report.hiddenNodes[entityType] = true;
 		}
 		update();
@@ -588,13 +590,21 @@ var StixGraph = function () {
 		});
 		
 
-		link.selectAll("text").attr('transform',function (d) {
+		link.selectAll("text")
+		.attr('transform',function (d) {
 			if (d.source.x > d.target.x) { 
 				var x = (d.source.x + d.target.x)/2;
 				var y = (d.source.y + d.target.y)/2;
 				return 'rotate(180 '+x+','+y+')';
 			} else { 
 				return 'rotate(0)';
+			}
+		})
+		.attr("dy", function (d) { 
+			if (d.source.x > d.target.x) { 
+				return 10;
+			} else { 
+				return -5;
 			}
 		});
 		
