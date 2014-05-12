@@ -225,7 +225,6 @@ function addXmlDoc (f) {
 	xmlFilePath = f.path.replace(/\\/g,'\\\\\\\\');
 	xslFilePath = path.resolve("public/xslt/stix_to_html.xsl").replace(/\\/g,'\\\\\\\\');
 	
-	instance.sendXsltRequest(num,xmlFilePath,xslFilePath);
 	
 	// Construct top level menu for displaying HTML view of XML files
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f.name+'</a></li>');
@@ -234,11 +233,22 @@ function addXmlDoc (f) {
 		doc = xmlDocs[$(this).attr("id").split("-")[1]];
 		if (doc) { 
 			showProcessing();
+			var totalTime = 0;
 			var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 				if (working == 0) { 
 					clearInterval(waitForXslt);
 					endProcessing();
-					showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+					if (typeof doc.html === 'undefined') {  // Transformed the XML to HTML
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+					} else {  // The transform failed
+						showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+					}
+				} else if (totalTime > 30000) { // wait for max of 30 seconds 
+					clearInterval(waitForXslt);
+					endProcessing();
+					showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML.</h2></div>");
+				} else { 
+					totalTime += 200;
 				}
 			}, 200);
 		} else { 
@@ -246,6 +256,15 @@ function addXmlDoc (f) {
 		}
 		$('#htmlView').scrollTop(0);
     });
+
+	try {
+		instance.sendXsltRequest(num,xmlFilePath,xslFilePath);
+	} catch (exception) { 
+		console.log("error transforming xml: " + exception.message);
+		working = 0;
+	}
+	
+	
 	
 }
 
@@ -308,12 +327,13 @@ function showContext (node,left,top) {
  * @param data The node selected to show HTML
  */
 function showHtmlByContext (node) {
+	var data = null;
 	if(d3.select(node).datum())
         {
-            var data = d3.select(node).datum();
-        }else
+            data = d3.select(node).datum();
+        } else
         {
-            var data = node;
+            data = node;
         }
 	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
@@ -324,7 +344,12 @@ function showHtmlByContext (node) {
 			if (nodeid) {
 				var found = false;
 				$.each(xmlDocs, function (i,entry) {
-					if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
+					if (typeof entry.html === 'undefined') { 
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+						found = true;
+						return false;
+					}
+					else if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						var objRef = $(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']"); 
 						objRef.find('tr').eq(0).addClass("infocus");
@@ -343,7 +368,10 @@ function showHtmlByContext (node) {
 			} else { 
 				var section = htmlSectionMap[data.type];
 				$.each(xmlDocs, function (i,entry) {
-					if ($(entry.html).find("h2 > a:contains('"+section+"')").get(0) != undefined) {
+					if (typeof entry.html === 'undefined') { 
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+						return false;
+					} else if ($(entry.html).find("h2 > a:contains('"+section+"')").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						$("h2 > a:contains('"+section+"')").get(0).scrollIntoView();
 						return false;

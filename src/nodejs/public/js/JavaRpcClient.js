@@ -46,7 +46,7 @@ var JavaRpcClient = function() {
 
     // The location of java and the jar file - we're making these public because maybe
     // we want to change them in the user of this module.
-    _self.javaPath  = './bin/java';
+    _self.javaPath  = 'java';
     _self.jarPath   = './dist/NodeRpc.jar';
     _self.verbose   = true;
 
