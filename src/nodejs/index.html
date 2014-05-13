@@ -154,12 +154,18 @@
     </div>
     <button id="unpinAllButton" type="button" class="btn btn-default">Unpin All</button>
     <span class="nav-divider">|</span>
-    <button id="widthPlus" type="button" class="btn btn-default" title="Increase Graph Width">W+</button>
-    <button id="widthMinus" type="button" class="btn btn-default" title="Decrease Graph Width">W-</button>
-    <button id="heightPlus" type="button" class="btn btn-default" title="Increase Graph Height">H+</button>
-    <button id="heightMinus" type="button" class="btn btn-default" title="Decrease Graph Height">H-</button>
+    <table id="graphSizeTable">
+      <tr id="sizePlus">
+        <td><button id="widthPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Width">width+</button></td>
+        <td><button id="heightPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Height">height+</button></td>
+      </tr>
+      <tr id="sizeMinus">
+        <td><button id="widthMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Width">width-</button></td>
+        <td><button id="heightMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Height">height-</button></td>
+      </tr>
+    </table>
     <span class="nav-divider">|</span>
-    <button id="resetGraphButton" type="button" class="btn btn-default">Reset Graph Size</button>
+    <button id="resetGraphButton" type="button" class="btn btn-default">Reset Graph</button>
     <span class="nav-divider">|</span>
     <button id="freeze" type="button" class="btn btn-default freeze">Freeze Graph</button>
     </form>

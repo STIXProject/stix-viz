@@ -102,3 +102,15 @@ marker.arrow {
 marker.arrow.bold {
   fill: #333;
 }
+
+
+.sizeButton { 
+	padding: 0;
+	height: 20px;
+	width: 50px;
+}
+
+#graphSizeTable {
+	vertical-align:middle;
+	display:inline-block;
+}
