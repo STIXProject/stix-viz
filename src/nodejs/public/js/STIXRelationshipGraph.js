@@ -130,14 +130,20 @@ var StixGraph = function () {
 
 	function hideNode (node) { 
 		var d = d3.select(node).datum();
-		$.each(d.parents, function (pid, p) {
-				if (p.node._children.indexOf(d) === -1) { 
-					p.node._children.push(d);
-				}
-				pos = p.node.children.indexOf(d);
-				p.node.children.splice(pos,1);
-			});
-		update();
+		// if it's a top level grouping node, use the filter menu to hide
+		if (d.depth === 1) {
+			var type = d.type.substring(0,d.type.length-1);
+			$('#filterDiv input#'+type+'EFilter').click();
+		} else {
+			$.each(d.parents, function (pid, p) {
+					if (p.node._children.indexOf(d) === -1) { 
+						p.node._children.push(d);
+					}
+					pos = p.node.children.indexOf(d);
+					p.node.children.splice(pos,1);
+				});
+			update();
+		}
 	}
 	
 	
@@ -257,34 +263,34 @@ var StixGraph = function () {
 		var d = report;
 		var nodesRemoved = [];
 		if (d.children) {
-			nodesRemoved = d.children.filter(function(node) {return (node.type === entityType + 's')});
-			d.children = d.children.filter(function(node) { return (node.type != entityType + 's')});
+			nodesRemoved = d.children.filter(function(node) { return (node.type === entityType + 's'); });
+			d.children = d.children.filter(function(node) { return (node.type != entityType + 's'); });
 			d.hiddenChildren = nodesRemoved;
 			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
 			//_self.markNodesToRemove(nodesRemoved);
 			report.hiddenNodes[entityType] = true;
 		}
 		update();
-	}
+	};
 	
 	_self.addNodesOfEntityType = function(entityType) {
 		var d = report;
 		var nodesToAdd = [];
 		if (d._children) {
-			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's')});
-			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's')});
+			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's'); });
+			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's'); });
 			d.children = d.children.concat(nodesToAdd);
 			report.hiddenNodes[entityType] = false;
 		}
 		update();
-	}
+	};
 	
 	_self.showLinksOfType = function(entity, r) {
 		if (entity in report.hiddenRelationships) {
 			delete report.hiddenRelationships[entity][r];
 		}
 		update();
-	}
+	};
 	
 	_self.hideLinksOfType= function(entity, r) {
 		if (entity in report.hiddenRelationships) {
@@ -295,7 +301,7 @@ var StixGraph = function () {
 			report.hiddenRelationships[entity][r] = true;
 		}
 		update();
-	}
+	};
 
 	/**
 	 * Remove links that are "bottom up" since they are only needed for tree view
@@ -859,12 +865,12 @@ var StixGraph = function () {
 		function recurse(node,parent) {
 
 			var pos = 0;
-			var entity = null;
 
 			// Recurse on the node's children
 			// If we have seen this node before, use the position in the node list
 			if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
+				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
 				if (! report.hiddenNodes[node.type] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
@@ -874,29 +880,33 @@ var StixGraph = function () {
 							recurse(n,pos);
 						});
 					}
+					
+					addLinkToParent(node,parent,pos);
+					
 				}
 			}
-
+			
+		}
+		
+		function addLinkToParent(node,parent,pos) {
 			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
 					relationship = node.parents[nodes[parent].id].relationship;
 					linkType = node.parents[nodes[parent].id].linkType;
 					// don't push if report.hiddenRelationships[entity][relationships]==true
-					entity = node.parents[nodes[parent].id].node.type;
+					var entity = node.parents[nodes[parent].id].node.type;
 					if (!(entity in report.hiddenRelationships) ||
-						!(relationship in report.hiddenRelationships[entity])) {
+							!(relationship in report.hiddenRelationships[entity])) {
 						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 					}
 				}
-			// If it's the root node, fix it in the middle of the window
-			} else { 
+			} else {// If it's the root node, fix it in the middle of the window 
 				node.fixed = true;
 				node.px = graphSize()[0]/2;
 				node.py = graphSize()[1]/2;
 			}
 
-			
 		}
 		
 		recurse(root);
