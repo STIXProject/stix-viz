@@ -260,45 +260,29 @@ var StixGraph = function () {
 	 * Calls update after filtering is complete
 	*/
 	_self.removeNodesOfEntityType = function(entityType) {
-		var d = report;
-		var nodesRemoved = [];
-		if (d.children) {
-			nodesRemoved = d.children.filter(function(node) { return (node.type === entityType + 's'); });
-			d.children = d.children.filter(function(node) { return (node.type != entityType + 's'); });
-			d.hiddenChildren = nodesRemoved;
-			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
-			//_self.markNodesToRemove(nodesRemoved);
-			report.hiddenNodes[entityType] = true;
-		}
+		report.hiddenNodes[entityType.toLowerCase()] = true;
 		update();
 	};
 	
 	_self.addNodesOfEntityType = function(entityType) {
-		var d = report;
-		var nodesToAdd = [];
-		if (d._children) {
-			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's'); });
-			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's'); });
-			d.children = d.children.concat(nodesToAdd);
-			report.hiddenNodes[entityType] = false;
-		}
+		report.hiddenNodes[entityType.toLowerCase()] = false;
 		update();
 	};
 	
 	_self.showLinksOfType = function(entity, r) {
-		if (entity in report.hiddenRelationships) {
-			delete report.hiddenRelationships[entity][r];
+		if (entity.toLowerCase() in report.hiddenRelationships) {
+			delete report.hiddenRelationships[entity.toLowerCase()][r];
 		}
 		update();
 	};
 	
-	_self.hideLinksOfType= function(entity, r) {
-		if (entity in report.hiddenRelationships) {
-			report.hiddenRelationships[entity][r] = true;
+	_self.hideLinksOfType = function(entity, r) {
+		if (entity.toLowerCase() in report.hiddenRelationships) {
+			report.hiddenRelationships[entity.toLowerCase()][r] = true;
 		}
 		else {
-			report.hiddenRelationships[entity] = {};
-			report.hiddenRelationships[entity][r] = true;
+			report.hiddenRelationships[entity.toLowerCase()] = {};
+			report.hiddenRelationships[entity.toLowerCase()][r] = true;
 		}
 		update();
 	};
@@ -421,7 +405,7 @@ var StixGraph = function () {
 		.call(drag);
 
 
-		// Append the image icon according to typeIconMap
+		// Append the image icon according to nodeTypeMap
 		nodeEnter.append("svg:image")
 		.attr("height", String(nodeHeight)+"px")
 		.attr("width", String(nodeWidth)+"px")
@@ -516,7 +500,7 @@ var StixGraph = function () {
 		if (d.type == 'top') 
 			return "./public/icons/report.png";
 		else
-			return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+			return "./public/xslt/images/"+nodeTypeMap[d.type]+".svg"; 
 	}
 
 
@@ -872,7 +856,7 @@ var StixGraph = function () {
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
-				if (! report.hiddenNodes[node.type] && !isOrphan(node, report.hiddenRelationships)) {			
+				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
 					pos = nodes.length-1;
 					if (node.children) { 
@@ -895,7 +879,7 @@ var StixGraph = function () {
 					relationship = node.parents[nodes[parent].id].relationship;
 					linkType = node.parents[nodes[parent].id].linkType;
 					// don't push if report.hiddenRelationships[entity][relationships]==true
-					var entity = node.parents[nodes[parent].id].node.type;
+					var entity = node.parents[nodes[parent].id].node.type.toLowerCase();
 					if (!(entity in report.hiddenRelationships) ||
 							!(relationship in report.hiddenRelationships[entity])) {
 						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
@@ -971,6 +955,11 @@ var StixGraph = function () {
 		});
 		
 		$('#resetGraphButton').click(function () {
+			//reset filters
+			$.fn.filterDivReset();
+			report.hiddenNodes = {};
+			report.hiddenRelationships = {};
+			
 			// collapse all children after the top level
 			expand(report);
 			report.children.forEach(collapse);
