@@ -322,8 +322,8 @@ var StixGraph = function () {
 	 * @param d
 	 */
 	function expand (d) { 
-		if (d._children) { 
-			d.children = d._children; 
+		if (d._children.length > 0) {
+			d.children = d.children.concat(d._children);
 			d._children = [];
 		}
 	}
@@ -970,7 +970,12 @@ var StixGraph = function () {
 			dragToPin = $(this).prop('checked');
 		});
 		
-		$('#resetGraphButton').click(function () { 
+		$('#resetGraphButton').click(function () {
+			// collapse all children after the top level
+			expand(report);
+			report.children.forEach(collapse);
+			
+			// reset the size 
 			$('#graphSVG').height('100%');
 			$('#graphSVG').width('100%');
 			_self.resize();
