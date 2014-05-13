@@ -82,7 +82,11 @@ var StixGraph = function () {
 				_self.resize();
 			} else if (d.x <= 60) {
 				$('#graphSVG').width($('#graphSVG').width()+5);
-				report.x = report.x+5;
+				// Move all fixed nodes over by the amount of the size increase to accommodate the additional space
+				d3.selectAll('.fixed').datum(function (d) { 
+					d.px = d.px+5; 
+					return d; 
+					});
 				_self.resize();
 			}
 			
@@ -91,7 +95,11 @@ var StixGraph = function () {
 				_self.resize();
 			} else if (d.y <= 20) { 
 				$('#graphSVG').height($('#graphSVG').height()+5);
-				report.y = report.y+5;
+				// Move all fixed nodes over by the amount of the size increase to accommodate the additional space
+				d3.selectAll('.fixed').datum(function (d) { 
+					d.py = d.py+5; 
+					return d; 
+					});
 				_self.resize();
 			}
 
@@ -236,6 +244,12 @@ var StixGraph = function () {
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
 		report._children = [];
 		report.children.forEach(collapse);
+		
+		// start the root node out fixed in the middle of the display
+		report.px = graphSize()[0]/2;
+		report.py = graphSize()[1]/2;
+		report.fixed = true;
+		
 
 		// This is where the tree actually gets displayed
 		update();
@@ -377,8 +391,9 @@ var StixGraph = function () {
 
 		node.exit().remove();
 		
-		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-
+		node
+		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+		.classed("fixed", function (d) { return d.fixed; });
 
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
@@ -885,11 +900,7 @@ var StixGraph = function () {
 						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 					}
 				}
-			} else {// If it's the root node, fix it in the middle of the window 
-				node.fixed = true;
-				node.px = graphSize()[0]/2;
-				node.py = graphSize()[1]/2;
-			}
+			} 
 
 		}
 		
@@ -959,10 +970,23 @@ var StixGraph = function () {
 			$.fn.filterDivReset();
 			report.hiddenNodes = {};
 			report.hiddenRelationships = {};
-			
+
 			// collapse all children after the top level
 			expand(report);
 			report.children.forEach(collapse);
+			
+			d3.selectAll('.node').datum(function (d) { 
+				if (d.index === 0) {
+					// start the root node out fixed in the middle of the display
+					d.px = graphSize()[0]/2;
+					d.py = graphSize()[1]/2;
+					d.fixed = true;
+				} else {
+					// all other nodes are not fixed
+					d.fixed = false;
+				}
+				return d;
+			});
 			
 			// reset the size 
 			$('#graphSVG').height('100%');
@@ -971,24 +995,18 @@ var StixGraph = function () {
 		});
 		
 		$('#unpinAllButton').click(function () {
-			d3.selectAll('.node').classed("fixed", function (d) { 
-				if ( d.id !== 0 ) { 
-					return d.fixed = false;
-				} else {
-					return d.fixed;
-				}
-			});
+			d3.selectAll('.node').classed("fixed", function (d) { return d.fixed = false; });
 		});
 		
 		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;
 		resizeGraph = function (widthDiff, heightDiff) {
 			if (widthDiff !== 0) { 
 				$('#graphSVG').width($('#graphSVG').width()+widthDiff);
-				report.x = report.x-(widthDiff/2);
+				//report.x = report.x-(widthDiff/2);
 			}
 			if (heightDiff !== 0) {
 				$('#graphSVG').height($('#graphSVG').height()+heightDiff);
-				report.y = report.y-(heightDiff/2);
+				//report.y = report.y-(heightDiff/2);
 			}
 			_self.resize();
 			holdTimer = setTimeout(function () { resizeGraph(widthDiff,heightDiff); },delay);
