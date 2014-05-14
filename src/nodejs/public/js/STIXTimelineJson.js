@@ -73,6 +73,7 @@ function getIncidentNodes(incidentObjs) {
 				//		     Restoration_Achieved, Incident_Reported, Incident_Closed
 				//timeTypeObj = timeObj.firstElementChild;
 				if (timeTypeObj != null) {
+                //node['type'] = 'Incident-First-Malicious-Action';
 					node['type'] = 'Incident-' + timeTypeObj.localName;
 					node['start'] = $(timeTypeObj).text();
 					incidentNodes.push(node);

@@ -204,7 +204,7 @@ var StixGraph = function () {
 		.attr("id","lighten")
 		.append("feColorMatrix")
 			.attr("type","matrix")
-			.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+			.attr("values","1 .2 .2 0 0  .2 1 .2 0 0  .2 .2 1 0 0  0 0 0 1 0");
 		
 		
 		// define arrow markers for graph links
@@ -447,14 +447,14 @@ var StixGraph = function () {
 		.attr("class","parentborder")
 		.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + ((-nodeHeight/2) - 2) + ")");
 		
-		// add layered icons for grouping nodes
-		for (var i = 0; i < 3; i++) { 
-			nodeEnter.filter('.group').insert("svg:image", ':first-child')
-			.attr("height", String(nodeHeight)+"px")
-			.attr("width", String(nodeWidth)+"px")
-			.attr("xlink:href",getImageUrl)
-			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
-		}
+//		// add layered icons for grouping nodes
+//		for (var i = 0; i < 3; i++) { 
+//			nodeEnter.filter('.group').insert("svg:image", ':first-child')
+//			.attr("height", String(nodeHeight)+"px")
+//			.attr("width", String(nodeWidth)+"px")
+//			.attr("xlink:href",getImageUrl)
+//			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
+//		}
 		
 
 		// Append text label to each node
@@ -516,7 +516,12 @@ var StixGraph = function () {
 		if (d.type == 'top') 
 			return "./public/icons/report.png";
 		else
-			return "./public/xslt/images/"+nodeTypeMap[d.type]+".svg"; 
+			if (isGroupingNode(d)) {
+				return "./public/xslt/images/"+nodeTypeMap[d.type]+"-group.svg"; 	
+			} else {
+				return "./public/xslt/images/"+nodeTypeMap[d.type]+".svg"; 
+			}
+			
 	}
 
 

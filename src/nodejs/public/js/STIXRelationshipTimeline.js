@@ -1,4 +1,3 @@
-
 //  A timeline component for d3
 //  version v0.1
 
@@ -58,10 +57,28 @@ var StixTimeline = function () {
     
     
     _self.resize = function () { 
-    	drawTimeline();
+        //Function exists to avoid errors but if we actually resize here 
+        //we will get tons of resize events during a drag resize.
     }
     
+    $(window).resize(function () {
+        waitForFinalEvent(function(){
+          drawTimeline();
+        }, 500, "some unique string");
+    });
     
+    var waitForFinalEvent = (function () {
+        var timers = {};
+        return function (callback, ms, uniqueId) {
+          if (!uniqueId) {
+            uniqueId = "Don't call this twice without a uniqueId";
+          }
+          if (timers[uniqueId]) {
+            clearTimeout (timers[uniqueId]);
+          }
+          timers[uniqueId] = setTimeout(callback, ms);
+        };
+      })();
 
     function drawTimeline()
     {
@@ -132,7 +149,7 @@ var StixTimeline = function () {
 	var tooltip = d3.select("body")
 	.append("div")
 	.attr("class", "tooltip")
-	.style("visibility", "none");
+	.style("visibility", "visible");
 
 
 	//--------------------------------------------------------------------------
@@ -267,8 +284,8 @@ var StixTimeline = function () {
 		{
 		    maxStart = item.end;
 		}
-		
-		
+
+
 		if(maxEnd == null)
 		{
 		    if(item.end == null)
@@ -289,14 +306,14 @@ var StixTimeline = function () {
 		    maxEnd = item.start;
 		}
 	    });
-	    
+
 	    var ed = new Date(maxEnd);
 	    var sd = new Date(maxStart);
 	    var ts = ed.getTime()-sd.getTime();
 	    //InstantOffset is How big an instant dot appears on the timeline
 	    var instantOffset = Math.pow(10, ts.toString().length-1);
 
-	    
+
 	    // Convert yearStrings into dates
 	    data.items.forEach(function (item){
 		if (item.end == null || item.end == "" || item.end==item.start) {
@@ -319,7 +336,7 @@ var StixTimeline = function () {
 		    item.end = today
 		    };
 	    });
-	    
+
 	    //Group the events
 	    data.items.forEach(function (item){
 		if(groupedData.hasOwnProperty(item.parentObjId))
@@ -349,20 +366,20 @@ var StixTimeline = function () {
 			group.end = item.end;
 		    }
 		    groupedData[item.parentObjId] = group;
-		    
+
 		}
 	    });
-	    
 
-	    
+
+
 	    for (var k in groupedData) {
 		if(maxGroupSize < groupedData[k].count)
 		{
 		    maxGroupSize = groupedData[k].count;
-		    
+
 		}
 	    }
-	    
+
 
 	    calculateTracks(data.items, "descending", "backward", "parentid");
 
@@ -383,7 +400,7 @@ var StixTimeline = function () {
 	//
 
 	timeline.band = function (bandName, sizeFactor) {
-	    
+
 	    var band = {};
 	    var printedGroupSize = {};
 	    band.id = "band" + bandNum;
@@ -401,11 +418,11 @@ var StixTimeline = function () {
 	    .domain([data.minDate, data.maxDate])
 	    .range([0, band.w]);
 
-	    
+
 	    band.yScale = function (track) {
 		return band.trackOffset + track * band.trackHeight;
 	    };
-	    	    
+
 	    band.g = chart.append("g")
 	    .attr("id", band.id)
 	    .attr("transform", "translate(0," + band.y +  ")");
@@ -414,7 +431,7 @@ var StixTimeline = function () {
 	    .attr("class", "band")
 	    .attr("width", band.w)
 	    .attr("height", band.h);
-	    
+
 
        
 
@@ -424,9 +441,18 @@ var StixTimeline = function () {
               .attr("x", outerWidth -180)
               .attr("y", 25)
               .attr("height", 100)
-              .attr("width", 100);
+              .attr("width", 100)
 
-
+         
+         var borderPath = svg.append("rect")
+              .attr("x", outerWidth -185)
+              .attr("y", 0)
+              .attr("height", 190)
+              .attr("width", 160)
+            .style("stroke", "black")
+            .style("fill", "none")
+            .style("stroke-width", 1);
+            
 
             legend.selectAll('g')
                 .data(legendMap)
@@ -436,22 +462,49 @@ var StixTimeline = function () {
                   var g = d3.select(this);
                   g.append("rect")
                     .attr("x", outerWidth - 180)
-                    .attr("y", i*15)
+                    .attr("y", i*15+25)
                     .attr("width", 10)
                     .attr("height", 10)
-                    .style("fill", typeColorMap[d.type]);
+                    .style("fill", typeColorMap[d.type])
+                    .on("click", function(){
+                        var t = d3.select(this);    
+                        if(t.style("fill") === "#000000")
+                            d3.select(this).style("fill", typeColorMap[d.type]);
+                        else
+                            d3.select(this).style("fill", "#000000");
+                        var b = d3.selectAll("#" + d.type);
+                        b.style("display", function(d){
+                            var e = d3.select(this).style('display');
+                            if(e === 'none')
+                            {
+                                return 'block';
+                            }
+                            else
+                            {
+                                return 'none';
+                            }
+                        });
+                  });
 
                   g.append("text")
                     .attr("x", outerWidth - 170)
-                    .attr("y", i * 15+9)
+                    .attr("y", i * 15+34)
                     .attr("height",30)
                     .attr("width",100)
                     .style("fill", typeColorMap[d.type])
                     .text(d.name);
 
                 });
+                
 
-
+                legend.append("text")                    
+                .attr("x", outerWidth -180)
+                .attr("y", 15)
+                .attr("height", 100)
+                .attr("width", 100)
+                .style("fill", "black")
+                .text("Click to hide types");
+                
             
 	    // Items
             //TODO: The groups should be the items passed it but unsure how this is processed
@@ -476,7 +529,7 @@ var StixTimeline = function () {
 	    .attr("class", function (d) {
 		return d.instant ? "part instant" : "part interval";
 	    });
-	    
+
 
 	    //Groups
 	    var groupings = band.g.selectAll("g")
@@ -491,8 +544,8 @@ var StixTimeline = function () {
 		return band.trackHeight * numPrinted;
 	    })
 	    .attr("class", "part grouping");
-	    	   
-		
+
+
 	    var groups = d3.select("#band0").selectAll(".grouping");
 	    groups.append("rect")
 	    .style("fill", "none")
@@ -509,22 +562,28 @@ var StixTimeline = function () {
 		    return 0;
 		}
 	    })
-	    
+
 	    var intervals = d3.select("#band" + bandNum).selectAll(".interval");
 	    intervals.append("rect")
 	    .style("fill", function (d) {
 		return typeColorMap[d.type];
 	    })
 	    .attr("width", "100%")
-	    .attr("height", "90%");
-	    
+	    .attr("height", "90%")
+            .attr("id", function(d){
+              return d.type;  
+            });
+
 	    intervals.append("text")
 	    .attr("class", "intervalLabel")
 	    .attr("x", 1)
 	    .attr("y", 10)
 	    .text(function (d) {
 		return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
 
 	    var instants = d3.select("#band" + bandNum).selectAll(".instant");
 	    instants.append("circle")
@@ -533,15 +592,21 @@ var StixTimeline = function () {
 	    })
 	    .attr("cx", band.itemHeight / 2)
 	    .attr("cy", band.itemHeight / 2)
-	    .attr("r", 5);
-	    
+	    .attr("r", 5)
+            .attr("id", function(d){
+              return d.type;  
+            });
+
 	    instants.append("text")
 	    .attr("class", "instantLabel")
 	    .attr("x", 15)
 	    .attr("y", 10)
 	    .text(function (d) {
                 return d.description.substring(0,20);
-	    });
+	    })
+            .attr("id", function(d){
+              return d.type;  
+            });
             
 	    band.addActions = function(actions) {
 		// actions - array: [[trigger, function], ...]
@@ -561,7 +626,7 @@ var StixTimeline = function () {
 		band.parts.forEach(function(part) {
 		    part.redraw();
 		});
-		
+
 		groupings
 		.attr("x", function (d) {
 		    //return band.xScale(d.start);
@@ -717,7 +782,7 @@ var StixTimeline = function () {
 	    function hideTooltip () {
 		tooltip.style("visibility", "hidden");
 	    }
-	
+
             /** Show the context menu for showing the HTML view when right clicking a node
              * 
              * @param data The node that was clicked
@@ -728,7 +793,7 @@ var StixTimeline = function () {
 		scrollTop = 10; 
 		showContext(data,(position[0]+offset.left+(10/2))+'px',(position[1]+offset.top-50+scrollTop)+'px');
 
-		
+
 	    }
 	    return timeline;
 	};
@@ -820,7 +885,7 @@ var StixTimeline = function () {
 	    {
 		return date;
 	    }
-	    
+
 	}
     
 	function displayDateLabel(date) {
@@ -831,7 +896,7 @@ var StixTimeline = function () {
 	    var month = date.getMonth();
 	    var day = date.getDate();
 	    var year = date.getFullYear();
-	    
+
 	    return month + "/" + day + "/" + year;
 	}
     
@@ -839,7 +904,7 @@ var StixTimeline = function () {
 	    var month = date.getMonth();
 	    var day = date.getDate();
 	    var year = date.getFullYear();
-	    
+
 	    return month + "/" + day + "/" + year;
 	}
     
@@ -854,7 +919,7 @@ var StixTimeline = function () {
 	    }
 	    return ttStr;
 	}
-	
+
 
 	return timeline;
     }
