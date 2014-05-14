@@ -392,8 +392,8 @@ var StixGraph = function () {
 		node.exit().remove();
 		
 		node
-		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-		.classed("fixed", function (d) { return d.fixed; });
+		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
 
 		var nodeEnter = node.enter().append("g")
 		.attr("class", "node")
@@ -975,23 +975,25 @@ var StixGraph = function () {
 			expand(report);
 			report.children.forEach(collapse);
 			
-			d3.selectAll('.node').datum(function (d) { 
+			d3.selectAll('.node').classed("fixed",function (d) { 
 				if (d.index === 0) {
-					// start the root node out fixed in the middle of the display
-					d.px = graphSize()[0]/2;
-					d.py = graphSize()[1]/2;
-					d.fixed = true;
+					return d.fixed = true;
 				} else {
 					// all other nodes are not fixed
-					d.fixed = false;
+					return d.fixed = false;
 				}
-				return d;
 			});
 			
 			// reset the size 
 			$('#graphSVG').height('100%');
 			$('#graphSVG').width('100%');
 			_self.resize();
+
+			// start the root node out fixed in the middle of the display
+			report.px = graphSize()[0]/2;
+			report.py = graphSize()[1]/2;
+			force.start();
+
 		});
 		
 		$('#unpinAllButton').click(function () {
