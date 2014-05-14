@@ -22,7 +22,7 @@ var StixGraph = function () {
 	nodeHeight = 60,
 	labelHeight = 35;
 
-        var nodeWarnThresh = 10;
+    var nodeWarnThresh = 20;
 
 	var dragToPin = true,
 	dragInitiated = false,
@@ -539,7 +539,7 @@ var StixGraph = function () {
 		var numChildren = getChildCount(d);
 		if(numChildren >=  nodeWarnThresh)
 		{
-			var r=confirm("This node has "+numChildren+" children nodes! Do you still want to expand this node?");
+			var r=confirm("This node has "+numChildren+" child nodes! Do you still want to expand this node?");
 		}
 		else
 		{
