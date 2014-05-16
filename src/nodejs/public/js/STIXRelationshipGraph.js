@@ -127,6 +127,12 @@ var StixGraph = function () {
 		} else { 
 			$('#toggleFix a').text("Pin node");
 		}
+		
+		if (d.label) { 
+			$('#showLabels a').text("Hide labels");
+		} else { 
+			$('#showLabels a').text("Show labels");
+		}
 	}
 	
 	
@@ -134,6 +140,21 @@ var StixGraph = function () {
 		d3.select(node).classed("fixed", function (d) { 
 			return d.fixed = !d.fixed;
 		});
+		force.resume();
+	}
+	
+	function toggleLabels (node) {
+		
+		var nd = d3.select(node).datum();
+		nd.label = !nd.label;
+		
+		// Highlight related links
+		d3.selectAll('.link').filter(function (l) { return l.source === nd; })
+		.classed("label",function (d) { return d.label = nd.label; });
+		
+		d3.selectAll('.link').filter(function (l) { return l.target === nd; })
+		.classed("label", function (d) { return d.label = nd.label; });
+		
 		force.resume();
 	}
 
@@ -179,6 +200,7 @@ var StixGraph = function () {
 		// Handlers for right-click context menu on nodes
 		$('#toggleFix a').click(function () { toggleFix(contextNode); });
 		$('#hideNode a').click(function () { hideNode(contextNode); });
+		$('#showLabels a').click(function () { toggleLabels(contextNode); });
 
 		
 		configureNav();
@@ -365,7 +387,10 @@ var StixGraph = function () {
 		link.exit().remove();
 
 		var linkEnter = link.enter().insert("g",".node")
-		.attr("class","link");
+		.attr("class","link")
+		.classed("label", function (d) { 
+			return d.label = d.source.label || d.target.label; 
+		});
 
 
 		linkEnter.append("path")
@@ -411,11 +436,14 @@ var StixGraph = function () {
 				force.resume();
 				return;
 			}
+			
+			force.stop();
 			position = d3.mouse(this);
 			offset = $(this).offset();
 			scrollTop = $('#viewContainer').scrollTop();
 			updateContext(d);
 			showContext(this,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+
 			d3.event.preventDefault();
 		})
 		.call(drag);
@@ -483,8 +511,8 @@ var StixGraph = function () {
 			.classed("bold",true)
 			.classed("out",true);
 			
-			d3.selectAll('.link').filter(function (l) { return l.target === d; }).
-			classed("bold",true)
+			d3.selectAll('.link').filter(function (l) { return l.target === d; })
+			.classed("bold",true)
 			.classed("in",true);
 
 			
@@ -874,9 +902,13 @@ var StixGraph = function () {
 				if (nodes[parent]) {
 					ref.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType};
 				}
-
+				
 			} 
-
+			
+			// these are stored in the parents property so delete them from the top level
+			delete node.relationship;
+			delete node.linkType;
+			
 			// Recurse on the children of the new node, since we might not have seen them before
 			if (node.children) { 
 				node.children.forEach(function (n) { 
@@ -1011,14 +1043,21 @@ var StixGraph = function () {
 			// collapse all children after the top level
 			expand(report);
 			report.children.forEach(collapse);
+
 			
-			d3.selectAll('.node').classed("fixed",function (d) { 
+			d3.selectAll('.node')
+			.classed("fixed",function (d) { 
 				if (d.index === 0) {
+					// the root node is fixed initially
 					return d.fixed = true;
 				} else {
 					// all other nodes are not fixed
 					return d.fixed = false;
 				}
+			})
+			.datum(function (d) { // remove fixed link labels  
+				d.label = false;
+				return d;
 			});
 			
 			// reset the size 
