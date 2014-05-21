@@ -223,7 +223,7 @@ var StixTree = function () {
 		.text(function (d) { 
 			return (getId(d) + '\n' + getName(d)).trim(); });
 
-		// Append the image icon according to typeIconMap
+		// Append the image icon according to nodeTypeMap
 		nodeEnter.append("svg:image")
 		.attr("height", 1e-6)
 		.attr("width", 1e-6)
@@ -231,7 +231,7 @@ var StixTree = function () {
         	if (d.type == 'top') 
         		return "./public/icons/report.png";
         	else
-        		return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+        		return "./public/xslt/images/"+nodeTypeMap[d.type]+".svg"; 
         	})
 		.attr("transform","translate("+ -nodeWidth/2 + ")")
 		.attr("class", function(d) { return d.type; })

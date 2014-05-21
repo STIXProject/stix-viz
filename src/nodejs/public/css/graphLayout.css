@@ -90,6 +90,11 @@
   font-size: 12px;
 }
 
+.link.label text.linkLabel {
+  display:inherit;
+  text-rendering: optimizeLegibility; 
+}
+
 .link.bold text.linkLabel {
   display:inherit;
   text-rendering: optimizeLegibility; 

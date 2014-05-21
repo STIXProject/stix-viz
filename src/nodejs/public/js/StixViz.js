@@ -23,72 +23,7 @@ relationshipData=null,  // stringified relationship json
 timelineData = null,   // stringified timeline json
 layout=null;
 
-/**
- * Mapping from node type to sections headings in the HTML rendering
- */
 
-var htmlSectionMap = { 
-		"Threat_Actors":"Threat Actors",
-		"TTPs":"TTPs",
-		"Indicators":"Indicators",
-		"Campaigns":"Campaigns",
-		"Course_Of_Actions":"Courses of Action",
-		"Incidents":"Incidents",
-		"Exploit_Targets":"Exploit Targets",
-		"Observables":"Observables",
-		"Indicator-Sighting" :"Indicator Sighting",
-		"Incident-First_Malicious_Action" :"Incident: First Malicious Action",
-		"Incident-Initial_Compromise" :"Incident: Initial Compromise",
-		"Incident-First_Data_Exfiltration" :"Incident: First Data Exfiltration",
-		"Incident-Incident_Discovery" :"Incident: Incident Discovery",
-		"Incident-Incident_Opened" :"Incident: Incident Opened",
-		"Incident-Containment_Achieved" :"Incident: Containment Achieved",
-		"Incident-Restoration_Achieved" :"Incident: Restoration Achieved",
-		"Incident-Incident_Reported" :"Incident: Incident Reported",
-		"Incident-Incident_Closed" :"Incident: Incident Closed",
-		"Incident-COATaken" :"Incident: COATaken"
-	};
-
-/**
- * Mapping from node type to icon names to be used in the tree display
- */
-
-var typeIconMap = {
-
-		"Campaigns" : "campaign",
-		"Campaign" : "campaign",
-		"Course_Of_Action" : "course_of_action",
-		"Course_Of_Actions" : "course_of_action",
-		"Exploit" : "exploit_target",
-		"Exploit_Target" : "exploit_target",
-		"Exploit_Targets" :  "exploit_target",
-		"Incident" : "incident",
-		"Incidents" : "incident",
-		"Indicator" : "indicator",
-		"Indicators" : "indicator",
-		"Indicator-Utility" : "indicator",
-		"Indicator-Composite" : "indicator",
-		"Indicator-Backdoor" : "indicator",
-		"Indicator-Downloader" : "indicator",
-		"Observable" : "observable",
-		"Observables" : "observable",
-		"AttackPattern" : "attack_patterns",
-		"MalwareBehavior" : "malware",
-		"Observable" : "observable",
-		"Observable-ElectronicAddress" : "observable",
-		"Observable-Email" : "observable",
-		"Observable-IPRange" : "observable",
-		"Observable-MD5" : "observable",
-		"Observable-URI" : "observable",
-		"UsesTool" : "tool",
-		"Tools" : "tool",
-		"VictimTargeting" : "victim_targeting",
-		"Threat_Actor" : "threat_actor",
-		"Threat_Actors" : "threat_actor",
-		"TTP" : "ttp",
-		"TTPs" : "ttp",
-		"top" : "report"
-	};
 
 $(function () { 
 	/**

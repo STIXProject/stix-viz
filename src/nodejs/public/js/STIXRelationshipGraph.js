@@ -22,6 +22,7 @@ var StixGraph = function () {
 	nodeHeight = 60,
 	labelHeight = 35;
 
+    var nodeWarnThresh = 20;
 
 	var dragToPin = true,
 	dragInitiated = false,
@@ -82,7 +83,11 @@ var StixGraph = function () {
 				_self.resize();
 			} else if (d.x <= 60) {
 				$('#graphSVG').width($('#graphSVG').width()+5);
-				report.x = report.x+5;
+				// Move all fixed nodes over by the amount of the size increase to accommodate the additional space
+				d3.selectAll('.fixed').datum(function (d) { 
+					d.px = d.px+5; 
+					return d; 
+					});
 				_self.resize();
 			}
 			
@@ -91,7 +96,11 @@ var StixGraph = function () {
 				_self.resize();
 			} else if (d.y <= 20) { 
 				$('#graphSVG').height($('#graphSVG').height()+5);
-				report.y = report.y+5;
+				// Move all fixed nodes over by the amount of the size increase to accommodate the additional space
+				d3.selectAll('.fixed').datum(function (d) { 
+					d.py = d.py+5; 
+					return d; 
+					});
 				_self.resize();
 			}
 
@@ -118,6 +127,12 @@ var StixGraph = function () {
 		} else { 
 			$('#toggleFix a').text("Pin node");
 		}
+		
+		if (d.label) { 
+			$('#showLabels a').text("Hide labels");
+		} else { 
+			$('#showLabels a').text("Show labels");
+		}
 	}
 	
 	
@@ -125,6 +140,21 @@ var StixGraph = function () {
 		d3.select(node).classed("fixed", function (d) { 
 			return d.fixed = !d.fixed;
 		});
+		force.resume();
+	}
+	
+	function toggleLabels (node) {
+		
+		var nd = d3.select(node).datum();
+		nd.label = !nd.label;
+		
+		// Highlight related links
+		d3.selectAll('.link').filter(function (l) { return l.source === nd; })
+		.classed("label",function (d) { return d.label = nd.label; });
+		
+		d3.selectAll('.link').filter(function (l) { return l.target === nd; })
+		.classed("label", function (d) { return d.label = nd.label; });
+		
 		force.resume();
 	}
 
@@ -170,6 +200,7 @@ var StixGraph = function () {
 		// Handlers for right-click context menu on nodes
 		$('#toggleFix a').click(function () { toggleFix(contextNode); });
 		$('#hideNode a').click(function () { hideNode(contextNode); });
+		$('#showLabels a').click(function () { toggleLabels(contextNode); });
 
 		
 		configureNav();
@@ -195,7 +226,7 @@ var StixGraph = function () {
 		.attr("id","lighten")
 		.append("feColorMatrix")
 			.attr("type","matrix")
-			.attr("values","1 .5 .5 0 0  .5 1 .5 0 0  .5 .5 1 0 0  0 0 0 1 0");
+			.attr("values","1 .2 .2 0 0  .2 1 .2 0 0  .2 .2 1 0 0  0 0 0 1 0");
 		
 		
 		// define arrow markers for graph links
@@ -236,6 +267,12 @@ var StixGraph = function () {
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
 		report._children = [];
 		report.children.forEach(collapse);
+		
+		// start the root node out fixed in the middle of the display
+		report.px = graphSize()[0]/2;
+		report.py = graphSize()[1]/2;
+		report.fixed = true;
+		
 
 		// This is where the tree actually gets displayed
 		update();
@@ -260,45 +297,29 @@ var StixGraph = function () {
 	 * Calls update after filtering is complete
 	*/
 	_self.removeNodesOfEntityType = function(entityType) {
-		var d = report;
-		var nodesRemoved = [];
-		if (d.children) {
-			nodesRemoved = d.children.filter(function(node) { return (node.type === entityType + 's'); });
-			d.children = d.children.filter(function(node) { return (node.type != entityType + 's'); });
-			d.hiddenChildren = nodesRemoved;
-			//$(nodesRemoved).each(function(i, node) {node.filterType = true;});
-			//_self.markNodesToRemove(nodesRemoved);
-			report.hiddenNodes[entityType] = true;
-		}
+		report.hiddenNodes[entityType.toLowerCase()] = true;
 		update();
 	};
 	
 	_self.addNodesOfEntityType = function(entityType) {
-		var d = report;
-		var nodesToAdd = [];
-		if (d._children) {
-			nodesToAdd = d.hiddenChildren.filter(function(node) {return (node.type === entityType + 's'); });
-			d.hiddenChildren = d.hiddenChildren.filter(function(node) {return (node.type != entityType + 's'); });
-			d.children = d.children.concat(nodesToAdd);
-			report.hiddenNodes[entityType] = false;
-		}
+		report.hiddenNodes[entityType.toLowerCase()] = false;
 		update();
 	};
 	
 	_self.showLinksOfType = function(entity, r) {
-		if (entity in report.hiddenRelationships) {
-			delete report.hiddenRelationships[entity][r];
+		if (entity.toLowerCase() in report.hiddenRelationships) {
+			delete report.hiddenRelationships[entity.toLowerCase()][r];
 		}
 		update();
 	};
 	
-	_self.hideLinksOfType= function(entity, r) {
-		if (entity in report.hiddenRelationships) {
-			report.hiddenRelationships[entity][r] = true;
+	_self.hideLinksOfType = function(entity, r) {
+		if (entity.toLowerCase() in report.hiddenRelationships) {
+			report.hiddenRelationships[entity.toLowerCase()][r] = true;
 		}
 		else {
-			report.hiddenRelationships[entity] = {};
-			report.hiddenRelationships[entity][r] = true;
+			report.hiddenRelationships[entity.toLowerCase()] = {};
+			report.hiddenRelationships[entity.toLowerCase()][r] = true;
 		}
 		update();
 	};
@@ -366,7 +387,10 @@ var StixGraph = function () {
 		link.exit().remove();
 
 		var linkEnter = link.enter().insert("g",".node")
-		.attr("class","link");
+		.attr("class","link")
+		.classed("label", function (d) { 
+			return d.label = d.source.label || d.target.label; 
+		});
 
 
 		linkEnter.append("path")
@@ -393,7 +417,8 @@ var StixGraph = function () {
 
 		node.exit().remove();
 		
-		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+		node
+		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
 
 		var nodeEnter = node.enter().append("g")
@@ -411,17 +436,20 @@ var StixGraph = function () {
 				force.resume();
 				return;
 			}
+			
+			force.stop();
 			position = d3.mouse(this);
 			offset = $(this).offset();
 			scrollTop = $('#viewContainer').scrollTop();
 			updateContext(d);
 			showContext(this,(position[0]+offset.left+(nodeWidth/2))+'px',(position[1]+offset.top-nodeHeight+scrollTop)+'px');
+
 			d3.event.preventDefault();
 		})
 		.call(drag);
 
 
-		// Append the image icon according to typeIconMap
+		// Append the image icon according to nodeTypeMap
 		nodeEnter.append("svg:image")
 		.attr("height", String(nodeHeight)+"px")
 		.attr("width", String(nodeWidth)+"px")
@@ -447,14 +475,14 @@ var StixGraph = function () {
 		.attr("class","parentborder")
 		.attr("transform","translate("+ -(nodeWidth+4)/2 + "," + ((-nodeHeight/2) - 2) + ")");
 		
-		// add layered icons for grouping nodes
-		for (var i = 0; i < 3; i++) { 
-			nodeEnter.filter('.group').insert("svg:image", ':first-child')
-			.attr("height", String(nodeHeight)+"px")
-			.attr("width", String(nodeWidth)+"px")
-			.attr("xlink:href",getImageUrl)
-			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
-		}
+//		// add layered icons for grouping nodes
+//		for (var i = 0; i < 3; i++) { 
+//			nodeEnter.filter('.group').insert("svg:image", ':first-child')
+//			.attr("height", String(nodeHeight)+"px")
+//			.attr("width", String(nodeWidth)+"px")
+//			.attr("xlink:href",getImageUrl)
+//			.attr("transform","translate("+ (-(nodeWidth/2)+(2*i)) + "," + (-(nodeHeight/2)-(2*i)) + ")");
+//		}
 		
 
 		// Append text label to each node
@@ -483,8 +511,8 @@ var StixGraph = function () {
 			.classed("bold",true)
 			.classed("out",true);
 			
-			d3.selectAll('.link').filter(function (l) { return l.target === d; }).
-			classed("bold",true)
+			d3.selectAll('.link').filter(function (l) { return l.target === d; })
+			.classed("bold",true)
 			.classed("in",true);
 
 			
@@ -516,7 +544,12 @@ var StixGraph = function () {
 		if (d.type == 'top') 
 			return "./public/icons/report.png";
 		else
-			return "./public/xslt/images/"+typeIconMap[d.type]+".svg"; 
+			if (isGroupingNode(d)) {
+				return "./public/xslt/images/"+nodeTypeMap[d.type]+"-group.svg"; 	
+			} else {
+				return "./public/xslt/images/"+nodeTypeMap[d.type]+".svg"; 
+			}
+			
 	}
 
 
@@ -530,45 +563,58 @@ var StixGraph = function () {
 
 		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 		if (!hasChildren(d)) return; // ignore leaf nodes
-		if (d._children && d._children.length > 0) {
-			d.children = d._children.concat(d.children);
-			d._children = [];
-			d.children.forEach(function (c) {
-				// Start at the same position as the parent
-				c.x = d.x + Math.random();
-				c.y = d.y + Math.random();
-				// Expand other nodes that share children in common with the clicked node
-				$.each(c.parents, function (id,properties) {
-					n = properties.node;
-					if (n._children) {
-						pos = n._children.indexOf(c);
-						if (pos > -1) {
-							n.children.push(c);
-							n._children.splice(pos,1);
+
+		var numChildren = getChildCount(d);
+		if(numChildren >=  nodeWarnThresh)
+		{
+			var r=confirm("This node has "+numChildren+" child nodes! Do you still want to expand this node?");
+		}
+		else
+		{
+			r = true;
+		}
+		if (r===true)
+		{
+			if (d._children && d._children.length > 0) {
+				d.children = d._children.concat(d.children);
+				d._children = [];
+				d.children.forEach(function (c) {
+					// Start at the same position as the parent
+					c.x = d.x + Math.random();
+					c.y = d.y + Math.random();
+					// Expand other nodes that share children in common with the clicked node
+					$.each(c.parents, function (id,properties) {
+						n = properties.node;
+						if (n._children) {
+							pos = n._children.indexOf(c);
+							if (pos > -1) {
+								n.children.push(c);
+								n._children.splice(pos,1);
+							}
 						}
-					}
+					});
 				});
-			});
-		} else {
-			d._children = d.children.concat(d._children);
-			d.children = [];
-			// collapse other nodes that have children in common with the clicked node
-			d._children.forEach(function (c) { 
-				$.each(c.parents,function (id,properties) {
-					n = properties.node;
-					if (n.children) {
-						pos = n.children.indexOf(c);
-						if (pos > -1) {
-							n._children.push(c);
-							n.children.splice(pos,1); // remove node from other node's children
+			} else {
+				d._children = d.children.concat(d._children);
+				d.children = [];
+				// collapse other nodes that have children in common with the clicked node
+				d._children.forEach(function (c) { 
+					$.each(c.parents,function (id,properties) {
+						n = properties.node;
+						if (n.children) {
+							pos = n.children.indexOf(c);
+							if (pos > -1) {
+								n._children.push(c);
+								n.children.splice(pos,1); // remove node from other node's children
+							}
 						}
-					}
+					});
 				});
-			});
-		} 
-		update();
-		$(this).mouseenter();
-		d3.select('body').classed('loading',false);
+			} 
+			update();
+			$(this).mouseenter();
+			d3.select('body').classed('loading',false);
+		}
 	}	
 
 	/** 
@@ -733,6 +779,24 @@ var StixGraph = function () {
 	}
 	
 	/** 
+	 * Returns the count of unique children a node has
+	 * @param d
+	 * @returns
+	 */
+        function getChildCount(d){
+            var counter = {};
+            var uniqureCount = 0;
+            d._children.forEach(function (cc) {
+                if(!counter[cc.id])
+                {
+                    counter[cc.id] = cc.id;
+                    uniqureCount++;
+                }
+            });
+            return uniqureCount;
+        }
+	
+	/** 
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
 	 */
 	function isGroupingNode(d) { 
@@ -838,9 +902,13 @@ var StixGraph = function () {
 				if (nodes[parent]) {
 					ref.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType};
 				}
-
+				
 			} 
-
+			
+			// these are stored in the parents property so delete them from the top level
+			delete node.relationship;
+			delete node.linkType;
+			
 			// Recurse on the children of the new node, since we might not have seen them before
 			if (node.children) { 
 				node.children.forEach(function (n) { 
@@ -872,7 +940,7 @@ var StixGraph = function () {
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
-				if (! report.hiddenNodes[node.type] && !isOrphan(node, report.hiddenRelationships)) {			
+				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
 					pos = nodes.length-1;
 					if (node.children) { 
@@ -895,17 +963,13 @@ var StixGraph = function () {
 					relationship = node.parents[nodes[parent].id].relationship;
 					linkType = node.parents[nodes[parent].id].linkType;
 					// don't push if report.hiddenRelationships[entity][relationships]==true
-					var entity = node.parents[nodes[parent].id].node.type;
+					var entity = node.parents[nodes[parent].id].node.type.toLowerCase();
 					if (!(entity in report.hiddenRelationships) ||
 							!(relationship in report.hiddenRelationships[entity])) {
 						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 					}
 				}
-			} else {// If it's the root node, fix it in the middle of the window 
-				node.fixed = true;
-				node.px = graphSize()[0]/2;
-				node.py = graphSize()[1]/2;
-			}
+			} 
 
 		}
 		
@@ -971,35 +1035,56 @@ var StixGraph = function () {
 		});
 		
 		$('#resetGraphButton').click(function () {
+			//reset filters
+			$.fn.filterDivReset();
+			report.hiddenNodes = {};
+			report.hiddenRelationships = {};
+
 			// collapse all children after the top level
 			expand(report);
 			report.children.forEach(collapse);
+
+			
+			d3.selectAll('.node')
+			.classed("fixed",function (d) { 
+				if (d.index === 0) {
+					// the root node is fixed initially
+					return d.fixed = true;
+				} else {
+					// all other nodes are not fixed
+					return d.fixed = false;
+				}
+			})
+			.datum(function (d) { // remove fixed link labels  
+				d.label = false;
+				return d;
+			});
 			
 			// reset the size 
 			$('#graphSVG').height('100%');
 			$('#graphSVG').width('100%');
 			_self.resize();
+
+			// start the root node out fixed in the middle of the display
+			report.px = graphSize()[0]/2;
+			report.py = graphSize()[1]/2;
+			force.start();
+
 		});
 		
 		$('#unpinAllButton').click(function () {
-			d3.selectAll('.node').classed("fixed", function (d) { 
-				if ( d.id !== 0 ) { 
-					return d.fixed = false;
-				} else {
-					return d.fixed;
-				}
-			});
+			d3.selectAll('.node').classed("fixed", function (d) { return d.fixed = false; });
 		});
 		
 		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;
 		resizeGraph = function (widthDiff, heightDiff) {
 			if (widthDiff !== 0) { 
 				$('#graphSVG').width($('#graphSVG').width()+widthDiff);
-				report.x = report.x-(widthDiff/2);
+				//report.x = report.x-(widthDiff/2);
 			}
 			if (heightDiff !== 0) {
 				$('#graphSVG').height($('#graphSVG').height()+heightDiff);
-				report.y = report.y-(heightDiff/2);
+				//report.y = report.y-(heightDiff/2);
 			}
 			_self.resize();
 			holdTimer = setTimeout(function () { resizeGraph(widthDiff,heightDiff); },delay);

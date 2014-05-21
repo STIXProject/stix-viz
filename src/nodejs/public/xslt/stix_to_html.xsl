@@ -27,11 +27,15 @@ mdunn@mitre.org
   
 -->
 
-<xsl:stylesheet version="2.0" xmlns:stix="http://stix.mitre.org/stix-1"
-  xmlns:cybox="http://cybox.mitre.org/cybox-2" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+<xsl:stylesheet version="2.0"
+  xmlns:stix="http://stix.mitre.org/stix-1"
+  xmlns:cybox="http://cybox.mitre.org/cybox-2"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:indicator="http://stix.mitre.org/Indicator-2" xmlns:TTP="http://stix.mitre.org/TTP-1"
+  xmlns:fn="http://www.w3.org/2005/xpath-functions"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:indicator="http://stix.mitre.org/Indicator-2"
+  xmlns:TTP="http://stix.mitre.org/TTP-1"
   xmlns:COA="http://stix.mitre.org/CourseOfAction-1"
   xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1"
   xmlns:marking="http://data-marking.mitre.org/Marking-1"
@@ -45,11 +49,33 @@ mdunn@mitre.org
 
   <xsl:output method="html" omit-xml-declaration="yes" indent="yes" media-type="text/html"
     version="4.0"/>
+  
+  <!--
+    how to set parameters: xslt stylesheet parameters should be passed in via
+    whatever mechanism the xslt engine has.  saxon allows you to set parameters
+    via the command-line or via the java api.  oxygen and xml spy allow you to
+    set parameters via the xslt configuration.
+  -->  
+  
+  <!--
+    include the file metadata header that shows stix version, filename, and html generation timestamp
+  -->  
   <xsl:param name="includeFileMetadataHeader" select="true()"/>
+  
+  <!--
+    include the stix header - the header table that shows the title, package
+    intent, description, handling, information source, etc.
+  -->
   <xsl:param name="includeStixHeader" select="true()"/>
+  
+  <!--
+    set to true if you want to preserve line breaks in the description text,
+    fields, otherwise text descriptions will be flowed like normal html text
+  -->
+  <xsl:param name="enablePreformattedDescriptions" select="false()" />
 
   <!--
-    do you want to display the constrains in cyboxProperties-style displays?
+    do you want to display the constraints in cyboxProperties-style displays?
     usually the answer is true(), but if you want a more concise display, set to false().
   -->
   <xsl:param name="displayConstraints" select="true()"/>
@@ -98,7 +124,7 @@ mdunn@mitre.org
   <xsl:template name="customFooter">
     <div class="customFooter">
       <xsl:comment>no custom footer provided</xsl:comment>
-      &#xA9; Generic Company
+      <!-- &#xA9; Generic Company -->
     </div>
   </xsl:template>
 
@@ -130,7 +156,18 @@ mdunn@mitre.org
       <xsl:if test="not($displayConstraints)">
         display: none;
       </xsl:if>
-      }</style>
+      }
+      
+      .description
+      {
+      /* if the descriptions are "preformatted text" use "pre-line" or "pre" */
+      <xsl:if test="$enablePreformattedDescriptions">
+      white-space: pre-line;
+      </xsl:if>
+      }
+      
+    
+    </style>
   </xsl:template>
 
   <!--
@@ -247,52 +284,71 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
               <a name="docContents">Document Contents</a>
             </h2>
             <div class="documentContentsList">
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Campaigns">
-                  <xsl:call-template name="iconCampaigns"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Courses_Of_Action">
-                  <xsl:call-template name="iconCOAs"/>
-                </xsl:if>
-              </div>
+              <a href="#observablesTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Observables">
+                    <xsl:call-template name="iconObservables"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#indicatorsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Indicators">
+                    <xsl:call-template name="iconIndicators"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#ttpsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:TTPs">
+                    <xsl:call-template name="iconTTPs"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#exploitTargetsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Exploit_Targets">
+                    <xsl:call-template name="iconExploitTargets"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#incidentsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Incidents">
+                    <xsl:call-template name="iconIncidents"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#coursesOfActionTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Courses_Of_Action">
+                    <xsl:call-template name="iconCOAs"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#campaignsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Campaigns">
+                    <xsl:call-template name="iconCampaigns"/>
+                  </xsl:if>
+                </div>
+              </a>
+              <a href="#threatActorsTopLevelCategoryContainer">
+                <div class="documentContentsItem">
+                  <xsl:if test="//stix:Threat_Actors">
+                    <xsl:call-template name="iconThreatActors"/>
+                  </xsl:if>
+                </div>
+              </a>
+              
+              <!-- no links to "marking" yet -->
               <div class="documentContentsItem">
                 <xsl:if test="//marking:Marking">
                   <xsl:call-template name="iconDataMarkings"/>
                 </xsl:if>
               </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Exploit_Targets">
-                  <xsl:call-template name="iconExploitTargets"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Incidents">
-                  <xsl:call-template name="iconIncidents"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Indicators">
-                  <xsl:call-template name="iconIndicators"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Observables">
-                  <xsl:call-template name="iconObservables"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:Threat_Actors">
-                  <xsl:call-template name="iconThreatActors"/>
-                </xsl:if>
-              </div>
-              <div class="documentContentsItem">
-                <xsl:if test="//stix:TTPs">
-                  <xsl:call-template name="iconTTPs"/>
-                </xsl:if>
-              </div>
-            </div>
+              
+            </div> <!-- end of div class="documentContentsList" -->
 
           </xsl:if>
           <xsl:if test="$includeStixHeader">
@@ -443,7 +499,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
   -->
   <!-- REFERENCE: HELP_UPDATE_STEP_1D -->
   <xsl:template
-    match="cybox:Observable|indicator:Observable|stix:Indicator|stix:TTP|stixCommon:Kill_Chain|stixCommon:Kill_Chain_Phase|stix:Campaign|stix:Incident|stix:Threat_Actor|stixCommon:Exploit_Target"
+    match="cybox:Observable|indicator:Observable|stix:Indicator|stix:TTP|stixCommon:TTP|stixCommon:Kill_Chain|stixCommon:Kill_Chain_Phase|stix:Campaign|stix:Incident|stix:Threat_Actor|stixCommon:Exploit_Target|stixCommon:Course_Of_Action|stix:Course_Of_Action|TTP:Identity"
     mode="printReference">
     <xsl:param name="reference" select="()"/>
     <xsl:param name="normalized" select="()"/>
@@ -463,7 +519,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
   -->
   <!-- REFERENCE: HELP_UPDATE_STEP_1D -->
   <xsl:template
-    match="cybox:Object|cybox:Event|cybox:Associated_Object|cybox:Related_Object|stixCommon:Kill_Chain|stixCommon:Course_Of_Action|stix:Course_Of_Action|cybox:Action"
+    match="cybox:Object|cybox:Event|cybox:Associated_Object|cybox:Related_Object|stixCommon:Kill_Chain|cybox:Action"
     mode="printReference">
     <xsl:param name="reference" select="()"/>
     <xsl:param name="normalized" select="()"/>
@@ -496,7 +552,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
 
     <xsl:if test="$categoryGroupingElement/*">
       <div class="topLevelCategoryContainer {$categoryIdentifier}"
-        id="{categoryIdentifier}TopLevelCategoryContainer">
+        id="{$categoryIdentifier}TopLevelCategoryContainer">
         <h2>
           <a name="{$categoryIdentifier}TopLevelCategoryHeadingAnchor">
             <xsl:value-of select="$categoryLabel"/>
@@ -633,9 +689,14 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
                   <xsl:call-template name="processIndicatorContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::stix:TTP">
+              <xsl:when test="self::stix:TTP|self::stixCommon:TTP">
                 <div class="containerTtp">
                   <xsl:call-template name="processTTPContents"/>
+                </div>
+              </xsl:when>
+              <xsl:when test="self::TTP:Identity">
+                <div class="containerIdentity">
+                  <xsl:apply-templates select="*" mode="cyboxProperties"/>
                 </div>
               </xsl:when>
               <xsl:when test="self::stixCommon:Kill_Chain_Phase">
@@ -659,6 +720,11 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
               <xsl:when test="self::stixCommon:Exploit_Target">
                 <div class="containerExploitTarget">
                   <xsl:call-template name="processExploitTargetContents"/>
+                </div>
+              </xsl:when>
+              <xsl:when test="self::stix:Course_Of_Action">
+                <div class="containerCourseOfAction">
+                  <xsl:call-template name="processCOAContents"/>
                 </div>
               </xsl:when>
             </xsl:choose>
