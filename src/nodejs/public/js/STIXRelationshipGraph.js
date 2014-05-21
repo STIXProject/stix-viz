@@ -561,8 +561,8 @@ var StixGraph = function () {
 	function click (d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
 
-		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 		if (!hasChildren(d)) return; // ignore leaf nodes
+		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 
 		var numChildren = getChildCount(d);
 		if(numChildren >=  nodeWarnThresh)
