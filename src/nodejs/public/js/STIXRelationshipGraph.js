@@ -23,8 +23,9 @@ var StixGraph = function () {
 	labelHeight = 35;
 
     var nodeWarnThresh = 20;
-
+    
 	var dragToPin = true,
+	showGrouping = false,
 	dragInitiated = false,
 	x0 = 0, // Initial position at start of drag
 	y0 = 0, 
@@ -182,7 +183,7 @@ var StixGraph = function () {
 
 		if (!node || node.length == 0) return;
 
-		updateForce();
+		updateForce(showGrouping);
 		
 		update();
 
@@ -216,7 +217,7 @@ var StixGraph = function () {
 	    .append("g")
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
-		updateForce();
+		updateForce(showGrouping);
 		
 		/**
 		 *  define color filter for lightening non-expandable nodes
@@ -343,24 +344,32 @@ var StixGraph = function () {
 	 * @param d
 	 */
 	function expand (d) { 
-		if (d._children.length > 0) {
+		if (d._children && d._children.length > 0) {
 			d.children = d.children.concat(d._children);
 			d._children = [];
 		}
 	}
 
-	function updateForce () { 
-		force
-		.linkStrength(.9)
-		.friction(.7)
-		.size(graphSize())
-		.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
-		.gravity(function (d) { 
-			return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-		})
-		.charge(Math.min.apply(Math,graphSize()) * -2);
-
-
+	function updateForce () {
+		if (showGrouping) {
+			force
+			.linkStrength(.9)
+			.friction(.7)
+			.size(graphSize())
+			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
+			.gravity(function (d) { 
+				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+			})
+			.charge(Math.min.apply(Math,graphSize()) * -2);
+		} else { 
+			force
+			.linkStrength(.9)
+			.friction(.7)
+			.size(graphSize())
+			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
+			.gravity(.1)
+			.charge(Math.min.apply(Math,graphSize()) * -2);
+		}
 	}
 
 	/** 
@@ -369,7 +378,8 @@ var StixGraph = function () {
 	 */
 	function update() {
 
-		var data = flatten(report), 
+
+		var data = flatten(report,showGrouping), 
 		nodes = data.nodes,
 		links = data.links;
 
@@ -927,22 +937,41 @@ var StixGraph = function () {
 	 * @param root
 	 * @returns the lists of nodes and links that define the graph
 	 */
-	function flatten(root) {
+	function flatten(root,showGrouping) {
 		var nodes = [], links = [];
 
 		function recurse(node,parent) {
-
+			
 			var pos = 0;
-
+			
+			// don't show root or grouping nodes
+			if (!showGrouping && (isGroupingNode(node) || node.id === 0)) {
+				if (node.children) { 
+					node.children.forEach(function (n) { 
+						recurse(n,parent);
+					});
+				}
+				if (node._children) { 
+					node._children.forEach(function (n) { 
+						recurse(n,parent);
+					});
+				}
+			}
 			// Recurse on the node's children
 			// If we have seen this node before, use the position in the node list
-			if (nodes.indexOf(node) > -1) { 
+			else if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
+
 				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
 					pos = nodes.length-1;
+
+					if (!showGrouping) {
+						expand(node);
+					}
+
 					if (node.children) { 
 						node.children.forEach(function (n) { 
 							recurse(n,pos);
