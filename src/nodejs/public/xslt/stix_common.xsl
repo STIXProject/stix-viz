@@ -32,6 +32,7 @@
     xmlns:cyboxCommon="http://cybox.mitre.org/common-2"
     xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2"
     xmlns:simpleMarking="http://data-marking.mitre.org/extensions/MarkingStructure#Simple-1"
+    xmlns:terms="http://data-marking.mitre.org/extensions/MarkingStructure#Terms_Of_Use-1"
 
     xmlns:ttp='http://stix.mitre.org/TTP-1'
     >
@@ -52,8 +53,8 @@
             <div class="stixHeader">
               <table class="grid topLevelCategory tablesorter" cellspacing="0">
                     <colgroup>
-                        <col width="30%"/>
-                        <col width="70%"/>
+                      <col class="stixHeaderColumnHeadings" />
+                      <col class="stixHeaderColumnValues" />
                     </colgroup>
                     <thead>
 <!--
@@ -106,20 +107,7 @@
                         -->
                         <xsl:choose>
                           <xsl:when test="self::stix:Handling">
-                            <xsl:variable name="isSimple" select="'simpleMarking:SimpleMarkingStructureType'"/>
-                            <xsl:variable name="isTLP" select="'tlpMarking:TLPMarkingStructureType'"/>
-                            <xsl:choose>
-                              <xsl:when test=".//marking:Marking_Structure/@xsi:type = $isSimple">
-                                <xsl:value-of select=".//simpleMarking:Statement/text()"/>
-                              </xsl:when>
-                              <xsl:when test=".//marking:Marking_Structure/@xsi:type = $isTLP">
-                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='red'"><xsl:attribute name="class" select="'tlpred'"/></xsl:if>
-                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='amber'"><xsl:attribute name="class" select="'tlpamber'"/></xsl:if>
-                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='green'"><xsl:attribute name="class" select="'tlpgreen'"/></xsl:if>
-                                <xsl:if test="lower-case(.//marking:Marking_Structure/@color)='white'"><xsl:attribute name="class" select="'tlpwhite'"/></xsl:if>
-                                Traffic Light Protocol (TLP): <xsl:value-of select=".//marking:Marking_Structure/@color"/>
-                              </xsl:when>
-                            </xsl:choose>
+                            <xsl:apply-templates select="."/>
                           </xsl:when>
                           <xsl:when test="self::stix:Information_Source">
                             <xsl:apply-templates mode="cyboxProperties" />
@@ -143,6 +131,53 @@
                 </td>
             </tr>
     </xsl:template>    
+  
+  <xsl:template match="stix:Handling|indicator:Handling">
+    <xsl:if test="marking:Marking">
+      <div class="cyboxPropertiesConstraints">WARNING: Handling of marking data is not fully supported in stix-to-html yet.</div>
+    </xsl:if>
+    <xsl:apply-templates />
+  </xsl:template>
+  
+  <xsl:template match="marking:Marking">
+    <div class="marking">
+      <!-- TODO display marking's control structure or apply to xml -->
+      <xsl:if test="marking:Controlled_Structure">
+        <div class="markingControlStructure cyboxPropertiesConstraints">
+          <xsl:choose>
+            <xsl:when test="marking:Controlled_Structure/text() = '//node()'">
+              marking for whole document:
+            </xsl:when>
+            <xsl:when test="not(marking:Controlled_Structure/text()) or (fn:normalize-space(marking:Controlled_Structure/text()) = '')">
+              no marking control structure specified:
+            </xsl:when>
+            <xsl:otherwise>
+              marking for (xpath): <xsl:value-of select="marking:Controlled_Structure" />
+            </xsl:otherwise>
+          </xsl:choose>
+        </div>
+      </xsl:if>
+      <xsl:if test="marking:Marking_Structure[fn:resolve-QName(fn:data(@xsi:type), .)=fn:QName('http://data-marking.mitre.org/extensions/MarkingStructure#Simple-1', 'SimpleMarkingStructureType')]">
+        <div class="markingSimple">
+          <xsl:value-of select="marking:Marking_Structure/simpleMarking:Statement/text()"/>
+        </div>
+      </xsl:if>
+      <xsl:if test="marking:Marking_Structure[fn:resolve-QName(fn:data(@xsi:type), .)=fn:QName('http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1', 'TLPMarkingStructureType')]">
+        <div class="markingTlp">
+          <xsl:if test="lower-case(marking:Marking_Structure/@color)='red'"><xsl:attribute name="class" select="'tlpred'"/></xsl:if>
+          <xsl:if test="lower-case(marking:Marking_Structure/@color)='amber'"><xsl:attribute name="class" select="'tlpamber'"/></xsl:if>
+          <xsl:if test="lower-case(marking:Marking_Structure/@color)='green'"><xsl:attribute name="class" select="'tlpgreen'"/></xsl:if>
+          <xsl:if test="lower-case(marking:Marking_Structure/@color)='white'"><xsl:attribute name="class" select="'tlpwhite'"/></xsl:if>
+          Traffic Light Protocol (TLP): <xsl:value-of select="marking:Marking_Structure/@color"/>
+        </div>
+      </xsl:if>
+      <xsl:if test="marking:Marking_Structure[fn:resolve-QName(fn:data(@xsi:type), .)=fn:QName('http://data-marking.mitre.org/extensions/MarkingStructure#Terms_Of_Use-1', 'TermsOfUseMarkingStructureType')]">
+        <div class="markingTermsOfUse">
+          <xsl:value-of select="marking:Marking_Structure/terms:Terms_Of_Use/text()"/>
+        </div>
+      </xsl:if>
+    </div>
+  </xsl:template>
 
 
 
@@ -162,9 +197,6 @@
       </xsl:attribute>
       -->
       
-      <xsl:if test="campaign:Title">
-        <xsl:copy-of select="stix:printNameValueTable('Title', campaign:Title)" />
-      </xsl:if>              
       <xsl:if test="campaign:Names">
         <xsl:variable name="contents">
           <xsl:apply-templates select="campaign:Names" />
@@ -241,6 +273,10 @@
     <div>Relationship: <xsl:apply-templates /></div>
   </xsl:template>
   
+  <xsl:template match="cybox:Related_Object/cybox:Relationship">
+    <div>Relationship: <xsl:apply-templates /></div>
+  </xsl:template>
+  
   <xsl:template match="*:Intended_Effect">
     <div class="stixCommonValue">
       <xsl:apply-templates select="stixCommon:Value" />
@@ -266,7 +302,7 @@
     <xsl:apply-templates select="campaign:Associated_Campaign/stixCommon:Campaign"/>
   </xsl:template>
   
-  <xsl:template match="stixCommon:Threat_Actor[@idref]|stixCommon:Campaign[@idref]">
+  <xsl:template match="stixCommon:Threat_Actor[@idref]|stixCommon:Campaign[@idref]|marking:Marking[@idref]">
     <div class="">
       <xsl:variable name="targetId" select="string(@idref)"/>
       <xsl:variable name="relationshipOrAssociationType" select="''" />
@@ -474,9 +510,6 @@
       </xsl:attribute>
       -->
       
-      <xsl:if test="ta:Title">
-        <xsl:copy-of select="stix:printNameValueTable('Title', ta:Title)" />
-      </xsl:if>              
       <xsl:if test="ta:Identity">
         <xsl:variable name="contents">
           <xsl:apply-templates select="ta:Identity" />
@@ -568,9 +601,6 @@
       </xsl:attribute>
       -->
       
-      <xsl:if test="et:Title">
-        <xsl:copy-of select="stix:printNameValueTable('Title', et:Title)" />
-      </xsl:if>              
       <xsl:if test="et:Vulnerability">
         <xsl:variable name="contents">
           <xsl:apply-templates select="et:Vulnerability" />
@@ -607,6 +637,12 @@
         </xsl:variable>
         <xsl:copy-of select="stix:printNameValueTable('Handling', $contents)" />
       </xsl:if>
+      <xsl:if test="et:Related_Exploit_Targets">
+        <xsl:variable name="contents">
+          <xsl:apply-templates select="et:Related_Exploit_Targets" />
+        </xsl:variable>
+        <xsl:copy-of select="stix:printNameValueTable('Related Expooit Targets', $contents)" />
+      </xsl:if>
     </div>
   </xsl:template>
   
@@ -632,9 +668,6 @@
         </xsl:attribute>
         -->
         
-        <xsl:if test="indicator:Title">
-          <xsl:copy-of select="stix:printNameValueTable('Title', indicator:Title)" />
-        </xsl:if>              
         <xsl:if test="indicator:Description">
           <xsl:variable name="contents">
             <xsl:apply-templates select="indicator:Description" />
@@ -654,7 +687,8 @@
         
         <xsl:if test="indicator:Observable">
           <xsl:variable name="contents">
-            <xsl:apply-templates select="indicator:Observable" mode="cyboxProperties" />
+            <xsl:apply-templates select="indicator:Observable/@*" mode="cyboxProperties" />
+            <xsl:apply-templates select="indicator:Observable/*" mode="cyboxProperties" />
           </xsl:variable>
           <xsl:copy-of select="stix:printNameValueTable('Observable', $contents)" />
         </xsl:if>
@@ -709,6 +743,7 @@
         </xsl:if> 
         <xsl:if test="indicator:Handling">
           <xsl:variable name="contents">
+            <div>name: <xsl:value-of select="local-name(.)"/></div>
             <xsl:apply-templates select="indicator:Handling" />
           </xsl:variable>
           <xsl:copy-of select="stix:printNameValueTable('Handling', $contents)" />
@@ -718,7 +753,13 @@
             <xsl:apply-templates select="indicator:Related_Indicators" />
           </xsl:variable>
           <xsl:copy-of select="stix:printNameValueTable('Related Indicators', $contents)" />
-        </xsl:if> 
+        </xsl:if>
+        <xsl:if test="indicator:Related_Campaigns">
+          <xsl:variable name="contents">
+            <xsl:apply-templates select="indicator:Related_Campaigns" />
+          </xsl:variable>
+          <xsl:copy-of select="stix:printNameValueTable('Related Campaigns', $contents)" />
+        </xsl:if>
         <xsl:if test="indicator:Producer">
           <xsl:variable name="contents">
             <xsl:apply-templates select="indicator:Producer" />
@@ -866,37 +907,30 @@
             <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
           </xsl:if>  
 
-          <xsl:if test="ttp:Intended_Effect">
-            <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Intended_Effect" mode="cyboxProperties" />
-            </xsl:variable>
-            <xsl:copy-of select="stix:printNameValueTable('Intended Effect', $contents)" />
-          </xsl:if>  
-          
           <xsl:if test="ttp:Behavior">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Behavior" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Behavior/*" mode="cyboxProperties" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Behavior', $contents)" />
           </xsl:if>
           
           <xsl:if test="ttp:Resources">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Resources" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Resources/*" mode="cyboxProperties" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Resources', $contents)" />
           </xsl:if>  
           
           <xsl:if test="ttp:Victim_Targeting">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Victim_Targeting" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Victim_Targeting/*" mode="cyboxProperties" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Victim Targeting', $contents)" />
           </xsl:if>  
           
           <xsl:if test="ttp:Exploit_Targets">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Exploit_Targets" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Exploit_Targets" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Exploit Targets', $contents)" />
           </xsl:if>  
@@ -917,20 +951,27 @@
           
           <xsl:if test="ttp:Information_Source">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Information_Source" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Information_Source/*" mode="cyboxProperties" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Information Source', $contents)" />
           </xsl:if>  
 
           <xsl:if test="ttp:Handling">
             <xsl:variable name="contents">
-              <xsl:apply-templates select="ttp:Handling" mode="cyboxProperties" />
+              <xsl:apply-templates select="ttp:Handling/*" mode="cyboxProperties" />
             </xsl:variable>
             <xsl:copy-of select="stix:printNameValueTable('Handling', $contents)" />
           </xsl:if>  
         </div>
       </div>
     </xsl:template>
+  
+  <xsl:template match="ttp:Exploit_Target">
+    <div class="container containerTtpExploitTarget">
+      <div><xsl:apply-templates select="stixCommon:Relationship" /></div>
+      <div><xsl:apply-templates select="stixCommon:Exploit_Target" /></div>
+    </div>
+  </xsl:template>
   
   <xsl:template name="processCOAContents">
     <div>
@@ -994,6 +1035,12 @@
             <xsl:apply-templates select="COA:Handling" />
           </xsl:variable>
           <xsl:copy-of select="stix:printNameValueTable('Handling', $contents)" />
+        </xsl:if>
+        <xsl:if test="COA:Related_COAs">
+          <xsl:variable name="contents">
+            <xsl:apply-templates select="COA:Related_COAs" />
+          </xsl:variable>
+          <xsl:copy-of select="stix:printNameValueTable('Related COAs', $contents)" />
         </xsl:if>
       </div>
     </div>

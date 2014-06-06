@@ -37,6 +37,7 @@ mdunn@mitre.org
   xmlns:indicator="http://stix.mitre.org/Indicator-2"
   xmlns:TTP="http://stix.mitre.org/TTP-1"
   xmlns:COA="http://stix.mitre.org/CourseOfAction-1"
+  xmlns:ET="http://stix.mitre.org/ExploitTarget-1"
   xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1"
   xmlns:marking="http://data-marking.mitre.org/Marking-1"
   xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1"
@@ -47,8 +48,11 @@ mdunn@mitre.org
   xmlns:EmailMessageObj="http://cybox.mitre.org/objects#EmailMessageObject-2"
   exclude-result-prefixes="cybox xsi fn EmailMessageObj">
 
+  <xsl:import href="icons.xsl"/>
+  
   <xsl:output method="html" omit-xml-declaration="yes" indent="yes" media-type="text/html"
     version="4.0"/>
+  
   
   <!--
     how to set parameters: xslt stylesheet parameters should be passed in via
@@ -73,7 +77,18 @@ mdunn@mitre.org
     fields, otherwise text descriptions will be flowed like normal html text
   -->
   <xsl:param name="enablePreformattedDescriptions" select="false()" />
-
+  
+  <!--
+    set the style of how svg images to be used for item type icons:
+      * inlineLiteralXml - the svg xml will show up inline in the resulting html document
+      * dataUri          - the svg image will be included in the document via the img element's src attribute using a data uri whose contents are a the base64 encoded version of the gzipped svg
+      * relativeUri      - normal html image style references, e.g. <img src="images/logo.svg" /> 
+  -->
+  <xsl:param name="iconReferenceStyle" select="'inlineLiteralXml'" />
+  <!-- base uri to where image svg files are located (only used for iconReferenceStyle == "relativeUri") -->
+  <xsl:param name="iconExternalImageBaseUri" select="'images'" />
+  <xsl:variable name="iconExternalImageBaseUriVariable" select="$iconExternalImageBaseUri" />
+  
   <!--
     do you want to display the constraints in cyboxProperties-style displays?
     usually the answer is true(), but if you want a more concise display, set to false().
@@ -81,11 +96,14 @@ mdunn@mitre.org
   <xsl:param name="displayConstraints" select="true()"/>
 
   <xsl:include href="stix_common.xsl"/>
-  <xsl:include href="icons.xsl"/>
   <xsl:include href="normalize.xsl"/>
-
-  <!-- <xsl:include href="cybox_common.xsl"/> -->
-  <xsl:key name="observableID" match="cybox:Observable" use="@id"/>
+  <xsl:include href="identify_anonymous_items.xsl" />
+  
+  <!-- do not modify this, this is used inside icons.xsl to pass in the value of the iconReferenceStyle parameter -->
+  <xsl:variable name="iconReferenceStyleVariable" select="$iconReferenceStyle" />
+  
+  <xsl:variable name="isRootStix" select="fn:exists(/stix:STIX_Package)" />
+  <xsl:variable name="isRootCybox" select="fn:exists(/cybox:Observables)" />
 
   <!--
     This prints out the header at the top of the page.
@@ -110,7 +128,11 @@ mdunn@mitre.org
   <xsl:template name="customTitle">
     <div class="customTitle">
       <xsl:comment>no custom title provided</xsl:comment>
-      <h1>STIX Report</h1>
+      <h1>
+        <xsl:if test="$isRootStix">STIX</xsl:if>
+        <xsl:if test="$isRootCybox">CYBOX</xsl:if>
+        Report
+      </h1>
     </div>
   </xsl:template>
 
@@ -158,7 +180,7 @@ mdunn@mitre.org
       </xsl:if>
       }
       
-      .description
+      .description, .StixDescriptionValue 
       {
       /* if the descriptions are "preformatted text" use "pre-line" or "pre" */
       <xsl:if test="$enablePreformattedDescriptions">
@@ -189,22 +211,45 @@ mdunn@mitre.org
           These two variables will become the main inputs to the primary transform.
         -->
     <!-- REFERENCE: HELP_UPDATE_STEP_1A -->
-    <xsl:variable name="normalized">
-      <xsl:apply-templates select="/stix:STIX_Package/*" mode="createNormalized"/>
+    <xsl:message>cleaning up input...</xsl:message>
+    <xsl:variable name="root" select="/" />
+    <xsl:variable name="cleanedInput">
+      <xsl:apply-templates select="$root" mode="cleanup" />
     </xsl:variable>
+    <xsl:message>DONE cleaning up input.</xsl:message>
+    
+    <xsl:message>identifying input...</xsl:message>
+    <xsl:variable name="identifiedInput">
+      <xsl:apply-templates select="$cleanedInput" mode="identifyAnonymousItems" />
+    </xsl:variable>
+    <xsl:message>DONE identifying input.</xsl:message>
+
+    <xsl:message>normalizing input...</xsl:message>
+    <xsl:variable name="normalized">
+      <xsl:apply-templates select="$identifiedInput/(stix:STIX_Package/*|cybox:Observables)" mode="createNormalized"/>
+    </xsl:variable>
+    <xsl:message>DONE normalizing input.</xsl:message>
+    <xsl:message>creating reference...</xsl:message>
     <xsl:variable name="reference">
       <xsl:apply-templates
-        select="/stix:STIX_Package//*[@id or @phase_id[../../self::stixCommon:Kill_Chain] or self::cybox:Object or self::cybox:Event 
+        select="$identifiedInput/(cybox:Observables//*|stix:STIX_Package//*)[@id or @phase_id[../../self::stixCommon:Kill_Chain] or self::cybox:Object or self::cybox:Event 
             or self::cybox:Related_Object or self::cybox:Associated_Object or self::cybox:Action_Reference or self::cybox:Action]"
         mode="createReference">
         <xsl:with-param name="isTopLevel" select="fn:true()"/>
         <xsl:with-param name="isRoot" select="fn:true()"/>
       </xsl:apply-templates>
     </xsl:variable>
+    <xsl:message>DONE creating reference.</xsl:message>
+    <xsl:message>processing main...</xsl:message>
 
     <html>
       <head>
-        <title>STIX Output</title>
+        <title>
+          <xsl:if test="$isRootStix">STIX</xsl:if>
+          <xsl:if test="$isRootCybox">CYBOX</xsl:if>
+          Report
+          Output
+        </title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 
         <!-- read in the main css -->
@@ -261,14 +306,26 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
               <table class="stixMetadata hor-minimalist-a" width="100%">
                 <thead>
                   <tr>
-                    <th scope="col">STIX Version</th>
+                    <th scope="col">
+                      <xsl:if test="$isRootStix">STIX</xsl:if>
+                      <xsl:if test="$isRootCybox">CYBOX</xsl:if>
+                      Version
+                    </th>
                     <th scope="col">Filename</th>
                     <th scope="col">Generation Date</th>
                   </tr>
                 </thead>
                 <tr>
                   <td>
-                    <xsl:value-of select="//stix:STIX_Package/@version"/>
+                    <xsl:choose>
+                      <xsl:when test="$isRootCybox">
+                        <xsl:variable name="cyboxRoot" select="/cybox:Observables" />
+                        <xsl:value-of select="fn:string-join(($cyboxRoot/@cybox_major_version, $cyboxRoot/@cybox_minor_version, $cyboxRoot/@cybox_update_version), '.')" />
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:value-of select="//stix:STIX_Package/@version"/>
+                      </xsl:otherwise>
+                    </xsl:choose>
                   </td>
                   <td>
                     <xsl:value-of select="tokenize(document-uri(.), '/')[last()]"/>
@@ -286,7 +343,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
             <div class="documentContentsList">
               <a href="#observablesTopLevelCategoryContainer">
                 <div class="documentContentsItem">
-                  <xsl:if test="//stix:Observables">
+                  <xsl:if test="//stix:Observables|//cybox:Observables">
                     <xsl:call-template name="iconObservables"/>
                   </xsl:if>
                 </div>
@@ -351,9 +408,13 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
             </div> <!-- end of div class="documentContentsList" -->
 
           </xsl:if>
-          <xsl:if test="$includeStixHeader">
+          <xsl:if test="$includeStixHeader and $isRootStix">
             <h2>
-              <a name="analysis">STIX Header</a>
+              <a name="analysis">
+                <xsl:if test="$isRootStix">STIX</xsl:if>
+                <xsl:if test="$isRootCybox">CYBOX</xsl:if>
+                Header
+              </a>
             </h2>
             <xsl:call-template name="processHeader"/>
           </xsl:if>
@@ -372,91 +433,25 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
 
           <!-- REFERENCE: HELP_UPDATE_STEP_1C -->
           <xsl:call-template name="printReference">
-            <xsl:with-param name="reference" select="$reference"/>
-            <xsl:with-param name="normalized" select="$normalized"/>
+            <xsl:with-param name="reference" select="$reference" tunnel="yes" />
+            <xsl:with-param name="normalized" select="$normalized" />
+          </xsl:call-template>
+          
+          <xsl:call-template name="processAllTopLevelTables">
+            <xsl:with-param name="reference" select="$reference" tunnel="yes" />
+            <xsl:with-param name="normalized" select="$normalized" tunnel="yes" />
           </xsl:call-template>
 
-          <!--
-            MAIN TOP LEVEL CATEGORY TABLES
-          -->
-          <div class="topLevelCategoryTables">
 
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:Observables"/>
-              <xsl:with-param name="categoryLabel" select="'Observables'"/>
-              <xsl:with-param name="categoryIdentifier" select="'observables'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:Indicators"/>
-              <xsl:with-param name="headingLabels" select="('Title', 'Observable Title', 'Type')"/>
-              <xsl:with-param name="categoryLabel" select="'Indicators'"/>
-              <xsl:with-param name="categoryIdentifier" select="'indicators'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:TTPs"/>
-              <xsl:with-param name="headingLabels" select="('Title', 'ID')"/>
-              <xsl:with-param name="categoryLabel" select="'TTPs'"/>
-              <xsl:with-param name="categoryIdentifier" select="'ttps'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement"
-                select="$normalized/stix:Exploit_Targets"/>
-              <xsl:with-param name="categoryLabel" select="'Exploit Targets'"/>
-              <xsl:with-param name="categoryIdentifier" select="'exploitTargets'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:Incidents"/>
-              <xsl:with-param name="categoryLabel" select="'Incidents'"/>
-              <xsl:with-param name="categoryIdentifier" select="'incidents'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement"
-                select="$normalized/stix:Courses_Of_Action"/>
-              <xsl:with-param name="categoryLabel" select="'Courses of Action'"/>
-              <xsl:with-param name="categoryIdentifier" select="'coursesOfAction'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:Campaigns"/>
-              <xsl:with-param name="categoryLabel" select="'Campaigns'"/>
-              <xsl:with-param name="categoryIdentifier" select="'campaigns'"/>
-            </xsl:call-template>
-
-            <xsl:call-template name="processTopLevelCategory">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="categoryGroupingElement" select="$normalized/stix:Threat_Actors"/>
-              <xsl:with-param name="categoryLabel" select="'Threat Actors'"/>
-              <xsl:with-param name="categoryIdentifier" select="'threatActors'"/>
-            </xsl:call-template>
-
-          </div>
         </div>
 
         <xsl:call-template name="customFooter"/>
       </body>
     </html>
+    <xsl:message>DONE processing main.</xsl:message>
+    <xsl:message>##########</xsl:message>
   </xsl:template>
-
+  
   <!--
     This template prints out the "reference" variable that comes of the the
     "normalization" transform.
@@ -471,8 +466,8 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
     and building this content.
   -->
   <xsl:template name="printReference">
-    <xsl:param name="reference" select="()"/>
-    <xsl:param name="normalized" select="()"/>
+    <xsl:param name="reference" select="()" tunnel="yes" />
+    <xsl:param name="normalized" select="()" tunnel="yes" />
 
     <div class="reference">
       <xsl:apply-templates select="$reference" mode="printReference"/>
@@ -499,7 +494,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
   -->
   <!-- REFERENCE: HELP_UPDATE_STEP_1D -->
   <xsl:template
-    match="cybox:Observable|indicator:Observable|stix:Indicator|stix:TTP|stixCommon:TTP|stixCommon:Kill_Chain|stixCommon:Kill_Chain_Phase|stix:Campaign|stix:Incident|stix:Threat_Actor|stixCommon:Exploit_Target|stixCommon:Course_Of_Action|stix:Course_Of_Action|TTP:Identity"
+    match="cybox:Observable|stixCommon:Observable|indicator:Observable|stix:Indicator|stixCommon:Indicator|indicator:Indicator|stix:TTP|stixCommon:TTP|stixCommon:Kill_Chain_Phase|stix:Campaign|stixCommon:Campaign|stix:Incident|stixCommon:Incident|stix:Threat_Actor|stixCommon:Threat_Actor|ET:Exploit_Target|stixCommon:Exploit_Target|stixCommon:Course_Of_Action|stix:Course_Of_Action|TTP:Identity|marking:Marking"
     mode="printReference">
     <xsl:param name="reference" select="()"/>
     <xsl:param name="normalized" select="()"/>
@@ -528,83 +523,6 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
       <xsl:with-param name="reference" select="$reference"/>
       <xsl:with-param name="normalized" select="$normalized"/>
     </xsl:call-template>
-  </xsl:template>
-
-  <!--
-      draw the main table on the page that represents the list of Observables.
-      these are the elements that are directly below the root element of the page.
-      
-      each item will generate two rows in the table.  the first one is the
-      heading that's always visible and is clickable to expand/collapse the
-      second row.
-      
-      this template will be used to print the table for all top level content
-      (observables, indicators, TTPs, etc).
-    -->
-  <xsl:template name="processTopLevelCategory">
-    <xsl:param name="reference" select="()"/>
-    <xsl:param name="normalized" select="()"/>
-    <xsl:param name="categoryGroupingElement" select="()"/>
-    <xsl:param name="headingLabels" select="('Type', 'ID')"/>
-    <xsl:param name="headingColumnStyles" select="('typeColumn', 'idColumn')"/>
-    <xsl:param name="categoryLabel"/>
-    <xsl:param name="categoryIdentifier"/>
-
-    <xsl:if test="$categoryGroupingElement/*">
-      <div class="topLevelCategoryContainer {$categoryIdentifier}"
-        id="{$categoryIdentifier}TopLevelCategoryContainer">
-        <h2>
-          <a name="{$categoryIdentifier}TopLevelCategoryHeadingAnchor">
-            <xsl:value-of select="$categoryLabel"/>
-          </a>
-        </h2>
-        <div class="expandAll" onclick="expandAll(this.parentNode);">[toggle all <xsl:value-of
-            select="$categoryLabel"/>]</div>
-        <table class="topLevelCategory {$categoryIdentifier}" cellspacing="0">
-          <colgroup>
-            <xsl:for-each select="$headingColumnStyles">
-              <col class="{.}"/>
-            </xsl:for-each>
-          </colgroup>
-          <thead>
-            <tr>
-              <xsl:for-each select="$headingLabels">
-                <th class="header">
-                  <xsl:value-of select="."/>
-                </th>
-              </xsl:for-each>
-            </tr>
-          </thead>
-          <xsl:for-each select="$categoryGroupingElement/*[@idref]">
-            <!-- <xsl:sort select="cybox:Observable_Composition" order="descending"/> -->
-            <xsl:variable name="evenOrOdd" select="if(position() mod 2 = 0) then 'even' else 'odd'"/>
-            <xsl:call-template name="printGenericItemForTopLevelCategoryTable">
-              <xsl:with-param name="reference" select="$reference"/>
-              <xsl:with-param name="normalized" select="$normalized"/>
-              <xsl:with-param name="colCount" select="count($headingLabels)"/>
-            </xsl:call-template>
-          </xsl:for-each>
-
-          <xsl:for-each select="$categoryGroupingElement/stix:Kill_Chains">
-            <thead>
-              <tr>
-                <th colspan="2">Kill Chains</th>
-              </tr>
-            </thead>
-            <xsl:for-each select="./stixCommon:Kill_Chain">
-              <!-- <tr><td colspan="2">kill chain <xsl:value-of select="fn:data(./@idref)"/></td></tr> -->
-
-              <xsl:call-template name="printGenericItemForTopLevelCategoryTable">
-                <xsl:with-param name="reference" select="$reference"/>
-                <xsl:with-param name="normalized" select="$normalized"/>
-                <xsl:with-param name="colCount" select="count($headingLabels)"/>
-              </xsl:call-template>
-
-            </xsl:for-each>
-          </xsl:for-each>
-        </table>
-      </div>
-    </xsl:if>
   </xsl:template>
 
   <!--
@@ -670,7 +588,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
           <div id="{$expandedContentId}" class="expandableContents">
             <!-- <div>THIS ONE</div> -->
             <xsl:choose>
-              <xsl:when test="self::cybox:Observable|self::indicator:Observable">
+              <xsl:when test="self::cybox:Observable|self::stixCommon:Observable|self::indicator:Observable">
                 <div class="containerObservable">
                   <xsl:call-template name="processObservableContents"/>
                 </div>
@@ -684,7 +602,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
                 </div>
                 <!-- <xsl:call-template name="processObservableContents" /> -->
               </xsl:when>
-              <xsl:when test="self::stix:Indicator">
+              <xsl:when test="self::stix:Indicator|self::stixCommon:Indicator|self::indicator:Indicator">
                 <div class="containerIndicator">
                   <xsl:call-template name="processIndicatorContents"/>
                 </div>
@@ -694,37 +612,44 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
                   <xsl:call-template name="processTTPContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::TTP:Identity">
+              <xsl:when test="self::TTP:Identity|self::stixCommon:Identity">
                 <div class="containerIdentity">
                   <xsl:apply-templates select="*" mode="cyboxProperties"/>
                 </div>
               </xsl:when>
               <xsl:when test="self::stixCommon:Kill_Chain_Phase">
-                <xsl:apply-templates select="."/>
+                <div class="containerKillChainPhase">
+                  <xsl:apply-templates select="."/>
+                </div>
               </xsl:when>
-              <xsl:when test="self::stix:Campaign">
+              <xsl:when test="self::stix:Campaign|self::stixCommon:Campaign">
                 <div class="containerCampaign">
                   <xsl:call-template name="processCampaignContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::stix:Incident">
+              <xsl:when test="self::stix:Incident|self::stixCommon:Incident">
                 <div class="containerIncident">
                   <xsl:call-template name="processIncidentContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::stix:Threat_Actor">
+              <xsl:when test="self::stix:Threat_Actor|self::stixCommon:Threat_Actor">
                 <div class="containerThreatActor">
                   <xsl:call-template name="processThreatActorContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::stixCommon:Exploit_Target">
+              <xsl:when test="self::ET:Exploit_Target|self::stixCommon:Exploit_Target">
                 <div class="containerExploitTarget">
                   <xsl:call-template name="processExploitTargetContents"/>
                 </div>
               </xsl:when>
-              <xsl:when test="self::stix:Course_Of_Action">
+              <xsl:when test="self::stix:Course_Of_Action|self::stixCommon:Course_Of_Action">
                 <div class="containerCourseOfAction">
                   <xsl:call-template name="processCOAContents"/>
+                </div>
+              </xsl:when>
+              <xsl:when test="self::marking:Marking">
+                <div class="containerMarking">
+                    <xsl:apply-templates select="." />
                 </div>
               </xsl:when>
             </xsl:choose>
