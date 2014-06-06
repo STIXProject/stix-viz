@@ -118,6 +118,7 @@ nav.navbar {
 #menubar { 
 	overflow:visible;
 	padding: 0;
+	font-size: 14px;
 }
 
 .nav-divider { 
