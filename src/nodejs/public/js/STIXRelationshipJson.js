@@ -14,13 +14,18 @@
 function createStixChildren(objNodes, parentName) {
     var allObjJson = [];
     var topChildJson = null;
-    $(objNodes).each(function (index, objJson) {
-	    allObjJson.push(objJson);
-	});
-    if (allObjJson.length > 0) {
-    	topChildJson = {"type":parentName, "children":allObjJson, "linkType":"topDown"};
+    if (objNodes.length == 1) {    // if there's only 1 child, don't add a grouping node
+    	return objNodes[0];
     }
-    return topChildJson;
+    else {
+	    $(objNodes).each(function (index, objJson) {
+		    allObjJson.push(objJson);
+		});
+	    if (allObjJson.length > 0) {
+	    	topChildJson = {"type":parentName, "grouping":true, "children":allObjJson, "linkType":"topDown"};
+	    }
+	    return topChildJson;
+    }
 }
 
 // main report JSON creation - add grouping node and children for each top level entity type
