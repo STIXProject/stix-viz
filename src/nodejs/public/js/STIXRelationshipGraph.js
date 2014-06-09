@@ -370,6 +370,31 @@ var StixGraph = function () {
 		recurse(d);
 	}
 	
+	function expandGroupNodes (d) { 
+		var seen = []; 
+			
+		function recurse (d) { 
+			if (seen.indexOf(d) < 0) { 
+				seen.push(d);
+				if (isGroupingNode(d)) {
+					if (d._children && d._children.length > 0) {
+						d.children = d.children.concat(d._children);
+						d._children = [];
+					}
+				}
+				if (d.children && d.children.length > 0) { 
+					d.children.forEach(recurse);
+				}
+				if (d._children && d._children.length > 0) { 
+					d._children.forEach(recurse);
+				}
+			}
+		}
+		
+		recurse(d);
+
+	}
+	
 	
 
 	function updateForce () {
@@ -843,7 +868,7 @@ var StixGraph = function () {
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
 	 */
 	function isGroupingNode(d) { 
-		return d.depth === 1 || d.grouping;
+		return d.grouping || d.type === 'top';
 	}
 
 	/**
@@ -1140,10 +1165,11 @@ var StixGraph = function () {
 			showGrouping = !showGrouping;
 			if (!showGrouping) {
 				expandAll(report);
+				//expandGroupNodes(report);
 				$(this).text("Group");
 			} else { 
-				expand(report);
-				report.children.forEach(collapse);
+				//expand(report);
+				//report.children.forEach(collapse);
 				$(this).text("Ungroup");
 			}
 
