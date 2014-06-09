@@ -63,6 +63,13 @@
   display: inherit;
 }
 
+.parent .parentborder { 
+	display:none;
+}
+.parent.collapsed .parentborder {
+	display: inherit;
+}
+
 /* For graph view */
 .link path {
   fill: none;

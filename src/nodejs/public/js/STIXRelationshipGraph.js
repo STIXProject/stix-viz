@@ -23,8 +23,9 @@ var StixGraph = function () {
 	labelHeight = 35;
 
     var nodeWarnThresh = 20;
-
+    
 	var dragToPin = true,
+	showGrouping = true,
 	dragInitiated = false,
 	x0 = 0, // Initial position at start of drag
 	y0 = 0, 
@@ -182,7 +183,7 @@ var StixGraph = function () {
 
 		if (!node || node.length == 0) return;
 
-		updateForce();
+		updateForce(showGrouping);
 		
 		update();
 
@@ -216,7 +217,7 @@ var StixGraph = function () {
 	    .append("g")
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
-		updateForce();
+		updateForce(showGrouping);
 		
 		/**
 		 *  define color filter for lightening non-expandable nodes
@@ -343,24 +344,54 @@ var StixGraph = function () {
 	 * @param d
 	 */
 	function expand (d) { 
-		if (d._children.length > 0) {
+		if (d._children && d._children.length > 0) {
 			d.children = d.children.concat(d._children);
 			d._children = [];
+			d.children.forEach(expand);
 		}
 	}
+	
+	function expandAll (d) { 
+		var seen = []; 
+		
+		function recurse (d) { 
+			if (seen.indexOf(d) < 0) { 
+				seen.push(d);
+				if (d._children && d._children.length > 0) {
+					d.children = d.children.concat(d._children);
+					d._children = [];
+				}
+				if (d.children && d.children.length > 0) { 
+					d.children.forEach(recurse);
+				}
+			}
+		}
+		
+		recurse(d);
+	}
+	
+	
 
-	function updateForce () { 
-		force
-		.linkStrength(.9)
-		.friction(.7)
-		.size(graphSize())
-		.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
-		.gravity(function (d) { 
-			return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-		})
-		.charge(Math.min.apply(Math,graphSize()) * -2);
-
-
+	function updateForce () {
+		if (showGrouping) {
+			force
+			.linkStrength(.9)
+			.friction(.7)
+			.size(graphSize())
+			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
+			.gravity(function (d) { 
+				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+			})
+			.charge(Math.min.apply(Math,graphSize()) * -2);
+		} else { 
+			force
+			.linkStrength(.9)
+			.friction(.7)
+			.size(graphSize())
+			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
+			.gravity(80/Math.min.apply(Math,graphSize())) 
+			.charge(Math.min.apply(Math,graphSize()) * -1.5);
+		}
 	}
 
 	/** 
@@ -369,7 +400,8 @@ var StixGraph = function () {
 	 */
 	function update() {
 
-		var data = flatten(report), 
+
+		var data = flatten(report,showGrouping), 
 		nodes = data.nodes,
 		links = data.links;
 
@@ -418,7 +450,8 @@ var StixGraph = function () {
 		node.exit().remove();
 		
 		node
-		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+		.classed("collapsed", hasHiddenChildren);
 
 
 		var nodeEnter = node.enter().append("g")
@@ -427,6 +460,7 @@ var StixGraph = function () {
 		.classed("parent",function(d) { 
 			return hasChildren(d) && !isGroupingNode(d);
 		})
+		.classed("collapsed", hasHiddenChildren)
 		.classed("group", function (d) { 
 			return hasChildren(d) && isGroupingNode(d);
 		})
@@ -561,7 +595,6 @@ var StixGraph = function () {
 	function click (d) {
 		if (d3.event.defaultPrevented) return; // ignore drag
 
-		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 		if (!hasChildren(d)) return; // ignore leaf nodes
 
 		var numChildren = getChildCount(d);
@@ -575,6 +608,7 @@ var StixGraph = function () {
 		}
 		if (r===true)
 		{
+			d3.select('body').classed('loading',true);  // Set wait cursor while expanding
 			if (d._children && d._children.length > 0) {
 				d.children = d._children.concat(d.children);
 				d._children = [];
@@ -770,7 +804,7 @@ var StixGraph = function () {
 
 
 	/**
-	 * Returns true if the node has children or if the base node with the same nodeId has children
+	 * Returns true if the node has children
 	 * @param d
 	 * @returns
 	 */
@@ -778,22 +812,31 @@ var StixGraph = function () {
 		return (d.children && d.children.length > 0) || (d._children && d._children.length > 0); 
 	}
 	
+	/**
+	 * Returns true if the node has children that are currently hidden
+	 * @param d
+	 * @returns
+	 */
+	function hasHiddenChildren (d) { 
+		return d._children && d._children.length > 0; 
+	}
+	
 	/** 
-	 * Returns the count of unique children a node has
+	 * Returns the count of unique hidden children a node has
 	 * @param d
 	 * @returns
 	 */
         function getChildCount(d){
             var counter = {};
-            var uniqureCount = 0;
+            var uniqueCount = 0;
             d._children.forEach(function (cc) {
                 if(!counter[cc.id])
                 {
                     counter[cc.id] = cc.id;
-                    uniqureCount++;
+                    uniqueCount++;
                 }
             });
-            return uniqureCount;
+            return uniqueCount;
         }
 	
 	/** 
@@ -811,15 +854,18 @@ var StixGraph = function () {
 	function findBaseNode (nodeId) { 
 		var queue = [report];
 		var node;
+		var seen = [];
 		while (queue.length > 0) {
 			node = queue.shift();
 			if ('nodeId' in node && node.nodeId == nodeId) { 
 				return node;
 			} else { 
+				seen.push(node);
 				if (node.children) { 
-					$.each(node.children,function(i,c) { queue.push(c); });
-				} else if (node._children) { 
-					$.each(node._children,function(i,c) { queue.push(c); });
+					$.each(node.children,function(i,c) { if (seen.indexOf(c) < 0) queue.push(c); });
+				}
+				if (node._children) { 
+					$.each(node._children,function(i,c) { if (seen.indexOf(c) < 0) queue.push(c); });
 				}
 			} 	
 		} 
@@ -927,22 +973,32 @@ var StixGraph = function () {
 	 * @param root
 	 * @returns the lists of nodes and links that define the graph
 	 */
-	function flatten(root) {
+	function flatten(root,showGrouping) {
 		var nodes = [], links = [];
 
 		function recurse(node,parent) {
-
+			
 			var pos = 0;
-
+			
+			// don't show root or grouping nodes
+			if (!showGrouping && (isGroupingNode(node) || node.id === 0)) {
+				if (node.children) { 
+					node.children.forEach(function (n) { 
+						recurse(n,parent);
+					});
+				}
+			}
 			// Recurse on the node's children
 			// If we have seen this node before, use the position in the node list
-			if (nodes.indexOf(node) > -1) { 
+			else if (nodes.indexOf(node) > -1) { 
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
+
 				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships)) {			
 					nodes.push(node);
 					pos = nodes.length-1;
+
 					if (node.children) { 
 						node.children.forEach(function (n) { 
 							recurse(n,pos);
@@ -972,7 +1028,7 @@ var StixGraph = function () {
 			} 
 
 		}
-		
+
 		recurse(root);
 		return {nodes:nodes,links:links};
 	}
@@ -1041,9 +1097,13 @@ var StixGraph = function () {
 			report.hiddenRelationships = {};
 
 			// collapse all children after the top level
-			expand(report);
-			report.children.forEach(collapse);
-
+			if (showGrouping) {
+				expand(report);
+				report.children.forEach(collapse);
+			} else { 
+				expandAll(report);
+			}
+			
 			
 			d3.selectAll('.node')
 			.classed("fixed",function (d) { 
@@ -1074,6 +1134,21 @@ var StixGraph = function () {
 		
 		$('#unpinAllButton').click(function () {
 			d3.selectAll('.node').classed("fixed", function (d) { return d.fixed = false; });
+		});
+		
+		$('#groupButton').click(function () { 
+			showGrouping = !showGrouping;
+			if (!showGrouping) {
+				expandAll(report);
+				$(this).text("Group");
+			} else { 
+				expand(report);
+				report.children.forEach(collapse);
+				$(this).text("Ungroup");
+			}
+
+			updateForce();
+			update();
 		});
 		
 		var holdTimer, resizeGraph = null, timerIsRunning = false, delay = 400;

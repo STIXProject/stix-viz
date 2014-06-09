@@ -47,7 +47,7 @@
   -->
   
   <!--
-    purpose: template for displayin descriptions from any namespace.  very
+    purpose: template for displaying descriptions from any namespace.  very
     simple, but useful for adding a css class so that they can be styled
     across any content type.
     
@@ -56,8 +56,44 @@
   -->
   <xsl:template match="*:Description">
     <div class="description">
-      <xsl:value-of select="text()" />
+      <xsl:apply-templates select="text()" />
     </div>
   </xsl:template>
+  
+  <!--
+    purpose: make stixCommon:Reference elements into clickable links in the
+    html output.
+  -->
+  <xsl:template match="stixCommon:Reference" mode="cyboxProperties">
+    <xsl:variable name="url" select="fn:data(.)" />
+    
+    <div class="stixCommonReference">
+      <xsl:element name="a">
+        <xsl:attribute name="href" select="$url" />
+        <xsl:value-of select="$url" />
+      </xsl:element>
+    </div>
+  </xsl:template>
+  
+  <!--
+  ····························································
+  -->
+  
+  <!--
+    purpose: placeholder for future template to support maec objects
+    
+    example:
+    <ttp:Malware_Instance xsi:type="maecInstance:MAEC4.0InstanceType" />
+  -->
+  <xsl:template match="*[some $ns in ('http://stix.mitre.org/extensions/Malware#MAEC4.0-1', 'http://stix.mitre.org/extensions/Malware#MAEC4.1-1') satisfies $ns = fn:namespace-uri-from-QName(fn:resolve-QName(fn:data(@xsi:type), .))]" mode="cyboxProperties">
+    PLACEHOLDER -- STIX-TO-HTML WILL SUPPORT MAEC CONTENT IN THE NEXT RELEASE.
+  </xsl:template>
+  
+  <!--
+  <xsl:template match="*:Type[count(../*:Type) ge 2]" mode="cyboxProperties">
+    <xsl:apply-templates mode="#current" /> <xsl:text> %% </xsl:text>
+  </xsl:template>
+  -->
+  
     
 </xsl:stylesheet>
