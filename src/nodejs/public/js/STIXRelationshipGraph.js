@@ -405,9 +405,9 @@ var StixGraph = function () {
 			.size(graphSize())
 			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
 			.gravity(function (d) { 
-				return 600/(Math.min.apply(Math,graphSize()) * (1+d.depth));
+				return 80/(Math.min.apply(Math,graphSize()) * (1+d.depth));
 			})
-			.charge(Math.min.apply(Math,graphSize()) * -2);
+			.charge(Math.min.apply(Math,graphSize()) * -1);
 		} else { 
 			force
 			.linkStrength(.9)
@@ -415,7 +415,7 @@ var StixGraph = function () {
 			.size(graphSize())
 			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
 			.gravity(80/Math.min.apply(Math,graphSize())) 
-			.charge(Math.min.apply(Math,graphSize()) * -1.5);
+			.charge(Math.min.apply(Math,graphSize()) * -1);
 		}
 	}
 
@@ -1164,12 +1164,14 @@ var StixGraph = function () {
 		$('#groupButton').click(function () { 
 			showGrouping = !showGrouping;
 			if (!showGrouping) {
-				expandAll(report);
-				//expandGroupNodes(report);
+				//expandAll(report);
+				expandGroupNodes(report);
 				$(this).text("Group");
 			} else { 
 				//expand(report);
 				//report.children.forEach(collapse);
+				report.px = graphSize()[0]/2;
+				report.py = graphSize()[1]/2;
 				$(this).text("Ungroup");
 			}
 
