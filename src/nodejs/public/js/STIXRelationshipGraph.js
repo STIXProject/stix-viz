@@ -204,7 +204,9 @@ var StixGraph = function () {
 		$('#showLabels a').click(function () { toggleLabels(contextNode); });
 
 		
+		showGrouping = true;
 		configureNav();
+		
 		
 		// Add graph container element
 		$('#contentDiv').html($('#graphTemplate').html());
@@ -1115,6 +1117,7 @@ var StixGraph = function () {
 			dragToPin = $(this).prop('checked');
 		});
 		
+		
 		$('#resetGraphButton').click(function () {
 			//reset filters
 			$.fn.filterDivReset();
@@ -1161,15 +1164,18 @@ var StixGraph = function () {
 			d3.selectAll('.node').classed("fixed", function (d) { return d.fixed = false; });
 		});
 		
+		$('#groupButton').text("Ungroup");
+		
 		$('#groupButton').click(function () { 
 			showGrouping = !showGrouping;
 			if (!showGrouping) {
-				//expandAll(report);
-				expandGroupNodes(report);
+				expandAll(report);
+				//expandGroupNodes(report);
 				$(this).text("Group");
 			} else { 
-				//expand(report);
-				//report.children.forEach(collapse);
+				expand(report);
+				report.children.forEach(collapse);
+				// Move root node back to center
 				report.px = graphSize()[0]/2;
 				report.py = graphSize()[1]/2;
 				$(this).text("Ungroup");
