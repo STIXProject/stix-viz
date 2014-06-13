@@ -89,11 +89,11 @@ var StixTimeline = function () {
         width = outerWidth - margin.left - margin.right-150,
         height = outerHeight - margin.top - margin.bottom;
         
-       d3.select("svg")
-       .remove();
+        d3.select("svg")
+        .remove();
         
         var dataset = $.parseJSON(jString);
-	timeline("#contentDiv")
+        timeline("#contentDiv")
 	.data(dataset)
 	.band("mainBand", 0.82)
 	.band("naviBand", 0.08)
@@ -165,92 +165,106 @@ var StixTimeline = function () {
 	    data.items = items;
 
 	    function calculateTracks(items) {
-		var i, track;
+		var i, k, track;
 
                 
                 // younger items end deeper
                 items.forEach(function (item) {
                     if(item.track === undefined)
                     {
-                        for (i = 0, track = 0; i < tracks.length; i++, track++) {
-                            if (item.start > tracks[i].end) {
-                                break;
-                            }
-                            if(item.end < tracks[i].start)
-                            {
-                                break;
-                            }
-                        }
-                        if(tracks[track])
-                        {
-                            //If there are already items in this track we add them to the track
-                            item.track = track;
-                            if(item.end > tracks[track].end)
-                            {
-                                tracks[track].end = item.end;
-                            }
-                            if(item.start < tracks[track].start)
-                            {
-                                tracks[track].start = item.start;
-                            }
-                        }
-                        else
-                        {
-                            //if this is the first item in the track, create new track then add it
-                            item.track = track;
-
-                            var newTrack={};
-                            newTrack.end = item.end;
-                            newTrack.start = item.start;
-                            tracks[track] = newTrack;
-                        }
-                        
-                        
-                        
                         //Find all the other items in this group
+                        var groupdedItems = [];
+                        groupdedItems.push(item);
                         items.forEach(function (it) {
                             if(item.parentObjId === it.parentObjId && item !== it)
                             {
-
-                                it.track = item.track+1;
-                                if(tracks[it.track] == null)
-                                {
-                                    //If we are adding the grouped item to a new track
-                                    //Create the track and add it to it
-                                    var newTrack={};
-                                    newTrack.end = it.end;
-                                    newTrack.start = it.start;
-                                    tracks[it.track] = newTrack;
-                                }
-                                if(it.end > tracks[item.track].end)
-                                {
-                                   //This assumes there is a max of 2 tracks in a group.
-                                   //If there are more we need to find all tracks for that parent id and compare them
-                                   tracks[it.track].end = it.end;
-                                   tracks[item.track].end = it.end;
-                                }
-                                else
-                                {
-                                    tracks[it.track].end = item.end;
-                                }
-                                
-                                if(it.start < tracks[item.track].start)
-                                {
-                                   tracks[it.track].start = it.start;
-                                   tracks[item.track].start = it.start;
-                                }
-                                else
-                                {
-                                    tracks[it.track].start = item.start;
-                                }
-
+                                groupdedItems.push(it);
                             }
                         });
+                        
+                        //Find the end of the window
+                        var theEnd = item.end;
+                        groupdedItems.forEach(function (it) {
+                            if(it.end > theEnd)
+                            {
+                               theEnd = it.end;
+                            }
+                        });
+                        //Find the start of the window
+                        var theStart = item.start;
+                        groupdedItems.forEach(function (it) {
+                            if(it.start < theStart)
+                            {
+                               theStart = it.start;
+                            }
+                        });
+                        
+                        var groupSize = groupdedItems.length;
+                        var fail = false;
+                        
+                        //We have to move down the track list looking for a window that can fit out group
+                        for (i = 0, track = 0; i < tracks.length; i++, track++) {
+                            for(k = 0; k < groupSize; k++)
+                            {
+                                //if the track doesnt exist yet then it is empty and we know it can fit our window
+                                if(tracks[i+k])
+                                {
+                                    if (theStart < tracks[i+k].end && theStart>tracks[i+k].start) {
+                                        fail = true;
+                                    }
+                                    if(theEnd > tracks[i+k].start && theEnd < tracks[i+k].end)
+                                    {
+                                        fail = true;
+                                    }
+                                    if(fail)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            //If we have gotten through a number or tracks equal to our group size
+                            //Then we have found a window and can break out
+                            if(!fail)
+                            {
+                                break;
+                            }
+                        }
+                        
+                        //This is our starting track
+                        var curTrack = track;
+                        
+                        //We have found the size of out window and the starting track for our window
+                        //Now we just add the group items to the track
+                        groupdedItems.forEach(function (it) {
+                            //If there are already items in this track we add them to the track
+                            if(tracks[curTrack])
+                            {
+                                it.track = curTrack;
+                                if(theEnd > tracks[curTrack].end)
+                                {
+                                    tracks[curTrack].end = theEnd;
+                                }
+                                if(theStart < tracks[curTrack].start)
+                                {
+                                    tracks[curTrack].start = theStart;
+                                }
+                            }
+                            //if this is the first item in the track, create new track then add it
+                            else
+                            {
+                                it.track = curTrack;
+
+                                var newTrack={};
+                                newTrack.end = theEnd;
+                                newTrack.start = theStart;
+                                tracks[curTrack] = newTrack;
+                            }
+                            curTrack++;
+                        });
                     }
-
-
                 });
-
+                
+                
                 //Figure out the starting track for each group
                 items.forEach(function (item) {
                     if(groupedData[item.parentObjId].track === undefined)
@@ -267,7 +281,7 @@ var StixTimeline = function () {
                 });
 
 	    }
-            
+                   
             //A bunch of math to figure out the scale of our data.
 	    var maxEnd = null; 
 	    var maxStart = null;
@@ -311,9 +325,9 @@ var StixTimeline = function () {
 	    var sd = new Date(maxStart);
 	    var ts = ed.getTime()-sd.getTime();
 	    //InstantOffset is How big an instant dot appears on the timeline
-	    var instantOffset = Math.pow(10, ts.toString().length-1);
-
-
+	    //var instantOffset = Math.pow(10, ts.toString().length-1);
+            var instantOffset = ts/10;
+            
 	    // Convert yearStrings into dates
 	    data.items.forEach(function (item){
 		if (item.end == null || item.end == "" || item.end==item.start) {
@@ -425,12 +439,14 @@ var StixTimeline = function () {
 
 	    band.g = chart.append("g")
 	    .attr("id", band.id)
-	    .attr("transform", "translate(0," + band.y +  ")");
+	    .attr("transform", "translate(0," + band.y +  ")")
+            .style("fill", "white");
 
 	    band.g.append("rect")
 	    .attr("class", "band")
 	    .attr("width", band.w)
-	    .attr("height", band.h);
+	    .attr("height", band.h)
+            .style("fill", "white");
 
 
        
@@ -507,7 +523,7 @@ var StixTimeline = function () {
                 
             
 	    // Items
-            //TODO: The groups should be the items passed it but unsure how this is processed
+            //TODO: The groups should be the items passed, but unsure how this is processed
 	    var items = band.g.selectAll("g")
 	    .data(data.items)
 	    .enter().append("svg")
@@ -578,8 +594,9 @@ var StixTimeline = function () {
 	    .attr("class", "intervalLabel")
 	    .attr("x", 1)
 	    .attr("y", 10)
+            .style("fill", 'black')
 	    .text(function (d) {
-		return d.description.substring(0,20);
+		return d.description.substring(0,12);
 	    })
             .attr("id", function(d){
               return d.type;  
@@ -601,8 +618,9 @@ var StixTimeline = function () {
 	    .attr("class", "instantLabel")
 	    .attr("x", 15)
 	    .attr("y", 10)
+            .style("fill", 'black')
 	    .text(function (d) {
-                return d.description.substring(0,20);
+                return d.description.substring(0,12);
 	    })
             .attr("id", function(d){
               return d.type;  
@@ -705,6 +723,7 @@ var StixTimeline = function () {
 	    })
 	    .attr("width", labelWidth)
 	    .attr("height", labelHeight)
+            .style("fill", "white")
 	    .style("opacity", 1);
 
 	    var labels = bandLabels.append("text")
@@ -718,6 +737,7 @@ var StixTimeline = function () {
 		return d[3];
 	    })
 	    .attr("y", yText)
+            .style("fill", 'black')
 	    .attr("text-anchor", function(d) {
 		return d[0];
 	    });
@@ -817,10 +837,15 @@ var StixTimeline = function () {
 
 	    var xAxis = chart.append("g")
 	    .attr("class", "axis")
-	    .attr("transform", "translate(0," + (band.y + band.h)  + ")");
+	    .attr("transform", "translate(0," + (band.y + band.h)  + ")")
+            //.style({ 'stroke': 'Black', 'opacity': 1});
 
 	    xAxis.redraw = function () {
-		xAxis.call(axis);
+		xAxis.call(axis)
+                .selectAll(".tick,.domain")
+                .style("stroke", "black")
+                .style("fill", "white")
+                .style("opacity", 1);
 	    };
 
 	    band.parts.push(xAxis); // for brush.redraw
@@ -893,7 +918,7 @@ var StixTimeline = function () {
 	}
     
 	function displayDateTicks(date) {
-	    var month = date.getMonth();
+	    var month = date.getMonth()+1;
 	    var day = date.getDate();
 	    var year = date.getFullYear();
 
