@@ -1,6 +1,6 @@
 ****************************************************
 
-      STIX Viz v1alpha4
+      STIX Viz v1alpha5
 
  Copyright (c) 2014 - The MITRE Corporation
  All rights reserved. See LICENSE.txt for complete terms.
@@ -14,7 +14,7 @@ THE STIX VIZ APPLICATION.
 For more information, please refer to the terms.txt file.
 
 #################################################################
-StixViz v1.0 alpha4
+StixViz v1.0 alpha5
 Compatible with STIX v1.0.1
 
 This is a proof of concept prototype to visualize a set of STIX documents 
@@ -27,7 +27,7 @@ application runtime which is based on the Chromium rendering engine and node.js.
 To use STIXViz, first select a set of related XML files using the
 'Choose Files' menu.  
 
-STIXViz v1.0a4 includes three different views of STIX documents: Graph View,
+STIXViz v1.0a5 includes three different views of STIX documents: Graph View,
 Tree View and Timeline View. These views show the same information using different layouts. 
 To switch between views, use the drop-down menu at the top of the 
 window. On startup, the default view is Graph View.  
@@ -46,12 +46,21 @@ and it will expand. Single-click again and the node will collapse. Leaf nodes
 are nodes with no children, and are represented by a washed-out color scheme and 
 no dark border. 
 
+By default, the graph includes "Grouping" nodes which are a parent of all nodes of the same
+type. To remove these grouping nodes and see just the entity nodes in the graph, click
+the "Ungroup" button in the menu bar. 
+
 Hovering over a node in graph view highlights the links with other nodes. In-links
 are shown in blue and out-links in green. 
 
 Nodes may be fixed in position using the right-button context menu on each 
 node. If a node is fixed, it may be dragged to a new position and it will stay 
 where it was placed. Nodes may be un-fixed again using the context menu. 
+
+Nodes and links may be filtered using the Filter menu on the left of the screen. Uncheck 
+checkbox next to a node type to hide all nodes of that type. Click the plus sign next 
+to a node type to see a list of all link types associated with that node type. Filter
+links using the checkboxes next to the link types.
 
 Nodes may also be hidden using the context menu. To re-display a hidden node, 
 click on its parent node. 
@@ -127,14 +136,14 @@ requirements:
  - bootstrap.js (v3.0)
  - d3.js (v3)
  - jquery and jquery-ui (tested with jquery 1.10.2)
- - Stix HTML package (tested with v1beta2)
+ - Stix HTML package (tested with v1beta4)
  - one or more STIX 1.0 input xml documents
- - Java 1.7 for XSLT transforms
+ - Java 1.7 executable for XSLT transforms
     - Java Gson package (tested with 2.2.4)
     - Saxon HE (tested with version 9.5.3)
  
-v1.0alpha1
-2013-10-24
+v1.0alpha5
+2014-06-13
 
 STIX - http://stix.mitre.org
 #################################################################
@@ -147,6 +156,7 @@ LICENSE.txt
  -nodejs: Runnable NodeJS package 
     index.html: The main html page for the application
     package.json: node-webkit config file for the StixViz app
+    java.exe: Java executable needed for xslt STIX to HTML transform
     -public
      -js
         StixViz.js: Top level StixViz app
@@ -239,7 +249,7 @@ On other platforms follow the instructions from https://github.com/rogerwang/nod
 -- Runnning from Binary Executable --
 
 A pre-packaged Windows executable is available from the GitHub release page at 
-https://github.com/STIXProject/stix-viz/releases/download/v1.0.4a/StixVizDistro.zip. To run this pre-packaged
+https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro.zip. To run this pre-packaged
 executable, extract all of the files included in the zip file into a directory and double click the 
 file StixViz.exe. 
  
