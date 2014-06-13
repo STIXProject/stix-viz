@@ -38,6 +38,9 @@ mdunn@mitre.org
   xmlns:TTP="http://stix.mitre.org/TTP-1"
   xmlns:COA="http://stix.mitre.org/CourseOfAction-1"
   xmlns:ET="http://stix.mitre.org/ExploitTarget-1"
+  xmlns:ta="http://stix.mitre.org/ThreatActor-1"
+  xmlns:ttp="http://stix.mitre.org/TTP-1"
+  xmlns:incident="http://stix.mitre.org/Incident-1"
   xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1"
   xmlns:marking="http://data-marking.mitre.org/Marking-1"
   xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1"
@@ -494,7 +497,7 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
   -->
   <!-- REFERENCE: HELP_UPDATE_STEP_1D -->
   <xsl:template
-    match="cybox:Observable|stixCommon:Observable|indicator:Observable|stix:Indicator|stixCommon:Indicator|indicator:Indicator|stix:TTP|stixCommon:TTP|stixCommon:Kill_Chain_Phase|stix:Campaign|stixCommon:Campaign|stix:Incident|stixCommon:Incident|stix:Threat_Actor|stixCommon:Threat_Actor|ET:Exploit_Target|stixCommon:Exploit_Target|stixCommon:Course_Of_Action|stix:Course_Of_Action|TTP:Identity|marking:Marking"
+    match="cybox:Observable|stixCommon:Observable|indicator:Observable|stix:Indicator|stixCommon:Indicator|indicator:Indicator|stix:TTP|stixCommon:TTP|stixCommon:Kill_Chain_Phase|stix:Campaign|stixCommon:Campaign|stix:Incident|stixCommon:Incident|stix:Threat_Actor|stixCommon:Threat_Actor|ET:Exploit_Target|stixCommon:Exploit_Target|stixCommon:Course_Of_Action|stix:Course_Of_Action|TTP:Identity|marking:Marking|stixCommon:Identity|ta:Identity|incident:Victim|ttp:Attack_Pattern"
     mode="printReference">
     <xsl:param name="reference" select="()"/>
     <xsl:param name="normalized" select="()"/>
@@ -650,6 +653,21 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
               <xsl:when test="self::marking:Marking">
                 <div class="containerMarking">
                     <xsl:apply-templates select="." />
+                </div>
+              </xsl:when>
+              <xsl:when test="self::ta:Identity|stixCommon:Identity">
+                <div class="containerIdentity">
+                  <xsl:apply-templates select="*" />
+                </div>
+              </xsl:when>
+              <xsl:when test="self::incident:Victim">
+                <div class="containerVictim">
+                  <xsl:apply-templates select="." />
+                </div>
+              </xsl:when>
+              <xsl:when test="self::ttp:Attack_Pattern">
+                <div class="containerAttackPattern">
+                  <xsl:apply-templates select="." />
                 </div>
               </xsl:when>
             </xsl:choose>
