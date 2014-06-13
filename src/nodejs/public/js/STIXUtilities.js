@@ -38,29 +38,108 @@ function vizNSResolver(prefix) {
     return nsMap[prefix] || null;
 }
 
-// single node types
+
+//single node types
 var STIXType = {
-		'ca' : 'campaign', 
-		'coa' : 'CourseOfAction',
-		'et' : 'ExploitTarget',
+		'ca' : 'Campaign', 
+		'coa' : 'Course_Of_Action',
+		'et' : 'Exploit_Target',
 		'incident' : 'Incident',
 		'indi': 'Indicator',
 		'obs' : 'Observable',
-		'ta' : 'threatActor',
-		'ttp' : 'ObservedTTP'
+		'ta' : 'Threat_Actor',
+		'ttp' : 'TTP'
 };
 
-// grouping node types
+//  Same as STIXTypes, with 's' on the end
 var STIXGroupings = {
 	'ca' : 'Campaigns',
-	'coa' : 'CoursesOfAction',
-	'et' : 'ExploitTargets',
+	'coa' : 'Course_Of_Actions',
+	'et' : 'Exploit_Targets',
 	'incident' : 'Incidents',
 	'indi' : 'Indicators',
 	'obs' : 'Observables',
-	'ta' : 'ThreatActors',
+	'ta' : 'Threat_Actors',
 	'ttp' : 'TTPs'
 };
+
+var entityRelationshipMap = {
+		'Campaign' : ['Associated_Campaign', 'Attributed_Threat_Actor', 'Related_TTP', 'Related_Incident', 'Related_Indicator'],
+		'Course_Of_Action' : ['Related_COA'],
+		'Exploit_Target' : ['Potential_COA', 'Related_Exploit_Target'],
+		'Incident' : ['COA_Requested', 'COA_Taken', 'Leveraged_TTP', 'Related_Incident', 'Related_Indicator', 'Related_Observable', 'Threat_Actor'],
+		'Indicator' : ['Indicated_TTP', 'Observable', 'Related_Indicator', 'Suggested_COA'],
+		'Observable' : [],
+		'Threat_Actor' : ['Associated_Actor', 'Associated_Campaign', 'Observed_TTP'],
+		'TTP' : ['Attack_Pattern', 'Exploit_Target', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
+}
+
+/**
+ * Mapping from node type to sections headings in the HTML rendering
+ */
+
+var htmlSectionMap = { 
+		"Threat_Actors":"Threat Actors",
+		"TTPs":"TTPs",
+		"Indicators":"Indicators",
+		"Campaigns":"Campaigns",
+		"Course_Of_Actions":"Courses of Action",
+		"Incidents":"Incidents",
+		"Exploit_Targets":"Exploit Targets",
+		"Observables":"Observables",
+		"Indicator-Sighting" :"Indicator Sighting",
+		"Incident-First_Malicious_Action" :"Incident: First Malicious Action",
+		"Incident-Initial_Compromise" :"Incident: Initial Compromise",
+		"Incident-First_Data_Exfiltration" :"Incident: First Data Exfiltration",
+		"Incident-Incident_Discovery" :"Incident: Incident Discovery",
+		"Incident-Incident_Opened" :"Incident: Incident Opened",
+		"Incident-Containment_Achieved" :"Incident: Containment Achieved",
+		"Incident-Restoration_Achieved" :"Incident: Restoration Achieved",
+		"Incident-Incident_Reported" :"Incident: Incident Reported",
+		"Incident-Incident_Closed" :"Incident: Incident Closed",
+		"Incident-COATaken" :"Incident: COATaken"
+	};
+
+/**
+ * Mapping from node type to icon names to be used in the tree display
+ */
+
+var nodeTypeMap = {
+
+		"Campaigns" : "campaign",
+		"Campaign" : "campaign",
+		"Course_Of_Action" : "course_of_action",
+		"Course_Of_Actions" : "course_of_action",
+		"Exploit" : "exploit_target",
+		"Exploit_Target" : "exploit_target",
+		"Exploit_Targets" :  "exploit_target",
+		"Incident" : "incident",
+		"Incidents" : "incident",
+		"Indicator" : "indicator",
+		"Indicators" : "indicator",
+		"Indicator-Utility" : "indicator",
+		"Indicator-Composite" : "indicator",
+		"Indicator-Backdoor" : "indicator",
+		"Indicator-Downloader" : "indicator",
+		"Observable" : "observable",
+		"Observables" : "observable",
+		"AttackPattern" : "attack_patterns",
+		"MalwareBehavior" : "malware",
+		"Observable" : "observable",
+		"Observable-ElectronicAddress" : "observable",
+		"Observable-Email" : "observable",
+		"Observable-IPRange" : "observable",
+		"Observable-MD5" : "observable",
+		"Observable-URI" : "observable",
+		"UsesTool" : "tool",
+		"Tools" : "tool",
+		"VictimTargeting" : "victim_targeting",
+		"Threat_Actor" : "threat_actor",
+		"Threat_Actors" : "threat_actor",
+		"TTP" : "ttp",
+		"TTPs" : "ttp",
+		"top" : "report"
+	};
 
 var STIXPattern = {
 		'ca' : './/stixCommon:Campaign', 
@@ -129,6 +208,11 @@ function createNode(id, type, name, direction, relationship) {
 	return json;	
 }
 
+// json object with linkType sibling
+function createSiblingNode(id, type, name, relationship) {
+	return createNode(id, type, name, "sibling", relationship);	
+}
+
 // json object with linkType topDown
 function createTopDownNode(id, type, name, relationship) {
 	return createNode(id, type, name, "topDown", relationship);	
@@ -137,6 +221,11 @@ function createTopDownNode(id, type, name, relationship) {
 // json object with linkType bottomUp
 function createBottomUpNode(id, type, name) {
 	return createNode(id, type, name, "bottomUp");
+}
+
+// json for sibling idRef
+function createSiblingIdRef(type, idRef, relationship) {
+	return {"type": type, "nodeIdRef":idRef, "linkType":"sibling", "relationship":relationship};
 }
 
 // json for topDown idRef

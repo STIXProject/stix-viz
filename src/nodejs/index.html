@@ -54,6 +54,7 @@
 
 <script type="text/javascript" src="./public/js/STIXUtilities.js"></script>
 <script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
+<script type="text/javascript" src="./public/js/STIXFilters.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipGraph.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipTimeline.js"></script>
@@ -80,6 +81,10 @@
 				style="display: block; position: static; margin-bottom: 5px;">
 				      <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
 			</ul>
+		</div>
+		<div id="filterDiv">
+			<div id="filterDivTitle"><span id="filterDivTitleText">Filter by Nodes/Relationships</span><a data-toggle="collapse" + data-target="#filterDivMenu" class="expandCollapse">-</a></div>
+			<div class="collapse in" id="filterDivMenu" ></div>
 		</div>
 		<div id="contentDiv">
 			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
@@ -133,6 +138,7 @@
   
   <script id="graphContextMenuTemplate" type="text/template">
       <li id="toggleFix"><a tabindex="-1" href="#"></a></li>
+      <li id="showLabels"><a tabindex="-1" href="#"></a></li>
       <li id="hideNode"><a tabindex="-1" href="#">Hide Node</a></li>
   </script>
 
@@ -149,14 +155,22 @@
     </div>
     <button id="unpinAllButton" type="button" class="btn btn-default">Unpin All</button>
     <span class="nav-divider">|</span>
-    <button id="widthPlus" type="button" class="btn btn-default" title="Increase Graph Width">W+</button>
-    <button id="widthMinus" type="button" class="btn btn-default" title="Decrease Graph Width">W-</button>
-    <button id="heightPlus" type="button" class="btn btn-default" title="Increase Graph Height">H+</button>
-    <button id="heightMinus" type="button" class="btn btn-default" title="Decrease Graph Height">H-</button>
+    <table id="graphSizeTable">
+      <tr id="sizePlus">
+        <td><button id="widthPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Width">width+</button></td>
+        <td><button id="heightPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Height">height+</button></td>
+      </tr>
+      <tr id="sizeMinus">
+        <td><button id="widthMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Width">width-</button></td>
+        <td><button id="heightMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Height">height-</button></td>
+      </tr>
+    </table>
     <span class="nav-divider">|</span>
-    <button id="resetGraphButton" type="button" class="btn btn-default">Reset Graph Size</button>
+    <button id="resetGraphButton" type="button" class="btn btn-default" title="Reset Graph">Reset</button>
     <span class="nav-divider">|</span>
-    <button id="freeze" type="button" class="btn btn-default freeze">Freeze Graph</button>
+    <button id="freeze" type="button" class="btn btn-default freeze" title="Freeze Graph">Freeze</button>
+    <span class="nav-divider">|</span>
+    <button id="groupButton" type="button" class="btn btn-default" title="Toggle Grouping Nodes">Ungroup</button>
     </form>
   </script>
   

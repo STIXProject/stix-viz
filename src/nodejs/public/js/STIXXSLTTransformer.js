@@ -23,7 +23,11 @@ $(function () {
 	/** 
 	 * Start the java RPC processor
 	 */
-	instance.run();
+	try {
+		instance.run();
+	} catch (error) {
+		console.log("Error starting java process. Make sure java.exe is on your path if you would like to access the STIX to HTML transform.");
+	}
 
 });
 
@@ -33,14 +37,14 @@ $(function () {
 
 instance.on('message', function(msg){
     console.log('Received a message...');
-    console.log(msg);
+    //console.log(msg);
     console.log("");
 
 });
 
 instance.on('sent', function(msg){
     console.log('Sent a message...');
-    console.log(msg);
+    //console.log(msg);
     console.log("");
 });
 

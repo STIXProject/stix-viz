@@ -23,69 +23,7 @@ relationshipData=null,  // stringified relationship json
 timelineData = null,   // stringified timeline json
 layout=null;
 
-/**
- * Mapping from node type to sections headings in the HTML rendering
- */
-var htmlSectionMap = { 
-	"ThreatActors":"Threat Actors",
-	"TTPs":"TTPs",
-	"Indicators":"Indicators",
-	"Campaigns":"Campaigns",
-	"CoursesOfAction":"Courses of Action",
-	"Incidents":"Incidents",
-	"ExploitTargets":"Exploit Targets",
-	"Observables":"Observables",
-	"Indicator-Sighting" :"Indicator Sighting",
-	"Incident-First_Malicious_Action" :"Incident: First Malicious Action",
-	"Incident-Initial_Compromise" :"Incident: Initial Compromise",
-	"Incident-First_Data_Exfiltration" :"Incident: First Data Exfiltration",
-	"Incident-Incident_Discovery" :"Incident: Incident Discovery",
-	"Incident-Incident_Opened" :"Incident: Incident Opened",
-	"Incident-Containment_Achieved" :"Incident: Containment Achieved",
-	"Incident-Restoration_Achieved" :"Incident: Restoration Achieved",
-	"Incident-Incident_Reported" :"Incident: Incident Reported",
-	"Incident-Incident_Closed" :"Incident: Incident Closed",
-	"Incident-COATaken" :"Incident: COATaken"
-};
 
-/**
- * Mapping from node type to icon names to be used in the tree display
- */
-var typeIconMap = {
-	"ThreatActors" : "threat_actor",
-	"TTPs" : "ttp",
-	"CourseOfAction" : "course_of_action",
-	"CoursesOfAction" : "course_of_action",
-	"AttackPattern" : "attack_patterns",
-	"Indicator" : "indicator",
-	"MalwareBehavior" : "malware",
-	"Observable" : "observable",
-	"Observable-ElectronicAddress" : "observable",
-	"Observable-Email" : "observable",
-	"Observable-IPRange" : "observable",
-	"Indicators" : "indicator",
-	"Campaigns" : "campaign",
-	"campaign" : "campaign",
-	"Observable" : "observable",
-	"Observables" : "observable",
-	"Observable-MD5" : "observable",
-	"Observable-URI" : "observable",
-	"ObservedTTP" : "ttp",
-	"threatActor" : "threat_actor",
-	"UsesTool" : "tool",
-	"Tools" : "tool",
-	"VictimTargeting" : "victim_targeting",
-	"Indicator-Utility" : "indicator",
-	"Indicator-Composite" : "indicator",
-	"Indicator-Backdoor" : "indicator",
-	"Indicator-Downloader" : "indicator",
-	"Incident" : "incident",
-	"Incidents" : "incident",
-	"Exploit" : "exploit_target",
-	"ExploitTarget" : "exploit_target",
-	"ExploitTargets" :  "exploit_target",
-	"top" : "report"
-};
 
 $(function () { 
 	/**
@@ -168,22 +106,28 @@ $(function () {
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
 		reset('view');
 		if (viewType === 'selectView-tree') { 
+			$(filterDiv).hide();
 			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
 			if (relationshipData) { 
 				view.display(relationshipData);
+				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-graph') {
+			$(filterDiv).show();
 			$('#viewName').text('STIX Graph View');
 			view = new StixGraph();
 			if (relationshipData) { 
 				view.display(relationshipData);
+				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-timeline'){
+			$(filterDiv).hide();
 			$('#viewName').text('STIX Timeline View');
 			view = new StixTimeline();
 			if (timelineData) {
 				view.display(timelineData);
+				layout.resizeAll();
 			}
 		};
 
@@ -216,7 +160,6 @@ function addXmlDoc (f) {
 	xmlFilePath = f.path.replace(/\\/g,'\\\\\\\\');
 	xslFilePath = path.resolve("public/xslt/stix_to_html.xsl").replace(/\\/g,'\\\\\\\\');
 	
-	instance.sendXsltRequest(num,xmlFilePath,xslFilePath);
 	
 	// Construct top level menu for displaying HTML view of XML files
 	$('#xmlFileList').append('<li><a id="xmlFile-'+num+'" href="#">'+f.name+'</a></li>');
@@ -225,11 +168,22 @@ function addXmlDoc (f) {
 		doc = xmlDocs[$(this).attr("id").split("-")[1]];
 		if (doc) { 
 			showProcessing();
+			var totalTime = 0;
 			var waitForXslt = setInterval(function () { // wait until xslt processing is complete
 				if (working == 0) { 
 					clearInterval(waitForXslt);
 					endProcessing();
-					showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+					if (typeof doc.html === 'undefined') {  // Transformed the XML to HTML
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+					} else {  // The transform failed
+						showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
+					}
+				} else if (totalTime > 30000) { // wait for max of 30 seconds 
+					clearInterval(waitForXslt);
+					endProcessing();
+					showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML.</h2></div>");
+				} else { 
+					totalTime += 200;
 				}
 			}, 200);
 		} else { 
@@ -237,6 +191,15 @@ function addXmlDoc (f) {
 		}
 		$('#htmlView').scrollTop(0);
     });
+
+	try {
+		instance.sendXsltRequest(num,xmlFilePath,xslFilePath);
+	} catch (exception) { 
+		console.log("error transforming xml: " + exception.message);
+		working = 0;
+	}
+	
+	
 	
 }
 
@@ -244,12 +207,16 @@ function addXmlDoc (f) {
 //  jsonDataObj created by generateJson contains a child for each type of view
 //    child json is stringified into global vars for later use when switching views
 function displayJson(jsonDataObj, viewType) {
+	$.fn.filterDivReset();
+	$(filterDiv).show();
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
 		view.display(relationshipData);
+		layout.resizeAll();
 	} else if (viewType === 'selectView-timeline'){
 		view.display(timelineData);
+		layout.resizeAll();
 	}
 }
 
@@ -295,12 +262,13 @@ function showContext (node,left,top) {
  * @param data The node selected to show HTML
  */
 function showHtmlByContext (node) {
+	var data = null;
 	if(d3.select(node).datum())
         {
-            var data = d3.select(node).datum();
-        }else
+            data = d3.select(node).datum();
+        } else
         {
-            var data = node;
+            data = node;
         }
 	showProcessing();
 	var waitForXslt = setInterval(function () { // wait until xslt processing is complete
@@ -311,7 +279,12 @@ function showHtmlByContext (node) {
 			if (nodeid) {
 				var found = false;
 				$.each(xmlDocs, function (i,entry) {
-					if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
+					if (typeof entry.html === 'undefined') { 
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+						found = true;
+						return false;
+					}
+					else if ($(entry.html).find(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						var objRef = $(".topLevelCategory .expandableContainer[data-stix-content-id='"+nodeid+"']"); 
 						objRef.find('tr').eq(0).addClass("infocus");
@@ -330,7 +303,10 @@ function showHtmlByContext (node) {
 			} else { 
 				var section = htmlSectionMap[data.type];
 				$.each(xmlDocs, function (i,entry) {
-					if ($(entry.html).find("h2 > a:contains('"+section+"')").get(0) != undefined) {
+					if (typeof entry.html === 'undefined') { 
+						showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML. Make sure you have java.exe on your path.</h2></div>");
+						return false;
+					} else if ($(entry.html).find("h2 > a:contains('"+section+"')").get(0) != undefined) {
 						showHtml(new XMLSerializer().serializeToString($(entry.html).find('#wrapper').get(0)));
 						$("h2 > a:contains('"+section+"')").get(0).scrollIntoView();
 						return false;
@@ -424,6 +400,8 @@ function expandSection (node) {
  *  Reset the display when new XML files are loaded
  */
 function reset (context) {
+	$(filterDiv).hide();
+	
 	// If the context is 'all', reset everything because we are loading new XML files
 	if (context === 'all') { 
 		xmlDocs = {};

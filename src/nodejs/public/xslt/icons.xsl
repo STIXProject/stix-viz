@@ -25,50 +25,78 @@
     xmlns:ns_sfw="http://ns.adobe.com/SaveForWeb/1.0/"
     xmlns:ns_custom="http://ns.adobe.com/GenericCustomNamespace/1.0/"
     xmlns:ns_adobe_xpath="http://ns.adobe.com/XPath/1.0/">
+  
+    <xsl:param name="iconReferenceStyleVariable" select="''" />
+    <xsl:param name="iconExternalImageBaseUriVariable" select="''" />
 
+    <xsl:function name="stix:generateIconGeneric">
+    
+      <xsl:param name="class" as="xs:string" />
+      <xsl:param name="baseFilename" as="xs:string" />
+     
+      <div>
+        <xsl:attribute name="class" select="string-join(('itemCategoryIcon', $class), ' ')" />
+        
+        <!--
+          iconReferenceStyle:
+          * inlineLiteralXml
+          * dataUri
+          * relativeUri 
+        -->
+        <xsl:choose>
+          <xsl:when test="$iconReferenceStyleVariable = 'inlineLiteralXml'">
+            <xsl:copy-of select="doc(concat('images/', $baseFilename, '.svg'))" />
+          </xsl:when>
+          
+          <xsl:when test="$iconReferenceStyleVariable = 'dataUri'">
+            <xsl:variable name="base64Data" select="unparsed-text(concat('images/', $baseFilename, '.svg.base64'))" />
+            <img><xsl:attribute name="src" select="concat('data:image/svg+xml;base64,', $base64Data)" /></img>
+          </xsl:when>
+            
+          <xsl:when test="$iconReferenceStyleVariable = 'relativeUri'">
+            <img><xsl:attribute name="src" select="concat($iconExternalImageBaseUriVariable, '/', $baseFilename, '.svg')" /></img>
+          </xsl:when>
+          
+          <xsl:otherwise>(icon reference style parameter set to invalid option</xsl:otherwise>
+        </xsl:choose>
+        
+      </div>
+    </xsl:function>
+    
     <xsl:template name="iconCampaigns">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/campaign.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconCampaigns', 'campaign')" />
     </xsl:template>
+    
     <xsl:template name="iconCOAs">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/course_of_action.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconCoa', 'course_of_action')" />
     </xsl:template>
+
     <xsl:template name="iconDataMarkings">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/data_marking.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconDataMarkings', 'data_marking')" />
     </xsl:template>
+  
     <xsl:template name="iconExploitTargets">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/exploit_target.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconExploitTargets', 'exploit_target')" />
     </xsl:template>
+  
     <xsl:template name="iconIncidents">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/incident.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconIncidents', 'incident')" />
     </xsl:template>
+  
     <xsl:template name="iconIndicators">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/indicator.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconIndicators', 'indicator')" />
     </xsl:template>
+  
     <xsl:template name="iconObservables">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/observable.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconObservables', 'observable')" />
     </xsl:template>
+  
     <xsl:template name="iconThreatActors">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/threat_actor.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconThreatActors', 'threat_actor')" />
     </xsl:template>
+  
     <xsl:template name="iconTTPs">
-      <div class="itemCategoryIcon">
-        <xsl:copy-of select="doc('images/ttp.svg')" />
-      </div>
+      <xsl:copy-of select="stix:generateIconGeneric('iconTTPs', 'ttp')" />
     </xsl:template>
+  
 </xsl:stylesheet>

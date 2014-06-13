@@ -63,6 +63,13 @@
   display: inherit;
 }
 
+.parent .parentborder { 
+	display:none;
+}
+.parent.collapsed .parentborder {
+	display: inherit;
+}
+
 /* For graph view */
 .link path {
   fill: none;
@@ -90,6 +97,11 @@
   font-size: 12px;
 }
 
+.link.label text.linkLabel {
+  display:inherit;
+  text-rendering: optimizeLegibility; 
+}
+
 .link.bold text.linkLabel {
   display:inherit;
   text-rendering: optimizeLegibility; 
@@ -101,4 +113,16 @@ marker.arrow {
 
 marker.arrow.bold {
   fill: #333;
+}
+
+
+.sizeButton { 
+	padding: 0;
+	height: 20px;
+	width: 50px;
+}
+
+#graphSizeTable {
+	vertical-align:middle;
+	display:inline-block;
 }

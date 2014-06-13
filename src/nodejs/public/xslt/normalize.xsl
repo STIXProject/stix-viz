@@ -127,7 +127,7 @@
                 <xsl:attribute name="id"><xsl:value-of select="generate-id(.)" /></xsl:attribute>
             </xsl:if>
             
-            <xsl:variable name="cutOff" select="$isTopLevel or self::cybox:Object or self::cybox:Event or self::cybox:Related_Object 
+            <xsl:variable name="cutOff" select="$isTopLevel or self::cybox:Object or self::cybox:Event 
                 or self::cybox:Associated_Object or self::cybox:Action_Reference or self::cybox:Action or self::cybox:Associated_Object" />
 
             <!-- pull in all the attributes -->
@@ -138,7 +138,7 @@
             <xsl:choose>
                 <xsl:when test="$cutOff and not($isRoot)">
                 <!-- call template applying idref -->
-                    <xsl:message select="local-name(.)"></xsl:message>
+                    <!-- <xsl:message select="local-name(.)"></xsl:message> -->
                     
                     <xsl:if test="not(@id) and not(@idref) and not(@action_id)">
                         <xsl:attribute name="idgen"><xsl:value-of select="true()" /></xsl:attribute>
@@ -207,6 +207,12 @@
     </xsl:template>
 
     <!--
+    <xsl:template match="cybox:*[cybox:Relationship]">
+      
+    </xsl:template>
+    -->
+
+    <!--
     <xsl:template match="stix:TTPs/stix:Kill_Chains/stixCommon:Kill_Chain/stixCommon:Kill_Chain_Phase[@phase_id]" mode="createReference" priority="20.0">
         <xsl:copy copy-namespaces="no">
             <xsl:apply-templates select="@*|node()" mode="createReference" />
@@ -224,6 +230,50 @@
         <!- - <xsl:attribute name="idref" select="fn:data(.)" /> - ->
     </xsl:template>
     -->
+  
+  <xsl:template match="cybox:Related_Object[@id]" mode="cleanup">
+    <xsl:variable name="id" select="fn:data(@id)" />
+    <xsl:variable name="relationshipElement" select="cybox:Relationship" />
+    
+    <cybox:Related_Object>
+      <cybox:Object id="{$id}">
+        <xsl:apply-templates select="node()[not(self::cybox:Relationship)]" mode="cleanup" />
+      </cybox:Object>
+      <xsl:apply-templates select="$relationshipElement" mode="verbatim" />
+    </cybox:Related_Object>
+  </xsl:template>
+  
+  <xsl:template match="cybox:Related_Object[@idref]" mode="cleanup">
+    <xsl:variable name="idref" select="fn:data(@idref)" />
+    <xsl:variable name="relationshipElement" select="cybox:Relationship" />
+    
+    <cybox:Related_Object>
+      <cybox:Object idref="{$idref}">
+        <xsl:apply-templates select="node()[not(self::cybox:Relationship)]" mode="cleanup" />
+      </cybox:Object>
+      <xsl:apply-templates select="$relationshipElement" mode="createReference" />
+    </cybox:Related_Object>
+  </xsl:template>
+  
+  <xsl:template match="/node()" mode="cleanup">
+    <xsl:variable name="e" select="." />
+    <xsl:copy copy-namespaces="no">
+      <xsl:for-each select="fn:in-scope-prefixes(.)">
+        <xsl:variable name="p" select="." />
+        <xsl:namespace name="{$p}" select="fn:namespace-uri-for-prefix($p, $e)" />
+      </xsl:for-each>
+      <!-- <xsl:copy-of select="descendant::*/namespace::*"/> -->
+      <xsl:apply-templates select="@*|node()" mode="cleanup"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  
+  <xsl:template match="@*|node()" mode="cleanup">
+    <xsl:copy copy-namespaces="no">
+      <xsl:apply-templates select="@*|node()" mode="cleanup"/>
+    </xsl:copy>
+  </xsl:template>
+  
 
     <xsl:template match="@*|node()" mode="verbatim">
         <xsl:copy copy-namespaces="no">

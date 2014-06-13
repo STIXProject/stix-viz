@@ -38,8 +38,53 @@ body {
 }
 
 #contentDiv { 
-/* 	width: 100%; */
+	align: right;
 	overflow: hidden;
+}
+
+#filterDivTitle {
+	font: 14px sans-serif;
+	font-weight: bold;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+#filterDiv {
+	float: left;
+	/* height:100%; */
+	background-color: #F0F0F0;
+	border: 1px solid #DDDDDD;
+	border-radius:4px;
+	font: 12px sans-serif;
+	font-weight: bold;
+	margin-left: 5px;
+	margin-top: 5px;
+}
+
+.expandCollapse:hover {
+	cursor:pointer;
+	text-decoration:none;
+}
+.expandCollapse { 
+	padding: 0px 3px;
+}
+
+.entityFilter {
+	display: block;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+.relationshipFilter {
+	display: block;
+	margin-top: 3px;
+	margin-left: 15px;
+}
+
+.expandCollapse
+{
+	font: 20px sans-serif;
+	font-weight: bold;
 }
 
 #initialInstructions {
@@ -73,6 +118,12 @@ nav.navbar {
 #menubar { 
 	overflow:visible;
 	padding: 0;
+	font-size: 14px;
+}
+
+.nav-divider { 
+	color: #bbb;
+	font-size: large;
 }
 
 .nav-divider { 

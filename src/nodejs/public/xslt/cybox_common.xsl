@@ -42,6 +42,7 @@ ikirillov@mitre.org
     
     xmlns:indicator="http://stix.mitre.org/Indicator-2"
     xmlns:incident="http://stix.mitre.org/Incident-1"
+    xmlns:threat-actor='http://stix.mitre.org/ThreatActor-1'
     
     xmlns:coa="http://stix.mitre.org/CourseOfAction-1"
     
@@ -55,6 +56,8 @@ ikirillov@mitre.org
     xmlns:et="http://stix.mitre.org/ExploitTarget-1"
     xmlns:stix='http://stix.mitre.org/stix-1'
     
+    xmlns:campaign="http://stix.mitre.org/Campaign-1"
+    
     xmlns:AddressObject='http://cybox.mitre.org/objects#AddressObject-2'
     xmlns:URIObject='http://cybox.mitre.org/objects#URIObject-2'
     xmlns:EmailMessageObj="http://cybox.mitre.org/objects#EmailMessageObject-2"
@@ -63,206 +66,18 @@ ikirillov@mitre.org
 
     <xsl:output method="html" omit-xml-declaration="yes" indent="yes" media-type="text/html" version="4.0" />
   
+    <!-- <xsl:include href="cybox_util.xsl" /> -->
+    <xsl:include href="cybox_objects.xsl" />
+    <xsl:include href="cybox_objects__customized.xsl" />
+  
+    <xsl:include href="common_top_level_tables.xsl" />
+  
+    <xsl:variable name="separator" select="'&#x25CB;'" />
+    <xsl:variable name="nameValueSeparator" select="':'" />
 
-    <!--
-      Shared function to convert CamelCaseText to standard word formatting.
-    -->
-    <xsl:function name="cybox:camelCase" as="xs:string" >
-        <xsl:param name="arg" as="xs:string?"/> 
-        
-        <xsl:choose>
-            <xsl:when test="matches($arg, '^\p{Ll}+$')">
-                <xsl:sequence select="concat(substring($arg,1,1),replace(substring($arg,2),'(\p{Lu})',concat(' ', '$1')))" />    
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:sequence select="$arg" />
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:function>
-
-    <!--
-      Shared function that is used to calculate what type or title to show in
-      the top level category table, depending on the type of the generic
-      "item" element.
-    -->
-    <xsl:template name="calculateColumn1Content">
-        <xsl:param name="reference" select="()" />
-        <xsl:param name="actualItem" select="()" />
-        
-        <xsl:choose>
-            <xsl:when test="$actualItem/cybox:Observable_Composition">
-                Composition
-            </xsl:when>
-            <xsl:when test="$actualItem/cybox:Event">
-                Event
-            </xsl:when>
-            <xsl:when test="$actualItem/cybox:Object">
-                <xsl:variable name="objectItem" select="$reference/*[@id = fn:data($actualItem/cybox:Object/@idref)]" />
-               
-                <xsl:choose>
-                    <xsl:when test="$objectItem/cybox:Properties/@xsi:type" xml:space="preserve">
-                        <xsl:value-of select="cybox:camelCase(fn:substring-before(fn:local-name-from-QName(fn:resolve-QName($objectItem/cybox:Properties/@xsi:type, $objectItem)),'ObjectType'))" />
-                    </xsl:when>
-                    <xsl:when test="$objectItem/cybox:Properties/@xsi:type and not($objectItem/cybox:Properties/@xsi:type)">
-                        Object (no properties set)
-                    </xsl:when>
-                    <xsl:otherwise>
-                        [Object, no ID]
-                    </xsl:otherwise>
-                </xsl:choose>
-               
-            </xsl:when>
-            
-            <!-- stix -->
-            <xsl:when test="$actualItem[contains(@xsi:type,'IndicatorType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/indicator:Title) then $actualItem/indicator:Title/text() else ('[Indicator, no Title]')" />
-                <xsl:value-of select="$output" />
-            </xsl:when>
-            <xsl:when test="$actualItem[contains(@xsi:type,'ThreatActorType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/indicator:Title) then $actualItem/indicator:Title/text() else ('[ThreatActor, no Title]')" />
-                <xsl:value-of select="$output" />
-            </xsl:when>
-            <xsl:when test="$actualItem[contains(@xsi:type,'TTPType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/ttp:Title) then $actualItem/ttp:Title/text() else ('[TTP, no Title]')" />
-                <xsl:value-of select="$output" />
-            </xsl:when>
-            <xsl:when test="$actualItem[contains(@xsi:type,'COAType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/coa:Type) then $actualItem/coa:Type/text() else ('[TTP, no Type]')" />
-                <xsl:value-of select="$output" />
-            </xsl:when>
-            <xsl:when test="$actualItem[contains(@xsi:type,'IncidentType')]"  xml:space="preserve">
-                <xsl:variable name="output" select="if ($actualItem/coa:Type) then $actualItem/coa:Type/text() else ('[Incident, no Type]')" />
-                <xsl:value-of select="$output" />
-            </xsl:when>
-            <!-- /stix -->
-            <xsl:otherwise>
-                Other
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
-    
-
-    <!--
-      Shared function that is used to calculate what type or title to show in
-      the top level category table, depending on the type of the generic
-      "item" element.
-    -->
-    <xsl:template name="calculateColumn2Content">
-        <xsl:param name="reference" select="()" />
-        <xsl:param name="actualItem" select="()" />
-        
-        <xsl:choose>
-            <!-- stix -->
-            <xsl:when test="$actualItem[contains(@xsi:type,'IndicatorType')]/indicator:Composite_Indicator_Expression">
-                <td>
-                    [Composition]
-                </td>
-            </xsl:when>
-            <xsl:when test="$actualItem[contains(@xsi:type,'IndicatorType')]/indicator:Observable">
-                <td>
-                    <xsl:variable name="observableItem" select="$reference/*[@id = fn:data($actualItem/indicator:Observable/@idref)]" />
-                    <xsl:variable name="output" select="if ($observableItem/cybox:Title) then $observableItem/cybox:Title/text()  else ('[Observable, no Title]')" />
-                    <xsl:value-of select="$output" />
-                </td>
-            </xsl:when>
-            <!-- /stix -->
-            <xsl:otherwise>
-                <td colspan="2">
-                    <xsl:value-of select="./@idref"/>
-                </td>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
-
-    <!--
-      Shared function that is used to calculate what type or title to show in
-      the top level category table, depending on the type of the generic
-      "item" element.
-    -->
-    <xsl:template name="calculateColumn3Content">
-        <xsl:param name="reference" select="()" />
-        <xsl:param name="actualItem" select="()" />
-        
-        <xsl:variable name="currentItem" select="." />
-        <xsl:variable name="actualItem2" select="$reference/*[@id = fn:data($currentItem/@idref)]" />
-        
-        <xsl:choose>
-            <!-- stix -->
-            <xsl:when test="$actualItem2[contains(@xsi:type,'IndicatorType')]">
-                <td>
-                    <xsl:value-of select="$actualItem2/indicator:Type/text()" />
-                </td>
-            </xsl:when>
-            <!-- /stix -->
-            <xsl:otherwise>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
-    
-
-    <!--
-      print one of the "items" (Obserbale, Indicator, TTP, etc) for the top
-      level category table.
-      
-      the same javascript and css logic for expand and collapse that is used
-      for nested indicators and observables is now also used here in the top
-      level category tables.
-    -->
-    <xsl:template name="printGenericItemForTopLevelCategoryTable">
-        <xsl:param name="reference" select="()" />
-        <xsl:param name="normalized" select="()" />
-        <xsl:param name="colCount" select="2" />
-
-        <xsl:variable name="originalItem" select="." />
-        <!--
-        <xsl:message>
-          <processed-item>
-            <context-has-id><xsl:value-of select="exists($originalItem/@id)"></xsl:value-of></context-has-id>
-            <id><xsl:value-of select="fn:data($originalItem/@id)"/></id>
-            <context-has-idref><xsl:value-of select="exists($originalItem/@idref)"></xsl:value-of></context-has-idref>
-            <idref><xsl:value-of select="fn:data($originalItem/@idref)"/></idref>
-            <looked-up>
-              <xsl:copy-of select="$reference/*[@id = fn:data($originalItem/@idref)]" copy-namespaces="no"/>
-            </looked-up>
-          </processed-item>
-        </xsl:message>
-        -->
-        <xsl:variable name="actualItem"  as="element()?" select="if ($originalItem/@id) then ($originalItem) else ($reference/*[@id = fn:data($originalItem/@idref)])" />
-        <xsl:variable name="id" select="fn:data($actualItem/@id)" />
-        <xsl:variable name="expandedContentId" select="generate-id(.)"/>
-        
-        <xsl:variable name="contentVar" select="concat(count(ancestor::node()), '00000000', count(preceding::node()))"/>
-        
-        <tbody class="expandableContainer expandableSeparate collapsed" data-stix-content-id="{$id}">
-            <tr>
-                <td>
-                    <div class="expandableToggle objectReference" onclick="embedObject()toggle(this.parentNode.parentNode.parentNode)">
-                        <xsl:attribute name="onclick">embedObject(this.parentNode.parentNode.parentNode, '<xsl:value-of select="$id"/>','<xsl:value-of select="$expandedContentId"/>');</xsl:attribute>
-                        <xsl:call-template name="calculateColumn1Content">
-                            <xsl:with-param name="reference" select="$reference" />
-                            <xsl:with-param name="actualItem" select="$actualItem" />
-                        </xsl:call-template>
-                    </div>
-                </td>
-                    <xsl:call-template name="calculateColumn2Content">
-                        <xsl:with-param name="reference" select="$reference" />
-                        <xsl:with-param name="actualItem" select="$actualItem" />
-                    </xsl:call-template>
-                    <xsl:call-template name="calculateColumn3Content">
-                        <xsl:with-param name="reference" select="$reference" />
-                        <xsl:with-param name="actualItem" select="$actualItem" />
-                    </xsl:call-template>
-            </tr>
-            <tr>
-                <td colspan="{$colCount}">
-                    <div id="{$expandedContentId}" class="expandableContents">
-                        EXPANDABLE CONTENT HERE
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </xsl:template>
-    
+  
+  
+  
     <!-- REFERENCE: HELP_UPDATE_STEP_1E -->
     <xsl:template name="printObjectForReferenceList">
         <xsl:param name="reference" select="()" />
@@ -435,60 +250,26 @@ ikirillov@mitre.org
   
   
   <xsl:template name="processObservableContents">
-    <xsl:if test="cybox:Title">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>Title</td>
-                        <td>
-                            <xsl:for-each select="cybox:Title">
-                                <xsl:value-of select="."/>
-                            </xsl:for-each>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>              
-    <xsl:if test="not(cybox:Observable_Composition)">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>
-                            <xsl:apply-templates select="cybox:Object|cybox:Event"></xsl:apply-templates>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>
+    <xsl:if test="cybox:Description">
+      <xsl:variable name="contents">
+        <xsl:apply-templates select="cybox:Description" />
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('Description', $contents)" />
+    </xsl:if>  
+    <xsl:if test="cybox:Object|cybox:Event">
+      <xsl:variable name="contents">
+        <xsl:apply-templates select="cybox:Object|cybox:Event" />
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('', $contents)" />
+    </xsl:if>  
     <xsl:if test="cybox:Observable_Composition">
-        <div id="section">
-            <table class="one-column-emphasis">
-                <colgroup>
-                    <col class="oce-first-obs" />
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>Observable Composition</td>
-                        <td>
-                            <xsl:for-each select="cybox:Observable_Composition">
-                                <xsl:call-template name="processObservableCompositionSimple" />
-                            </xsl:for-each>
-                        </td>
-                    </tr>
-                </tbody>
-            </table> 
-        </div>
-    </xsl:if>
+      <xsl:variable name="contents">
+        <xsl:for-each select="cybox:Observable_Composition">
+          <xsl:call-template name="processObservableCompositionSimple" />
+        </xsl:for-each>
+      </xsl:variable>
+      <xsl:copy-of select="stix:printNameValueTable('Observable Composition', $contents)" />
+    </xsl:if>  
   </xsl:template>
     
     <!--
@@ -576,18 +357,18 @@ ikirillov@mitre.org
         </xsl:variable>
       
         <xsl:if test="$relationshipOrAssociationType or $currentObjectType">
-          <xsl:text> &#x25CB; </xsl:text>
+          <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
         <xsl:if test="$relationshipOrAssociationType">
             <xsl:value-of select="$relationshipOrAssociationType/text()" />
-            <xsl:text> &#x25CB; </xsl:text>
+            <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
         <xsl:if test="$currentObjectType">
             <xsl:text> </xsl:text>
             <xsl:value-of select="$currentObjectType" />
-            <xsl:text> &#x25CB; </xsl:text>
+            <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
     </xsl:template>
 
@@ -617,13 +398,13 @@ ikirillov@mitre.org
         
         <xsl:if test="$relationshipOrAssociationType">
             <xsl:value-of select="$relationshipOrAssociationType/text()" />
-            <xsl:text> &#x25CB; </xsl:text>
+            <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
         <xsl:if test="$currentObjectType">
             <xsl:text> </xsl:text>
             <xsl:value-of select="$currentObjectType" />
-            <xsl:text> &#x25CB; </xsl:text>
+            <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
         <xsl:element name="span">
@@ -647,33 +428,59 @@ ikirillov@mitre.org
         <xsl:param name="targetObject"/>
         <xsl:param name="relationshipOrAssociationType" select="''"/>
         <xsl:param name="idref"/>
+        <xsl:param name="reference" tunnel="yes" />
+      
+        <xsl:choose>
+          <xsl:when test="$targetObject">
+            <xsl:variable name="threeColumns" select="cybox:calculateAllColumns($targetObject, $reference)" />
+            
+            <span class="clickableIdref">
+              <xsl:value-of select="$threeColumns[1]" />
+              <xsl:if test="fn:normalize-space($threeColumns[2])"><xsl:value-of select="concat(' ', $separator, ' ')" /></xsl:if>
+              <xsl:value-of select="$threeColumns[2]" />
+              <xsl:if test="fn:normalize-space($threeColumns[3])"><xsl:value-of select="concat(' ', $separator, ' ')" /></xsl:if>
+              <xsl:value-of select="$threeColumns[3]" />
+            </span>
+          </xsl:when>
+          
+          <!--
+            otherwise, target object not found in current document and it
+            should be labeled as external and it should not be expandable.
+          -->
+          <xsl:otherwise>
+            <xsl:value-of select="$idref" />
+            <xsl:text> </xsl:text>
+            <span class="externalLinkWarning">[external]</span>
+          </xsl:otherwise>
+        </xsl:choose>
         
+        <!--
         <xsl:variable name="targetObjectType">
             <xsl:choose>
-                <!-- case 0: targetObject not present -->
+                <!- - case 0: targetObject not present - ->
                 <xsl:when test="not($targetObject)"></xsl:when>
-                <!-- case 1: cybox objects have a cybox:Properties child with an xsi type,
+                <!- - case 1: cybox objects have a cybox:Properties child with an xsi type,
                      or an observable has a child that is an object that has cybox:Properties
-                -->
+                - ->
                 <xsl:when test="($targetObject/cybox:Properties|$targetObject/cybox:*/cybox:Properties)/@xsi:type">
                     <xsl:value-of select="fn:local-name-from-QName(fn:resolve-QName(($targetObject/cybox:Properties|$targetObject/cybox:*/cybox:Properties)/@xsi:type, ($targetObject/cybox:Properties|$targetObject/cybox:*/cybox:Properties)))"/>
                 </xsl:when>
-                <!-- case 2: cybox event with a name  -->
+                <!- - case 2: cybox event with a name  - ->
                 <xsl:when test="$targetObject/cybox:Name|$targetObject/cybox:Event/cybox:Name">
                     <xsl:value-of select="($targetObject/cybox:Name|$targetObject/cybox:Event/cybox:Name)/text()"/>
                 </xsl:when>
-                <!-- case 3: the current item is a cybox event or an observable that contains an event  -->
+                <!- - case 3: the current item is a cybox event or an observable that contains an event  - ->
                 <xsl:when test="$targetObject/cybox:Type|$targetObject/cybox:Event/cybox:Type">
                     <xsl:value-of select="($targetObject/cybox:Type|$targetObject/cybox:Event/cybox:Type)/text()"/>
                 </xsl:when>
-                <!-- catch all -->
+                <!- - catch all - ->
                 <xsl:otherwise></xsl:otherwise>
             </xsl:choose>
         </xsl:variable>
         
         <xsl:if test="$relationshipOrAssociationType">
            <xsl:value-of select="$relationshipOrAssociationType/text()" />
-           <xsl:text> &#x25CB; </xsl:text>
+           <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
         <xsl:if test="not($targetObject)">
@@ -683,15 +490,16 @@ ikirillov@mitre.org
         <xsl:if test="$targetObjectType">
             <xsl:text> </xsl:text>
             <xsl:value-of select="$targetObjectType" />
-            <xsl:text> &#x25CB; </xsl:text>
+            <xsl:value-of select="concat(' ', $separator, ' ')" />
         </xsl:if>
         
-        <!-- THIS IS THE MAIN LINK TEXT -->
-        <xsl:if test="$idref!='[No ID]'">"</xsl:if>
-        <xsl:value-of select="$idref"/>
-        <xsl:if test="$idref!='[No ID]'">"</xsl:if>
+        <!- - THIS IS THE MAIN LINK TEXT - ->
+        <!- - <xsl:if test="$idref!='[No ID]'">"</xsl:if> - ->
+        <!- - <xsl:value-of select="$idref"/> - ->
+        <!- - <xsl:if test="$idref!='[No ID]'">"</xsl:if> - ->
 
         <xsl:text> </xsl:text>
+        -->
         
     </xsl:template>
 
@@ -822,16 +630,40 @@ ikirillov@mitre.org
       objects).
     -->
     <xsl:template match="cybox:Related_Objects|cybox:Associated_Objects|ttp:Related_TTPs">
+        <xsl:param name="reference" as="node()*" tunnel="yes" />
         <xsl:variable name="relatedOrAssociated" select="if (local-name() = 'Related_Objects') then ('related') else if (local-name() = 'Associated_Objects') then ('associated') else ('other')" />
         <xsl:variable name="relatedOrAssociatedCapitalized" select="if (local-name() = 'Related_Objects') then ('Related') else if (local-name() = 'Associated_Objects') then ('Associated') else ('Other')" />
+        
+      
         <div class="container {$relatedOrAssociated}Objects">
             <div class="heading {$relatedOrAssociated}Objects">
                 <xsl:value-of select="$relatedOrAssociatedCapitalized"/> Objects
             </div>
             <div class="contents {$relatedOrAssociated}Objects">
-                <xsl:apply-templates select="cybox:Related_Object|cybox:Associated_Object|ttp:Related_TTP"></xsl:apply-templates>
+              <xsl:for-each select="cybox:Related_Object|cybox:Associated_Object|ttp:Related_TTP">
+                <xsl:variable name="currentId" select="fn:data(./@idref)" />
+                <xsl:variable name="r" select="$reference/*[@id=$currentId]" />
+                <div class="debug">
+                  <div>BEFORE</div>
+                  <div>IDREF: <xsl:value-of select="$currentId" /></div>
+                  <div>REFERENCE COUNT: <xsl:value-of select="count($reference)" /></div>
+                  <div>R COUNT: <xsl:value-of select="count($r)" /></div>
+                  <div>CURRENT NAME: <xsl:value-of select="local-name(.)" /></div>
+                  <div>CONTEXT CHILD NAMES: <xsl:value-of select="fn:string-join((for $c in ./* return name($c)), ', ')" /></div>
+                  <div>R CHILD NAMES: <xsl:value-of select="fn:string-join((for $c in $r/* return name($c)), ', ')" /></div>
+                  <div>ONE: <xsl:apply-templates select="./cybox:Relationship/text()" /> </div>
+                  <div>TWO: <xsl:value-of select="$r/cybox:Relationship/text()" /> </div>
+                </div>
+                <xsl:apply-templates select="." />
+              </xsl:for-each>
+              <!-- <xsl:apply-templates select="cybox:Related_Object|cybox:Associated_Object|ttp:Related_TTP" /> -->
             </div>
         </div>
+    </xsl:template>
+  
+    <xsl:template match="cybox:Related_Object">
+      <xsl:apply-templates select="cybox:Relationship" />
+      <xsl:apply-templates select="cybox:Object" />
     </xsl:template>
 
   <!--
@@ -842,7 +674,7 @@ ikirillov@mitre.org
     See also the similar template in cybox_common.xsl.
   -->
   <!-- REFERENCE: HELP_UPDATE_STEP_3 -->
-  <xsl:template match="cybox:Object[@idref]|cybox:Event[@idref]|cybox:Related_Object[@idref]|cybox:Associated_Object[@idref]|stixCommon:Course_Of_Action[@idref]|stix:Course_Of_Action[@idref]|cybox:Action[@idref]|cybox:Action_Reference[@idref]">
+  <xsl:template match="cybox:Object[@idref]|cybox:Event[@idref]|cybox:Related_Object[@idref]|cybox:Associated_Object[@idref]|stixCommon:Course_Of_Action[@idref]|stix:Course_Of_Action[@idref]|cybox:Action[@idref]|cybox:Action_Reference[@idref]|indicator:Related_Campaign[@idref]|et:Exploit_Target[@idref]|stixCommon:Exploit_Target[@idref]">
       <!-- [object link here - - <xsl:value-of select="fn:data(@idref)" />] -->
     
       <xsl:variable name="idGen">
@@ -876,13 +708,17 @@ ikirillov@mitre.org
        It also prints out either original inline objects (with an id) or object references (with and idref).
     -->
     <!--<xsl:template match="cybox:Object[@id]|cybox:Event[@id]|cybox:Related_Object[@id]|cybox:Associated_Object[@id]|cybox:Action_Reference[@id]">-->
-    <xsl:template match="cybox:Object|cybox:Event|cybox:Related_Object|cybox:Associated_Object|cybox:Action_Reference">
+    <!-- <xsl:template match="cybox:Object|cybox:Event|cybox:Related_Object|cybox:Associated_Object|cybox:Action_Reference"> -->
+    <xsl:template match="cybox:Object|cybox:Event|cybox:Associated_Object|cybox:Action_Reference">
         <xsl:variable name="localName" select="local-name()"/>
         <xsl:variable name="identifierName" select="if ($localName = 'Object') then 'object' else if ($localName = 'Event') then 'event' else if ($localName = 'Related_Object') then 'relatedObject' else if ($localName = 'Associated_Object') then 'associatedObject' else ''" />
         <xsl:variable name="friendlyName" select="fn:replace($localName, '_', ' ')" />
         <xsl:variable name="headingName" select="fn:upper-case($friendlyName)" />
       
         <div class="debug">NOT THERE</div>
+      
+        <!-- <xsl:apply-templates select="cybox:Relationship|cybox:Association_Type" /> -->
+      
         
         <div class="container {$identifierName}Container {$identifierName}">
             <div class="contents {$identifierName}Contents {$identifierName}">
@@ -996,7 +832,7 @@ ikirillov@mitre.org
         </div>
     </xsl:template>
   
-  <xsl:template match="cybox:Relationship">
+  <xsl:template match="cybox:Relationship[not(../self::cybox:Related_Object)]">
     <xsl:variable name="localName" select="local-name()"/>
     <xsl:variable name="identifierName" select="cybox:elementLocalNameToIdentifier($localName)" />
     <xsl:variable name="friendlyName" select="fn:replace($localName, '_', ' ')" />
@@ -1057,23 +893,14 @@ ikirillov@mitre.org
       This is customizable by writing custom templates for specific properties.
     -->
     <xsl:template match="cybox:Properties|ttp:Behavior|ta:Identity|ta:Type|ta:Motivation|et:Vulnerability|stixCommon:Course_Of_Action|stix:Course_Of_Action">
-        <fieldset>
-            <legend>
-                <xsl:if test="./self::cybox:Properties">cybox properties</xsl:if>
-                <xsl:if test="./self::ttp:Behavior">behavior</xsl:if>
-                <xsl:if test="./self::ta:Identity">identity</xsl:if>
-                <xsl:if test="./self::ta:Type">type</xsl:if>
-                <xsl:if test="./self::ta:Motivation">motivation</xsl:if>
-                <xsl:if test="./self::et:Vulnerability">vulnerability</xsl:if>
-                <xsl:if test="./self::stixCommon:Course_Of_Action|./self::stix:Course_Of_Action">course of action</xsl:if>
-                <xsl:if test="@xsi:type">
-                    (type: <xsl:value-of select="local-name-from-QName(fn:resolve-QName(fn:data(@xsi:type), .))"/>)
-                </xsl:if>
-              <xsl:apply-templates select="@*[not((fn:QName(namespace-uri(), local-name()) = fn:QName('http://www.w3.org/2001/XMLSchema-instance', 'type')) or (fn:QName(namespace-uri(), local-name()) = fn:QName('', 'id')))]" mode="cyboxProperties" />
-            </legend>
-            <xsl:apply-templates select="*" mode="cyboxProperties"></xsl:apply-templates>
-            
-        </fieldset>
+      <div class="cyboxPropertiesStyleContainer">
+        <div class="cyboxPropertiesStyleConstraints">
+          <xsl:apply-templates select="@*[not((fn:QName(namespace-uri(), local-name()) = fn:QName('http://www.w3.org/2001/XMLSchema-instance', 'type')) or (fn:QName(namespace-uri(), local-name()) = fn:QName('', 'id')))]" mode="cyboxProperties" />
+        </div>
+        <div class="cyboxPropertiesStyleDetails">
+          <xsl:apply-templates select="*" mode="cyboxProperties" />
+        </div>
+      </div>
     </xsl:template>
 
     <!--
@@ -1107,69 +934,25 @@ ikirillov@mitre.org
         </div>
     </xsl:template>
   
-    <xsl:template match="text()[../self::*:Description[@structuring_format='HTML5']]" mode="cyboxProperties">
+    <!--
+      template for formatting any Descriptions that contain HTML5 text
+      
+      the original html content is written to a data-* attribute on a div, and
+      then later on when the page is loaded the html content is parsed and
+      inserted into the page's dom.
+    -->
+    <xsl:template match="text()[../self::*:Description[@structuring_format='HTML5']]" mode="cyboxProperties #default">
       <xsl:variable name="content" select="fn:data(.)" />
       <div class="htmlContainer" data-stix-content="{$content}" />
     </xsl:template>
   
     <!--
-      Output hash value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="Common:Hash" mode="cyboxProperties">
-        <div class="container cyboxPropertiesContainer cyboxProperties">
-            <span class="cyboxPropertiesName"><xsl:value-of select="local-name()"/> </span>
-            <span class="cyboxPropertiesValue">
-                <xsl:value-of select="./Common:Type"/> = 
-                <xsl:value-of select="./Common:Simple_Hash_Value|./Common:Fuzzy_Hash_Value"/>
-            </span>            
-        </div>
-    </xsl:template>
-
-    <!--
-      Output URI & Link value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="cybox:Properties[contains(@xsi:type,'URIObjectType')]|cybox:Properties[contains(@xsi:type,'LinkObjectType')]">
-        <fieldset>
-            <legend>URI</legend>
-            <div class="container cyboxPropertiesContainer cyboxProperties">
-                <div class="heading cyboxPropertiesHeading cyboxProperties">
-                    <xsl:apply-templates select="URIObject:Value" mode="cyboxProperties" />
-                </div>
-            </div>
-        </fieldset>
-    </xsl:template>
-    <xsl:template match="URIObject:Value" mode="cyboxProperties">
-        Value <xsl:value-of select="Common:Defanged(@is_defanged, @defanging_algorithm_ref)" />
-        <xsl:choose>
-            <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-            <xsl:otherwise> = </xsl:otherwise>
-        </xsl:choose>
-        <xsl:value-of select="." />
-    </xsl:template>
-
-    <!--
-      Output Port value without unnecessary nested schema tree structure
-    -->
-    <xsl:template match="*:Port[contains(@xsi:type,'PortObjectType')]|*:Port[./*:Port_Value]" mode="cyboxProperties">
-        <div class="container cyboxPropertiesContainer cyboxProperties">
-            <div class="heading cyboxPropertiesHeading cyboxProperties">
-                Port <xsl:choose>
-                    <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-                    <xsl:otherwise> = </xsl:otherwise>
-                </xsl:choose>
-                <xsl:value-of select="." />
-            </div>
-        </div>
-    </xsl:template>
-    
-    <!--
       Output Address value without unnecessary nested schema tree structure
+      
+      See also: templates in cybox_objects.xsl for
+        * <cybox:Properties xsi:type="AddressObject:AddressObjectType" /> and
+        * <AddressObject:Address_Value />
     -->
-    <xsl:template match="cybox:Properties[contains(@xsi:type,'AddressObjectType')]">
-        <xsl:call-template name="Common:Address">
-            <xsl:with-param name="context" select="."/>
-        </xsl:call-template>
-    </xsl:template>
     <xsl:template match="*:IP_Address" mode="cyboxProperties">
         <xsl:call-template name="Common:Address">
             <xsl:with-param name="context" select="."/>
@@ -1200,35 +983,6 @@ ikirillov@mitre.org
             </xsl:otherwise>
         </xsl:choose>
     </xsl:function>
-    <xsl:template match="AddressObject:Address_Value" mode="cyboxProperties">
-        Address <xsl:value-of select="Common:Defanged(@is_defanged, @defanging_algorithm_ref)" />
-        <xsl:choose>
-            <xsl:when test="@condition!=''"><xsl:value-of select="Common:ConditionType(@condition)" /></xsl:when>
-            <xsl:otherwise> = </xsl:otherwise>
-        </xsl:choose>
-        <xsl:value-of select="." />
-    </xsl:template>
-    <xsl:function name="Common:ConditionType">
-        <xsl:param name="condition" />
-        <xsl:choose>
-            <xsl:when test="$condition='Equals'"> = </xsl:when>
-            <xsl:when test="$condition='DoesNotEqual'"> != </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$condition" />: 
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:function>
-    <xsl:function name="Common:Defanged">
-        <xsl:param name="is_defanged" />
-        <xsl:param name="defanging_algorithm_ref" />
-        <xsl:if test="$is_defanged='true'">
-            (defanged 
-            <xsl:if test="$defanging_algorithm_ref!=''">
-                with <xsl:value-of select="$defanging_algorithm_ref" />
-            </xsl:if>
-            )
-        </xsl:if>
-    </xsl:function>
     
     <!--
       default template for outputting hierarchical cybox:Properties names/values/constraints
@@ -1239,7 +993,7 @@ ikirillov@mitre.org
                 <span class="cyboxPropertiesName"><xsl:value-of select="local-name()"/> </span>
                 <span class="cyboxPropertiesConstraints"><xsl:apply-templates select="@*[not(node-name(.) = fn:QName('', 'id')) and not(node-name(.) = fn:QName('', 'idref')) and not(node-name(.) = fn:QName('', 'object_reference'))][not(node-name(.) = fn:QName('http://www.w3.org/2001/XMLSchema-instance', 'type'))]" mode="#current"/></span>
                 <xsl:if test="text()">
-                    <span class="cyboxPropertiesNameValueSeparator"> &#x2192; </span>
+                    <span class="cyboxPropertiesNameValueSeparator"><xsl:value-of select="concat(' ', $nameValueSeparator, ' ')" /></span>
                 </xsl:if>
                 <span class="cyboxPropertiesValue">
                     <xsl:apply-templates select="text()" mode="#current"/>
@@ -1327,12 +1081,16 @@ ikirillov@mitre.org
     <div class="nameValueTable">
       <table class="one-column-emphasis indicator-sub-table">
         <colgroup>
-          <col class="oce-first-obs heading-column" />
+          <xsl:if test="$title">
+            <col class="oce-first-obs heading-column" />
+          </xsl:if>
           <col class="details-column" />
         </colgroup>
         <tbody>
           <tr>
-            <td><xsl:value-of select="$title" /></td>
+            <xsl:if test="$title">
+              <td><xsl:value-of select="$title" /></td>
+            </xsl:if>
             <td>
               <xsl:copy-of select="$value"/>
             </td>
@@ -1341,5 +1099,6 @@ ikirillov@mitre.org
       </table> 
     </div>
   </xsl:function>
+    
   
 </xsl:stylesheet>
