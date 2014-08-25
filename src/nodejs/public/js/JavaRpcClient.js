@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * A client that talks with a Java program which is emitting a simple JSON based 

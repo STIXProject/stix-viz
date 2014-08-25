@@ -133,7 +133,7 @@ $(function () {
 
 	});
 
-
+      
 	/**
 	 * If there's a context menu open, you can hide it by clicking somewhere else in the document
 	 */
@@ -212,9 +212,11 @@ function displayJson(jsonDataObj, viewType) {
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
+                $(filterDiv).show();
 		view.display(relationshipData);
 		layout.resizeAll();
 	} else if (viewType === 'selectView-timeline'){
+                $(filterDiv).hide();
 		view.display(timelineData);
 		layout.resizeAll();
 	}
