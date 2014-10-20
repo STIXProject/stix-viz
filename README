@@ -248,10 +248,13 @@ On other platforms follow the instructions from https://github.com/rogerwang/nod
 
 -- Runnning from Binary Executable --
 
-A pre-packaged Windows executable is available from the GitHub release page at 
-https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro_Windows.zip. To run this pre-packaged
-executable, extract all of the files included in the zip file into a directory and double click the 
-file StixViz.exe. 
+A pre-packaged Windows 7 executable is available from the GitHub release page at 
+https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro_Windows_java7.zip
+
+A pre-packaged Windows 8 executable is available from the GitHub release page at 
+https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro_Windows_Java8.zip
+
+To run the pre-packaged Windows executable, extract all of the files included in the zip file into a directory and double click the file StixViz.exe. 
 
 A pre-packaged Mac OSX executable can be downloaded from https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixViz_Mac.zip.
 Extract StixViz.app from the zip file. 

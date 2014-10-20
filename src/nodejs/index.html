@@ -58,7 +58,7 @@
 <script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipGraph.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipTimeline.js"></script>
-<script type="text/javascript" src="./public/js/STIXViz.js"></script>
+<script type="text/javascript" src="./public/js/StixViz.js"></script>
 <script type="text/javascript" src="./public/js/STIXJsonGeneration.js"></script>
 <script type="text/javascript" src="./public/js/STIXRelationshipJson.js"></script>
 <script type="text/javascript" src="./public/js/STIXTimelineJson.js"></script>
@@ -68,10 +68,16 @@
 <script type="text/javascript" src="./public/xslt/common.js"></script> 
 <script type="text/javascript" src="./public/xslt/wgxpath.install.js"></script> 
 
+
+
+<script>
+var fs = require('fs');    
+</script>
+
 </head>
 <body>
 
-
+        <canvas id="jcanvas" width="500" height="500"></canvas> 
 
 	<div class="ui-layout-center" id="viewContainer">
 		<div id="jsonOutput"></div>
@@ -86,7 +92,7 @@
 			<div id="filterDivTitle"><span id="filterDivTitleText">Filter by Nodes/Relationships</span><a data-toggle="collapse" + data-target="#filterDivMenu" class="expandCollapse">-</a></div>
 			<div class="collapse in" id="filterDivMenu" ></div>
 		</div>
-		<div id="contentDiv">
+		<div id="contentDiv" style="overflow: auto">
 			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
 			<!--  leave for debugging purposes -->
 		</div>
