@@ -29,6 +29,10 @@ function createSingleTTPJson(ttp, etBottomUpInfo, relationship) {
     if (ttpChildren.length > 0) {
         ttpJson["children"] = ttpChildren;
     }
+	var killChainPhases = xpFind('.//ttp:Kill_Chain_Phases/stixCommon:Kill_Chain_Phase', ttp);
+	if (killChainPhases.length > 0) {
+		ttpJson["kill_chain_phases"] = getKillChainPhaseIds(killChainPhases);
+	}
     return ttpJson;
 }
 

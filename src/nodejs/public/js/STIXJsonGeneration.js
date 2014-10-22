@@ -33,6 +33,8 @@ function generateJsonForFiles(inputFiles, viewType, callback) {
 	var relTopLevelObjects = null;
 	var relTopLevelNodes = null;
 	var timeTopLevelObjects = null;
+	var killChainObjects = null;
+	var killChainInfo = {};
 	
 	var relTopNodeName = $.map(inputFiles,function (f) {
 		return f.name;
@@ -51,6 +53,7 @@ function generateJsonForFiles(inputFiles, viewType, callback) {
 	        
 	        // gather top level objects from xml
 	        relTopLevelObjects = gatherRelationshipTopLevelObjs(xml, relTopLevelObjects);
+	        killChainObjects = gatherKillChainObjs(xml, killChainObjects);
 	        timeTopLevelObjects = gatherTimelineTopLevelObjs(xml, timeTopLevelObjects);
 	        
 	        deferred.resolve();
@@ -74,12 +77,13 @@ function generateJsonForFiles(inputFiles, viewType, callback) {
 	$.when.apply(null, deferreds)
 		.then(
 			function () {
-                
+                killChainInfo = processKillChainObjs(killChainObjects);
+				
                 // done collecting from files, start processing objects
 				relTopLevelNodes = processTopLevelObjects(relTopLevelObjects, relTopLevelNodes);
 
 				// create the json for the relationship views (tree and graph)
-				jsonRelationshipObj = createRelationshipJson(jsonRelationshipObj, relTopLevelNodes, relTopNodeName);
+				jsonRelationshipObj = createRelationshipJson(jsonRelationshipObj, relTopLevelNodes, relTopNodeName, killChainInfo);
 				jsonTimelineObj = createTimelineJson(timeTopLevelObjects);
 				
 				jsonObj["relationshipData"] = jsonRelationshipObj;

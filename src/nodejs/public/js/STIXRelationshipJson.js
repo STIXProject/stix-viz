@@ -30,7 +30,7 @@ function createStixChildren(objNodes, parentName) {
 
 // main report JSON creation - add grouping node and children for each top level entity type
 // top level nodes: Threat Actor, TTP, Campaign, Incident, Indicator, Exploit, Course of Action, Observable
-function createRelationshipJson(jsonObj, topLevelNodes, topNodeName) {
+function createRelationshipJson(jsonObj, topLevelNodes, topNodeName, killChainInfo) {
     var reportChildren = [];
     var topLevelChild = null;
 
@@ -68,6 +68,7 @@ function createRelationshipJson(jsonObj, topLevelNodes, topNodeName) {
     }
 
 	jsonObj["name"] = topNodeName;
+	jsonObj["killChains"] = killChainInfo;
     jsonObj['children'] = reportChildren;
     return jsonObj;
 }
@@ -248,6 +249,10 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
 		}
 		if (indiChildren.length > 0) {
 			childJson["children"] = indiChildren;
+		}
+		var killChainPhases = xpFind('.//indicator:Kill_Chain_Phases/stixCommon:Kill_Chain_Phase', indi);
+		if (killChainPhases.length > 0) {
+			childJson["kill_chain_phases"] = getKillChainPhaseIds(killChainPhases);
 		}
 	    if (typeof(subTypeMap[subType]) == 'undefined') {
 	    	subTypeMap[subType] = [childJson];

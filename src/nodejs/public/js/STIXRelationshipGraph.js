@@ -41,6 +41,7 @@ var StixGraph = function () {
 
 	report.hiddenRelationships = {};
 	report.hiddenNodes = {};
+	report.hiddenKCPhases = {};
 
 //	var xmlDocs = {}, docIndex = 0;
 
@@ -264,6 +265,7 @@ var StixGraph = function () {
 		report = $.parseJSON(jsonString);
 		report.hiddenRelationships = {};
 		report.hiddenNodes = {};
+		report.hiddenKCPhases = {};
 		
 		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
@@ -323,6 +325,16 @@ var StixGraph = function () {
 			report.hiddenRelationships[entity.toLowerCase()] = {};
 			report.hiddenRelationships[entity.toLowerCase()][r] = true;
 		}
+		update();
+	};
+	
+	_self.addNodesFromKillChainPhase = function(phase_id) {
+		report.hiddenKCPhases[phase_id] = false;
+		update();
+	};
+	
+	_self.removeNodesFromKillChainPhase = function(phase_id) {
+		report.hiddenKCPhases[phase_id] = true;
 		update();
 	};
 
@@ -963,6 +975,11 @@ var StixGraph = function () {
 					// Remove the duplicate child and replace it with the existing ref node 
 					nodes[parent].children.splice(childPos,1,ref);
 				}
+				
+				// add kill chain phases
+				if (node.kill_chain_phases) {
+					ref.kill_chain_phases = node.kill_chain_phases;
+				}
 
 				var relationship = null;
 				if (node.relationship && parent) { 
@@ -1019,7 +1036,8 @@ var StixGraph = function () {
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
 
-				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships)) {			
+				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships) 
+						&& !hiddenKCPhase(node, report.hiddenKCPhases)) {			
 				nodes.push(node);
 				pos = nodes.length-1;
 				if (node.children) { 
@@ -1033,6 +1051,18 @@ var StixGraph = function () {
 			}
 			}
 
+		}
+		
+		function hiddenKCPhase(node, hiddenKCPhases) {
+			var hidden = false;
+			if (typeof node["kill_chain_phases"] != 'undefined') {
+				$.each(node["kill_chain_phases"], function(index, phaseid) {
+					if (phaseid in hiddenKCPhases) {
+						hidden = true;
+					}
+				});
+			}
+			return hidden;
 		}
 		
 		function addLinkToParent(node,parent,pos) {
@@ -1124,6 +1154,7 @@ var StixGraph = function () {
 			$.fn.filterDivReset();
 			report.hiddenNodes = {};
 			report.hiddenRelationships = {};
+			report.hiddenKCPhases = {};
 
 			// collapse all children after the top level
 			if (showGrouping) {

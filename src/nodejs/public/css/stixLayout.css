@@ -69,13 +69,13 @@ body {
 	padding: 0px 3px;
 }
 
-.entityFilter {
+.entityFilter, .killChainFilter {
 	display: block;
 	margin-top: 5px;
 	margin-left: 5px;
 }
 
-.relationshipFilter {
+.relationshipFilter, .kcPhaseFilter {
 	display: block;
 	margin-top: 3px;
 	margin-left: 15px;

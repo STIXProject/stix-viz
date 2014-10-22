@@ -21,9 +21,8 @@ viewType = null,
 jsonDataObj = null,  // json returned from generateJson
 relationshipData=null,  // stringified relationship json
 timelineData = null,   // stringified timeline json
-layout=null;
-
-
+layout=null,
+viewKillChains = {};
 
 $(function () { 
 	/**
@@ -64,7 +63,7 @@ $(function () {
 		} 			
 	});
 	
-	viewType = "selectView-graph";   // Default to tree view
+	viewType = "selectView-graph";   // Default to graph view
 	view = new StixGraph();  
 	
 
@@ -208,6 +207,8 @@ function addXmlDoc (f) {
 //    child json is stringified into global vars for later use when switching views
 function displayJson(jsonDataObj, viewType) {
 	$.fn.filterDivReset();
+	viewKillChains = jsonDataObj["relationshipData"]['killChains'];
+	addKillChainFilters();
 	$(filterDiv).show();
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
