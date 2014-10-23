@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the top level invocation of STIXViz.   It is invoked when the file is loaded by
@@ -1057,7 +1057,7 @@ var StixGraph = function () {
 			var hidden = false;
 			if (typeof node["kill_chain_phases"] != 'undefined') {
 				$.each(node["kill_chain_phases"], function(index, phaseid) {
-					if (phaseid in hiddenKCPhases) {
+					if (hiddenKCPhases[phaseid]) {
 						hidden = true;
 					}
 				});

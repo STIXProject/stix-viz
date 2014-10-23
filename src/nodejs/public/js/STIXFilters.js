@@ -102,9 +102,10 @@ function toggleRelationshipFilter(entity, relationship) {
 
 function toggleKillChainFilter(kcid) {
 	var phases = viewKillChains[kcid]['phases'];
-	if ($('#' + kcid + 'KillChain').prop('checked')) {
+	if ($('#' + kcid.replace( /(:|\.|\[|\])/g, "\\$1" ) + 'KillChain').prop('checked')) {
 		if ($(phases).length > 0) {
 			$.each(phases, function(index, phase) {
+				$('#' + phase.phase_id.replace( /(:|\.|\[|\])/g, "\\$1" ) + 'kcPhaseFilter').prop('checked',true);
 				view.addNodesFromKillChainPhase(phase['phase_id']);
 			});
 		}
@@ -112,6 +113,7 @@ function toggleKillChainFilter(kcid) {
 	else {
 		if ($(phases).length > 0) {
 			$.each(phases, function(index, phase) {
+				$('#' + phase.phase_id.replace( /(:|\.|\[|\])/g, "\\$1" ) + 'kcPhaseFilter').prop('checked',false);
 				view.removeNodesFromKillChainPhase(phase['phase_id']);
 			});
 		}
@@ -119,7 +121,7 @@ function toggleKillChainFilter(kcid) {
 }
 
 function toggleKCPhaseFilter(phase_id) {
-	if ($('#' + phase_id + 'kcPhaseFilter').prop('checked')) {
+	if ($('#' + phase_id.replace( /(:|\.|\[|\])/g, "\\$1" ) + 'kcPhaseFilter').prop('checked')) {
 		view.addNodesFromKillChainPhase(phase_id);
 	}
 	else {
