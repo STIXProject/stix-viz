@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 ï¿½ The MITRE Corporation
+ * Copyright (c) 2013 – The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * A client that talks with a Java program which is emitting a simple JSON based 
@@ -46,7 +46,7 @@ var JavaRpcClient = function() {
 
     // The location of java and the jar file - we're making these public because maybe
     // we want to change them in the user of this module.
-    _self.javaPath  = 'java';
+    _self.javaPath  = './java';
     _self.jarPath   = './dist/NodeRpc.jar';
     _self.verbose   = true;
 

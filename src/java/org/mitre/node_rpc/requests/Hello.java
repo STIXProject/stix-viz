@@ -35,7 +35,9 @@ public class Hello extends RequestMessage {
         if(!NodeRpc.APP_VERSION.equals(version)) {
             response = new Error(new Exception("Client does not match expected version " + NodeRpc.APP_VERSION));
         } else {
-            response = new Info("Ready to receive requests.");
+            String javaVersion = System.getProperty("java.version");
+            String javaHome = System.getProperty("java.home");
+            response = new Info("Java " + javaVersion + " (" + javaHome + "): Ready to receive requests.");
         }
         
         response.send();

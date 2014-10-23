@@ -68,6 +68,7 @@ instance.on('Hello', function(msg) {
 
 instance.on('Info', function(msg){
     console.log("I received some special info ...");
+    alert(msg.message);
     console.log(msg.message);
     console.log("");
 });

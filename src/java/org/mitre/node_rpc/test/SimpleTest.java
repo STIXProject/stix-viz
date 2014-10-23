@@ -33,6 +33,7 @@ import org.mitre.node_rpc.requests.Echo;
 import org.mitre.node_rpc.requests.Goodbye;
 import org.mitre.node_rpc.requests.ProcessXslt;
 import org.mitre.node_rpc.responses.Hello;
+import org.mitre.node_rpc.responses.Error;
 import org.mitre.node_rpc.responses.Info;
 import org.mitre.node_rpc.responses.XsltResponse;
 
