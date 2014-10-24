@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2013 ï¿½ The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the top level invocation of STIXViz.   It is invoked when the file is loaded by
@@ -867,7 +867,7 @@ var StixGraph = function () {
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
 	 */
 	function isGroupingNode(d) { 
-		return d.grouping;// || d.type === 'top';
+		return d.grouping || d.type === 'top';
 	}
 
 	/**
@@ -1005,7 +1005,7 @@ var StixGraph = function () {
 			var pos = 0;
 
 			// don't show root or grouping nodes
-			if (!showGrouping && isGroupingNode(node)) {
+			if (!showGrouping && (isGroupingNode(node) || node.id === 0)) {
 				if (node.children) { 
 					node.children.forEach(function (n) { 
 						recurse(n,parent);
@@ -1039,17 +1039,13 @@ var StixGraph = function () {
 			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
-					if (showGrouping || parent != 0) { 
-						relationship = node.parents[nodes[parent].id].relationship;
-						linkType = node.parents[nodes[parent].id].linkType;
-						// don't push if report.hiddenRelationships[entity][relationships]==true
-						var entity = node.parents[nodes[parent].id].node.type.toLowerCase();
-						if (!(entity in report.hiddenRelationships) ||
-								!(relationship in report.hiddenRelationships[entity])) {
-							links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
-						}
-					} else { 
-						links.push({source:parent,target:pos,relationship:null,linkType:'topLevel'});
+					relationship = node.parents[nodes[parent].id].relationship;
+					linkType = node.parents[nodes[parent].id].linkType;
+					// don't push if report.hiddenRelationships[entity][relationships]==true
+					var entity = node.parents[nodes[parent].id].node.type.toLowerCase();
+					if (!(entity in report.hiddenRelationships) ||
+							!(relationship in report.hiddenRelationships[entity])) {
+						links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 					}
 				}
 			}
