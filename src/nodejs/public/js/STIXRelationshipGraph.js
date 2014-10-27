@@ -1056,11 +1056,15 @@ var StixGraph = function () {
 		function hiddenKCPhase(node, hiddenKCPhases) {
 			var hidden = false;
 			if (typeof node["kill_chain_phases"] != 'undefined') {
+				var ctr = node["kill_chain_phases"].length;
 				$.each(node["kill_chain_phases"], function(index, phaseid) {
 					if (hiddenKCPhases[phaseid]) {
-						hidden = true;
+						ctr--;
 					}
 				});
+				if (ctr == 0) {
+					hidden = true;
+				}
 			}
 			return hidden;
 		}
