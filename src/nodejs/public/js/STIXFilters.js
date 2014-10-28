@@ -12,18 +12,27 @@ $(function () {
 			});
 			filterText += '</div>';
 		}
-		$('#filterDivMenu').append(filterText);
+		$('#filterNodeDivMenu').append(filterText);
 	});
 	
-	$('#filterDivMenu').on('hide.bs.collapse', function () {
-		$('#filterDivTitleText').text('Filter');
+	$('#filterNodeDivMenu').on('hide.bs.collapse', function () {
+		$('#filterNodeDivTitleText').text('Filter');
 		view.resize();
 	});
-	$('#filterDivMenu').on('show.bs.collapse', function () {
-		$('#filterDivTitleText').text('Filter by Nodes/Relationships');
+	$('#filterNodeDivMenu').on('show.bs.collapse', function () {
+		$('#filterNodeDivTitleText').text('Filter by Nodes/Relationships');
 		view.resize();
 	});
-	
+
+	$('#filterKCDivMenu').on('hide.bs.collapse', function () {
+		$('#filterKCDivTitleText').text('Filter KC');
+		view.resize();
+	});
+	$('#filterKCDivMenu').on('show.bs.collapse', function () {
+		$('#filterKCDivTitleText').text('Filter by Kill Chain Phase');
+		view.resize();
+	});
+
 	$('.expandCollapse').click(function(){ 
 			$(this).text(function(i,old){
 				return old=='+' ?  '-' : '+';
@@ -35,17 +44,17 @@ function addKillChainFilters() {
 	var filterText = "";
 	var ctr = 0;
 	$.each(viewKillChains, function (kcid, killChainInfo) {
-		filterText += '<span class="killChainFilter"><label><input type="checkbox" id="' + kcid + 'KillChain" onChange="toggleKillChainFilter(\'' + kcid + '\')"; checked> ' + killChainInfo['name'] + '</label>';
+		filterText += '<span class="killChainFilter"><label><input type="checkbox" id="' + kcid + 'KillChain" onChange="toggleKillChainFilter(\'' + kcid + '\')"; > ' + killChainInfo['name'] + '</label>';
 		var phases = killChainInfo['phases'];
 		if ($(phases).length > 0) {
 			filterText += '<a data-toggle="collapse" data-target="#killChain' + ctr + 'Phases" class="expandCollapse">+</a></span>';
 			filterText += '<div class="collapse" id="killChain' + ctr + 'Phases">'
 			$.each(phases, function(index, phase) {
-				filterText += '<span class="kcPhaseFilter"><label><input type="checkbox" id="' + phase['phase_id'] + 'kcPhaseFilter" onChange="toggleKCPhaseFilter(\'' + phase['phase_id'] + '\')"; checked> ' + phase['name'] + '</label></span>';
+				filterText += '<span class="kcPhaseFilter"><label><input type="checkbox" id="' + phase['phase_id'] + 'kcPhaseFilter" onChange="toggleKCPhaseFilter(\'' + phase['phase_id'] + '\')"; > ' + phase['name'] + '</label></span>';
 			});
 			filterText += '</div>';
 		}
-		$('#filterDivMenu').append(filterText);
+		$('#filterKCDivMenu').append(filterText);
 		ctr += 1;
 	});
 }

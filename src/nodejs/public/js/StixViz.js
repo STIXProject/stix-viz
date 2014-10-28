@@ -105,7 +105,7 @@ $(function () {
 		$('#selectedView').html($(this).text() + '<b class="caret"></b>');
 		reset('view');
 		if (viewType === 'selectView-tree') { 
-			$(filterDiv).hide();
+			$('#filterGroupDiv').hide();
 			$('#viewName').text('STIX Tree View');
 			view = new StixTree();
 			if (relationshipData) { 
@@ -113,7 +113,7 @@ $(function () {
 				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-graph') {
-			$(filterDiv).show();
+			$('#filterGroupDiv').show();
 			$('#viewName').text('STIX Graph View');
 			view = new StixGraph();
 			if (relationshipData) { 
@@ -121,7 +121,7 @@ $(function () {
 				layout.resizeAll();
 			};
 		} else if (viewType === 'selectView-timeline'){
-			$(filterDiv).hide();
+			$('#filterGroupDiv').hide();
 			$('#viewName').text('STIX Timeline View');
 			view = new StixTimeline();
 			if (timelineData) {
@@ -209,15 +209,15 @@ function displayJson(jsonDataObj, viewType) {
 	$.fn.filterDivReset();
 	viewKillChains = jsonDataObj["relationshipData"]['killChains'];
 	addKillChainFilters();
-	$(filterDiv).show();
+	$('#filterGroupDiv').show();
 	relationshipData = JSON.stringify(jsonDataObj["relationshipData"], null, 2);
 	timelineData = JSON.stringify(jsonDataObj["timelineData"], null, 2);
 	if ((viewType === 'selectView-tree') || (viewType === 'selectView-graph')) {
-                $(filterDiv).show();
+                $('#filterGroupDiv').show();
 		view.display(relationshipData);
 		layout.resizeAll();
 	} else if (viewType === 'selectView-timeline'){
-                $(filterDiv).hide();
+                $('#filterGroupDiv').hide();
 		view.display(timelineData);
 		layout.resizeAll();
 	}
@@ -403,7 +403,7 @@ function expandSection (node) {
  *  Reset the display when new XML files are loaded
  */
 function reset (context) {
-	$(filterDiv).hide();
+	$('#filterGroupDiv').hide();
 	
 	// If the context is 'all', reset everything because we are loading new XML files
 	if (context === 'all') { 

@@ -8,7 +8,7 @@
         "mime":"1.2.10"
     },
     "window":{
-        "toolbar":false,  
+        "toolbar":true,  
         "width":1250,
         "height":700,
         "icon":"public/icons/werner_icon.png"

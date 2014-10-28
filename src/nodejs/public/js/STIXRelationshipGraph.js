@@ -33,7 +33,7 @@ var StixGraph = function () {
 	
 
 
-	/* Root is the node that is currently visible at the top of the tree. Report is the root of the entire structure.*/
+	/* Report is the root of the graph.*/
 	var report={},
 	svg=null,
 	node=[],
@@ -41,8 +41,10 @@ var StixGraph = function () {
 
 	report.hiddenRelationships = {};
 	report.hiddenNodes = {};
-	report.hiddenKCPhases = {};
+	report.shownKCPhases = {};
 
+	report.killChain = {};
+	
 //	var xmlDocs = {}, docIndex = 0;
 
 	/* Layout of tree within its div */
@@ -160,7 +162,7 @@ var StixGraph = function () {
 		force.resume();
 	}
 
-	function hideNode (node) { 
+	function hideNode (node,update) { 
 		var d = d3.select(node).datum();
 		// if it's a top level grouping node, use the filter menu to hide
 		if (d.depth === 1) {
@@ -168,14 +170,16 @@ var StixGraph = function () {
 			$('#filterDiv input#'+type+'EFilter').click();
 		} else {
 			$.each(d.parents, function (pid, p) {
-					if (p.node._children.indexOf(d) === -1) { 
-						p.node._children.push(d);
+				if (p.node._children.indexOf(d) === -1) { 
+					p.node._children.push(d);
 				}
-					pos = p.node.children.indexOf(d);
-					p.node.children.splice(pos,1);
+				pos = p.node.children.indexOf(d);
+				p.node.children.splice(pos,1);
 			});
-		update();
-	}
+			if (update) { 
+				update();
+			}
+		}
 	}
 	
 	
@@ -185,6 +189,7 @@ var StixGraph = function () {
 		if (!node || node.length == 0) return;
 
 		updateForce(showGrouping);
+		setKillChainLocations();
 		
 		update();
 
@@ -195,13 +200,13 @@ var StixGraph = function () {
 	 *  Compute the graph layout based on the JSON representation of the XML data
 	 */
 	_self.display = function (jsonString) {
-
+		
 		// Set context menu for nodes in graph view
 		$('#contextMenu ul').append($('#graphContextMenuTemplate').html());
 		
 		// Handlers for right-click context menu on nodes
 		$('#toggleFix a').click(function () { toggleFix(contextNode); });
-		$('#hideNode a').click(function () { hideNode(contextNode); });
+		$('#hideNode a').click(function () { hideNode(contextNode,true); });
 		$('#showLabels a').click(function () { toggleLabels(contextNode); });
 
 		
@@ -220,7 +225,7 @@ var StixGraph = function () {
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
 		updateForce(showGrouping);
-		
+
 		/**
 		 *  define color filter for lightening non-expandable nodes
 		 */
@@ -265,7 +270,10 @@ var StixGraph = function () {
 		report = $.parseJSON(jsonString);
 		report.hiddenRelationships = {};
 		report.hiddenNodes = {};
-		report.hiddenKCPhases = {};
+		report.shownKCPhases = {};
+
+		setKillChainLocations();
+
 		
 		removeBottomUp(report);		// Remove bottom up links since they are only needed for tree view
 		mergeNodes(report); // this will set the correct ids for all nodes in the graph and merge duplicate nodes 
@@ -329,12 +337,12 @@ var StixGraph = function () {
 	};
 	
 	_self.addNodesFromKillChainPhase = function(phase_id) {
-		report.hiddenKCPhases[phase_id] = false;
+		report.shownKCPhases[phase_id] = true;
 		update();
 	};
 	
 	_self.removeNodesFromKillChainPhase = function(phase_id) {
-		report.hiddenKCPhases[phase_id] = true;
+		report.shownKCPhases[phase_id] = false;
 		update();
 	};
 
@@ -411,22 +419,23 @@ var StixGraph = function () {
 
 	function updateForce () { 
 		if (showGrouping) {
-		force
-		.linkStrength(.9)
-		.friction(.7)
-		.size(graphSize())
-		.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
-		.gravity(function (d) { 
+			force
+			.linkStrength(.9)
+			.friction(.7)
+			.size(graphSize())
+			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
+			.gravity(function (d) { 
 				return 80/(Math.min.apply(Math,graphSize()) * (1+d.depth));
-		})
+			})
 			.charge(Math.min.apply(Math,graphSize()) * -1);
 		} else { 
 			force
 			.linkStrength(.9)
 			.friction(.7)
 			.size(graphSize())
-			.linkDistance(Math.min(250,Math.min.apply(Math,graphSize())/3))
-			.gravity(80/Math.min.apply(Math,graphSize())) 
+			.linkDistance(Math.min(175,Math.min.apply(Math,graphSize())/4))
+			//.gravity(80/Math.min.apply(Math,graphSize()))
+			.gravity(0)
 			.charge(Math.min.apply(Math,graphSize()) * -1);
 		}
 	}
@@ -645,10 +654,18 @@ var StixGraph = function () {
 		if (r===true)
 		{
 			d3.select('body').classed('loading',true);  // Set wait cursor while expanding
+			
+			var kcFilterMode = false;
+			$.each(report.shownKCPhases, function (k,v) { 
+				kcFilterMode = kcFilterMode || v;
+			});
+			
+			// Expand the node if it is collapsed
 			if (d._children && d._children.length > 0) {
 				d.children = d._children.concat(d.children);
 				d._children = [];
 				d.children.forEach(function (c) {
+		
 					// Start at the same position as the parent
 					c.x = d.x + Math.random();
 					c.y = d.y + Math.random();
@@ -664,11 +681,12 @@ var StixGraph = function () {
 						}
 					});
 				});
-			} else {
+			} else { // collapse the node if it is expanded
 				d._children = d.children.concat(d._children);
 				d.children = [];
 				// collapse other nodes that have children in common with the clicked node
-				d._children.forEach(function (c) { 
+				d._children.forEach(function (c) {
+
 					$.each(c.parents,function (id,properties) {
 						n = properties.node;
 						if (n.children) {
@@ -691,6 +709,23 @@ var StixGraph = function () {
 	 * Reposition nodes and links on each tick
 	 */
 	function tick(e) {
+		
+		// move nodes associated with kill chain phases into the x position for their phase
+		if (!showGrouping && e) { 
+			var kx = .1 * e.alpha,
+				ky = .1 * e.alpha;
+
+			node.each(function (d) {
+				if (typeof d.kill_chain_phases != 'undefined' && d.kill_chain_phases.length > 0) {
+					// only use the first phase for each node
+					var pid = d.kill_chain_phases[0];
+					var phasex = report.kcPhases[pid].x;
+					d.x += (phasex - d.x) * kx;
+					d.y += ((graphSize()[1]/2) - d.y) * ky;
+				}
+
+			});
+		}		
 		
 	    // avoid node collisions
 		node.each(collide(0.5));
@@ -879,7 +914,7 @@ var StixGraph = function () {
 	 * Any node that does not have a relationship defined with its parent will be considered a grouping node
 	 */
 	function isGroupingNode(d) { 
-		return d.grouping;// || d.type === 'top';
+		return d.grouping || d.type === 'top';
 	}
 
 	/**
@@ -945,8 +980,9 @@ var StixGraph = function () {
 				// the parent list is initialized to a list containing the current parent, if there is one
 				if (nodes[parent]) {
 					node.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType}; 
+					node.kill_chain_phases = _.union(node.kill_chain_phases,nodes[parent].kill_chain_phases);
 				}
-
+				
 				pos = nodes.length-1;
 			}
 			// If there is a pre-existing node, merge it with the new node and then replace the new node with the old one in 
@@ -978,9 +1014,9 @@ var StixGraph = function () {
 				
 				// add kill chain phases
 				if (node.kill_chain_phases) {
-					ref.kill_chain_phases = node.kill_chain_phases;
+					ref.kill_chain_phases = _.union(ref.kill_chain_phases,node.kill_chain_phases);
 				}
-
+				
 				var relationship = null;
 				if (node.relationship && parent) { 
 					relationship = node.relationship.split(':')[1] || node.relationship;
@@ -988,6 +1024,7 @@ var StixGraph = function () {
 				
 				if (nodes[parent]) {
 					ref.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType};
+					ref.kill_chain_phases = _.union(ref.kill_chain_phases,nodes[parent].kill_chain_phases);
 				}
 				
 			}
@@ -1022,7 +1059,7 @@ var StixGraph = function () {
 			var pos = 0;
 
 			// don't show root or grouping nodes
-			if (!showGrouping && isGroupingNode(node)) {
+			if (!showGrouping && (isGroupingNode(node) || node.id === 0)) {
 				if (node.children) { 
 					node.children.forEach(function (n) { 
 						recurse(n,parent);
@@ -1035,36 +1072,56 @@ var StixGraph = function () {
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
+				var kcFilterMode = false;
+				$.each(report.shownKCPhases, function (k,v) { 
+					kcFilterMode = kcFilterMode || v;
+				});
+				
+				if (!report.hiddenNodes[nodeTypeMap[node.type]]  
+						&& !isOrphan(node, report.hiddenRelationships)
+						&& (!kcFilterMode || !hiddenKCPhase(node, report.shownKCPhases))) {
+					nodes.push(node);
+					pos = nodes.length-1;
+					if (node.children) { 
+						node.children.forEach(function (n) { 
+							recurse(n,pos);
+						});
+					}
 
-				if (!report.hiddenNodes[nodeTypeMap[node.type]] && !isOrphan(node, report.hiddenRelationships) 
-						&& !hiddenKCPhase(node, report.hiddenKCPhases)) {			
-				nodes.push(node);
-				pos = nodes.length-1;
-				if (node.children) { 
-					node.children.forEach(function (n) { 
-						recurse(n,pos);
-					});
-				}
-					
 					addLinkToParent(node,parent,pos);
 					
-			}
+				}
 			}
 
 		}
 		
-		function hiddenKCPhase(node, hiddenKCPhases) {
-			var hidden = false;
+		
+		
+		function hiddenKCPhase(node, shownKCPhases) {
+			// true if there are any "shown" kc phases
+			var kcFilterMode = false;
+			$.each(shownKCPhases, function (k,v) { 
+				kcFilterMode = kcFilterMode || v;
+			});
+			
+			// If there are no hidden kc phases then the node isn't hidden
+			if (!kcFilterMode || isGroupingNode(node)) { 
+				return false;
+			}
+			
+//			// show nodes that are not TTPs or indicators
+//			if ($.inArray(nodeTypeMap[node.type],['ttp','indicator']) == -1) {
+//				return false;
+//			}
+
+			// Hide the node unless it is associated with at least one shown kill chain phase
+			var hidden = true;
 			if (typeof node["kill_chain_phases"] != 'undefined') {
-				var ctr = node["kill_chain_phases"].length;
 				$.each(node["kill_chain_phases"], function(index, phaseid) {
-					if (hiddenKCPhases[phaseid]) {
-						ctr--;
+					if (shownKCPhases[phaseid]) {
+						hidden = false;
 					}
 				});
-				if (ctr == 0) {
-					hidden = true;
-				}
 			}
 			return hidden;
 		}
@@ -1073,7 +1130,6 @@ var StixGraph = function () {
 			// Add link to parent
 			if (typeof parent !== 'undefined') {
 				if (links.filter(function (l) { return l.source === parent && l.target === pos; }).length == 0) {
-					if (showGrouping || parent != 0) { 
 						relationship = node.parents[nodes[parent].id].relationship;
 						linkType = node.parents[nodes[parent].id].linkType;
 						// don't push if report.hiddenRelationships[entity][relationships]==true
@@ -1082,11 +1138,8 @@ var StixGraph = function () {
 								!(relationship in report.hiddenRelationships[entity])) {
 							links.push({source:parent,target:pos,relationship:relationship,linkType:linkType});
 						}
-					} else { 
-						links.push({source:parent,target:pos,relationship:null,linkType:'topLevel'});
 					}
 				}
-			}
 
 			
 		}
@@ -1125,7 +1178,7 @@ var StixGraph = function () {
 	};
 
 	// true if all links coming into the node are currently hidden
-	function isOrphan(node, hiddenRelationships) {
+	function isOrphan(node, hiddenRelationships, shownKCPhases) {
 		var orphan = true;
 		var parentType = null;
 		var linkType = null;
@@ -1139,6 +1192,19 @@ var StixGraph = function () {
 			}
 		});
 		return orphan;
+	}
+	
+	
+	function setKillChainLocations () { 
+		// calculate the width to allocate to each killChain phase
+		report.kcPhases = {};
+		if (Object.keys(report.killChains).length > 0) {
+			var kc_id = Object.keys(report.killChains)[0];
+			var w = (graphSize()[0])/(report.killChains[kc_id].phases.length);
+			$.each(report.killChains[kc_id].phases, function (p,phase) {
+				report.kcPhases[phase.phase_id] = {x:(w*p)+(w/2),name:phase.name}; // put the phase in the center of its section
+			});
+		}
 	}
 	
 	function configureNav () {

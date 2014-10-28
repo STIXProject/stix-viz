@@ -42,15 +42,18 @@ body {
 	overflow: hidden;
 }
 
-#filterDivTitle {
+#filterGroupDiv {
+  float: left;
+}
+
+.filterDivTitle {
 	font: 14px sans-serif;
 	font-weight: bold;
 	margin-left: 5px;
 	margin-right: 5px;
 }
 
-#filterDiv {
-	float: left;
+.filterDiv {
 	/* height:100%; */
 	background-color: #F0F0F0;
 	border: 1px solid #DDDDDD;
@@ -60,6 +63,7 @@ body {
 	margin-left: 5px;
 	margin-top: 5px;
 }
+
 
 .expandCollapse:hover {
 	cursor:pointer;
