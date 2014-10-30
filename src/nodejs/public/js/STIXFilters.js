@@ -20,16 +20,16 @@ $(function () {
 		view.resize();
 	});
 	$('#filterNodeDivMenu').on('show.bs.collapse', function () {
-		$('#filterNodeDivTitleText').text('Filter by Nodes/Relationships');
+		$('#filterNodeDivTitleText').text('Include Nodes/Relationships');
 		view.resize();
 	});
 
 	$('#filterKCDivMenu').on('hide.bs.collapse', function () {
-		$('#filterKCDivTitleText').text('Filter KC');
+		$('#filterKCDivTitleText').text('Show KC');
 		view.resize();
 	});
 	$('#filterKCDivMenu').on('show.bs.collapse', function () {
-		$('#filterKCDivTitleText').text('Filter by Kill Chain Phase');
+		$('#filterKCDivTitleText').text('Show Kill Chain Phases');
 		view.resize();
 	});
 
@@ -57,6 +57,17 @@ function addKillChainFilters() {
 		$('#filterKCDivMenu').append(filterText);
 		ctr += 1;
 	});
+}
+
+function addKillChainBands () { 
+	// calculate the width to allocate to each killChain phase
+	if (Object.keys(viewKillChains).length > 0) {
+		var kc_id = Object.keys(viewKillChains)[0];
+		$.each(viewKillChains[kc_id].phases, function (p,phase) {
+			$('#killChainBands').append('<div id="kcBand_'+phase.phase_id+'" class="killChainBand">'+phase.name+'</div>')
+			.hide();
+		});
+	}
 }
 
 // check all checkboxes for entities and relationships, collapse entities

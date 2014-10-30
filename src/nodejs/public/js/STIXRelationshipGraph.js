@@ -54,7 +54,7 @@ var StixGraph = function () {
 			bottom : 35,
 			left : 10
 	};
-
+	
 	function graphSize () { 
 		return [$('#graphSVG').width() - nodeWidth,$('#graphSVG').height()-nodeHeight-labelHeight];
 	}
@@ -215,6 +215,8 @@ var StixGraph = function () {
 		
 		// Add graph container element
 		$('#contentDiv').html($('#graphTemplate').html());
+		addKillChainBands();
+
 		
 		/**
 		 *  Append svg container for tree
@@ -225,7 +227,7 @@ var StixGraph = function () {
 	    .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
 		updateForce(showGrouping);
-
+		
 		/**
 		 *  define color filter for lightening non-expandable nodes
 		 */
@@ -446,8 +448,18 @@ var StixGraph = function () {
 	 */
 	function update() {
 
-
-		var data = flatten(report,showGrouping), 
+		var kcFilterMode = false;
+		$.each(report.shownKCPhases, function (k,v) { 
+			kcFilterMode = kcFilterMode || v;
+		});
+		
+		if (kcFilterMode && !showGrouping) {
+			$('#killChainBands').show();
+		} else { 
+			$('#killChainBands').hide();
+		}
+		
+		var data = flatten(report,showGrouping,kcFilterMode), 
 		nodes = data.nodes,
 		links = data.links;
 
@@ -654,11 +666,6 @@ var StixGraph = function () {
 		if (r===true)
 		{
 			d3.select('body').classed('loading',true);  // Set wait cursor while expanding
-			
-			var kcFilterMode = false;
-			$.each(report.shownKCPhases, function (k,v) { 
-				kcFilterMode = kcFilterMode || v;
-			});
 			
 			// Expand the node if it is collapsed
 			if (d._children && d._children.length > 0) {
@@ -1051,7 +1058,7 @@ var StixGraph = function () {
 	 * @param root
 	 * @returns the lists of nodes and links that define the graph
 	 */
-	function flatten(root,showGrouping) {
+	function flatten(root,showGrouping,kcFilterMode) {
 		var nodes = [], links = [];
 
 		function recurse(node,parent) {
@@ -1072,11 +1079,6 @@ var StixGraph = function () {
 				pos = nodes.indexOf(node); 
 				addLinkToParent(node,parent,pos);
 			} else { 			// Otherwise, add the node to the list
-				var kcFilterMode = false;
-				$.each(report.shownKCPhases, function (k,v) { 
-					kcFilterMode = kcFilterMode || v;
-				});
-				
 				if (!report.hiddenNodes[nodeTypeMap[node.type]]  
 						&& !isOrphan(node, report.hiddenRelationships)
 						&& (!kcFilterMode || !hiddenKCPhase(node, report.shownKCPhases))) {
@@ -1196,13 +1198,15 @@ var StixGraph = function () {
 	
 	
 	function setKillChainLocations () { 
-		// calculate the width to allocate to each killChain phase
 		report.kcPhases = {};
+		// calculate the width to allocate to each killChain phase
 		if (Object.keys(report.killChains).length > 0) {
 			var kc_id = Object.keys(report.killChains)[0];
 			var w = (graphSize()[0])/(report.killChains[kc_id].phases.length);
+			$('.killChainBand').width(w);
 			$.each(report.killChains[kc_id].phases, function (p,phase) {
-				report.kcPhases[phase.phase_id] = {x:(w*p)+(w/2),name:phase.name}; // put the phase in the center of its section
+				var mid = (w*p)+(w/2);
+				report.kcPhases[phase.phase_id] = {x:mid,name:phase.name}; // put the phase in the center of its section
 			});
 		}
 	}

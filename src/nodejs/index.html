@@ -88,24 +88,25 @@ var fs = require('fs');
 		<div id="filterGroupDiv">
 			<div id="filterNodesDiv" class="filterDiv">
 				<div id="filterNodeDivTitle" class="filterDivTitle">
-					<span id="filterNodeDivTitleText">Filter by
-						Nodes/Relationships</span><a data-toggle="collapse"
+					<span id="filterNodeDivTitleText">Include	Nodes/Relationships</span><a data-toggle="collapse"
 						+ data-target="#filterNodeDivMenu" class="expandCollapse">-</a>
 				</div>
 				<div class="collapse in" id="filterNodeDivMenu"></div>
 			</div>
 			<div id="filterKillchainsDiv" class="filterDiv">
 				<div id="filterKCDivTitle" class="filterDivTitle">
-					<span id="filterKCDivTitleText">Filter by Kill Chain Phase</span>
+					<span id="filterKCDivTitleText">Show Kill Chain Phases</span>
 					<a data-toggle="collapse" + data-target="#filterKCDivMenu"
 						class="expandCollapse">-</a>
 				</div>
 				<div class="collapse in" id="filterKCDivMenu"></div>
 			</div>
 		</div>
+		
 		<div id="contentDiv" style="overflow: auto">
 			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
-			<!--  leave for debugging purposes -->
+			
+	
 		</div>
 	</div>
 
@@ -161,6 +162,7 @@ var fs = require('fs');
 
   <script id="graphTemplate" type="text/template">
     <div id="graphSVGContainer"></div>
+    <div id="killChainBands"></div>
   </script>
   
   <script id="graphControlsTemplate" type="text/template">
