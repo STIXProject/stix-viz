@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 – The MITRE Corporation
+ * Copyright (c) 2015 – The MITRE Corporation
  * All rights reserved. See LICENSE.txt for complete terms.
  * 
  * This file contains the top level invocation of STIXViz.   It is invoked when the file is loaded by
