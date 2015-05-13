@@ -361,9 +361,9 @@ var StixTimeline = function () {
 		// The timeline never reaches into the future.
 		// This is an arbitrary decision.
 		// Comment out, if dates in the future should be allowed.
-		if (item.end > today) {
+		/*if (item.end > today) {
 		    item.end = today
-		    };
+		    };*/
 	    });
 
 	    //Group the events
