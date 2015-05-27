@@ -178,7 +178,7 @@ function addXmlDoc (f) {
 					} else {  // The transform failed
 						showHtml(new XMLSerializer().serializeToString($(doc.html).find('#wrapper').get(0)));
 					}
-				} else if (totalTime > 30000) { // wait for max of 30 seconds 
+				} else if (totalTime > 45000) { // wait for max of 45 seconds 
 					clearInterval(waitForXslt);
 					endProcessing();
 					showHtml("<div id='wrapper'><h2>Could not convert XML file to HTML.</h2></div>");
