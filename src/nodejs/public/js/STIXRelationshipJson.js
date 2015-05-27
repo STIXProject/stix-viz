@@ -58,6 +58,10 @@ function createRelationshipJson(jsonObj, topLevelNodes, topNodeName) {
     if (topLevelChild != null) {
         reportChildren.push(topLevelChild);
     }    
+    topLevelChild = createStixChildren(topLevelNodes['rptNodes'], STIXGroupings.rpt);
+    if (topLevelChild != null) {
+        reportChildren.push(topLevelChild);
+    }    
     topLevelChild = createStixChildren(topLevelNodes['taNodes'], STIXGroupings.ta);
     if (topLevelChild != null) {
         reportChildren.push(topLevelChild);
@@ -277,6 +281,66 @@ function processObservableObjs(obsObjs) {
 	return obsNodes;
 }
 
+function processReportObjs(rptObjs, allBottomUpInfo) {
+	var rptNodes = [];
+	var rptJson = null;
+	var rptChildren = null;
+	var rptId = null;
+	$(rptObjs).each(function (index, rpt) {
+		rptId = getObjIdStr(rpt);
+		rptJson = createTopDownNode(rptId, STIXType.rpt, getBestReportName(rpt), "");
+		rptChildren = [];
+    	var observables = xpFind('.//report:Observables//cybox:Observable', rpt);
+    	$.merge(rptChildren, processChildObservables(observables, 'report:Observable'));
+		var indicators = xpFind('.//report:Indicators', rpt);
+		$.merge(rptChildren, processChildIndicators(indicators, 'report:Indicator'));
+		var ttps = xpFind('.//report:TTP', rpt);
+		$.merge(rptChildren, processChildTTPs(ttps, 'report:TTP'));
+		var ets = xpFind('.//report:Exploit_Targets', rpt);
+		$.merge(rptChildren, processChildExploitTargets(ets, 'report:Exploit_Target'));
+    	var incidents = xpFind('.//report:Incident', rpt);
+    	$.merge(rptChildren, processChildIncidents(incidents, 'report:Incident'));
+		var coas = xpFind('.//report:Course_Of_Action', rpt);
+		$.merge(rptChildren, processChildCoas(coas, 'report:Course_Of_Action'));	
+		var campaigns = xpFind('.//report:Campaign', rpt);
+		$.merge(rptChildren, processChildCampaigns(campaigns, 'report:Campaign'));
+		var threatActors = xpFind('.//report:Threat_Actor', rpt);
+		$.merge(rptChildren, processChildThreatActors(threatActors, 'report:Threat_Actor'));
+		var relatedReports = xpFind('.//report:Related_Report', rpt);
+		$.merge(rptChildren, processChildReports(relatedReports, 'report:Related_Report'));
+		if (rptChildren.length > 0) {
+			rptJson["children"] = rptChildren;
+		}
+		if (rptId != "") {
+			$(observables).each(function (index, obs) {
+				addToBottomUpInfo(allBottomUpInfo['obsBottomUpInfo'], $(xpFindSingle(STIXPattern.obs, obs)), STIXGroupings.rpt, rptId);
+			});
+			$(indicators).each(function (index, indi) {
+				addToBottomUpInfo(allBottomUpInfo['indiBottomUpInfo'], $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.rpt, rptId);
+			});
+			$(ttps).each(function(index, ttp) {
+				addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.rpt, rptId);			
+			});
+			//TODO add et bottom up info?
+					
+            $(incidents).each(function (index, incident) {
+            	addToBottomUpInfo(allBottomUpInfo['incidentBottomUpInfo'], $(xpFindSingle(STIXPattern.incident, incident)), STIXGroupings.rpt, rptId);
+            });					
+        	$(coas).each(function(index, coa) {
+        		addToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle(STIXPattern.coa, coa)), STIXGroupings.rpt, rptId);
+        	});
+            $(campaigns).each(function (index, ca) {
+            	addToBottomUpInfo(allBottomUpInfo['campaignBottomUpInfo'], ca, STIXGroupings.rpt, rptId);
+            });
+            $(threatActors).each(function (index,ta) {
+            	addToBottomUpInfo(allBottomUpInfo['taBottomUpInfo'], ta, STIXGroupings.rpt, rptId);
+            });
+		}
+		rptNodes.push(rptJson);
+	});
+	return rptNodes;
+}
+
 // TODO - add associated actors
 // Note: if a threat actor is specified via Attribution in a campaign, and 
 //     the campaign is specified as an associated_campaign in the threat actor,
@@ -328,7 +392,13 @@ function processChildTTPs(ttps, relationship) {
     var ttpNodes = [];
     var ttpJson = null;
     $(ttps).each(function (index, ttp) {
-	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ttp, ttp)));
+    	var idRef = "";
+    	if (relationship == 'report:TTP') {
+    		idRef = getObjIdRefStr(ttp);
+    	}
+    	else {
+    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ttp, ttp)));
+    	}
             if (idRef != "") {
             	if (relationship == 'ttp:Related_TTP') {
             		ttpJson = createSiblingIdRef(STIXType.ttp, idRef, relationship);
@@ -424,11 +494,31 @@ function processChildExploitTargets(ets, relationship) {
     return etNodes;
 }
 
+function processChildReports(rpts, relationship) {
+	var rptNodes = [];
+	$(rpts).each(function(index, rpt) {
+		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.rpt, rpt)));
+		if (idRef != "") {
+			rptNodes.push(createSiblingIdRef(STIXType.rpt, idRef, relationship));
+		}
+		else {
+			rptNodes.push(createTopDownIdRef(STIXType.rpt, idRef, relationship));
+		}
+	});
+	return rptNodes;
+}
+
 // TODO first just handle idRefs, need to add inline processing
 function processChildThreatActors(actors, relationship) {
     var actorNodes = [];
     $(actors).each(function (index, actor) {
-	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ta, actor)));
+    	var idRef = "";
+    	if (relationship == 'report:Threat_Actor') {
+    		idRef = getObjIdRefStr(actor);
+    	}
+    	else {
+    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ta, actor)));
+    	}
 	    if (idRef != "") {
 	    	if (relationship == 'threat-actor:Associated_Actor') {
 	    		actorNodes.push(createSiblingIdRef(STIXType.ta, idRef, relationship));
@@ -508,6 +598,7 @@ function gatherRelationshipTopLevelObjs(xml, topLevelObjs) {
 		topLevelObjs['incidentObjs'] = [];
 		topLevelObjs['indiObjs'] = [];
 		topLevelObjs['obsObjs'] = [];
+		topLevelObjs['rptObjs'] = [];
 		topLevelObjs['taObjs'] = [];
 		topLevelObjs['ttpObjs'] = [];
 	}
@@ -530,6 +621,7 @@ function gatherRelationshipTopLevelObjs(xml, topLevelObjs) {
     $.merge(topLevelObjs['incidentObjs'], xpFind('//stix:Incidents/stix:Incident', xml));
     $.merge(topLevelObjs['indiObjs'], xpFind('//stix:Indicators/stix:Indicator', xml));
     $.merge(topLevelObjs['obsObjs'], xpFind('//stix:Observables/cybox:Observable', xml));
+    $.merge(topLevelObjs['rptObjs'], xpFind('//stix:Reports/stix:Report', xml));
     $.merge(topLevelObjs['taObjs'], xpFind('//stix:Threat_Actors/stix:Threat_Actor', xml));
     $.merge(topLevelObjs['ttpObjs'], xpFind('//stix:TTPs/stix:TTP', xml));
     
@@ -550,6 +642,7 @@ function processTopLevelObjects(topLevelObjs, topLevelNodes) {
 		var incidentNodes = [];
 		var indiNodes = [];
 		var obsNodes = [];
+		var rptNodes = [];
 		var taNodes = [];
 		var ttpNodes = [];	
 	}
@@ -560,6 +653,7 @@ function processTopLevelObjects(topLevelObjs, topLevelNodes) {
 	allBottomUpInfo['incidentBottomUpInfo'] = {};
 	allBottomUpInfo['indiBottomUpInfo'] = {};
 	allBottomUpInfo['obsBottomUpInfo'] = {};
+	allBottomUpInfo['rptBottomUpInfo'] = {};
 	allBottomUpInfo['taBottomUpInfo'] = {};
 	allBottomUpInfo['ttpBottomUpInfo'] = {};
 
@@ -569,6 +663,7 @@ function processTopLevelObjects(topLevelObjs, topLevelNodes) {
 	incidentNodes = processIncidentObjs(topLevelObjs['incidentObjs'], allBottomUpInfo);
 	indiNodes = processIndicatorObjs(topLevelObjs['indiObjs'], allBottomUpInfo);
 	obsNodes= processObservableObjs(topLevelObjs['obsObjs']);
+	rptNodes = processReportObjs(topLevelObjs['rptObjs'], allBottomUpInfo);
 	taNodes = processThreatActorObjs(topLevelObjs['taObjs'], allBottomUpInfo);
 	ttpNodes = processTTPObjs(topLevelObjs['ttpObjs'], allBottomUpInfo['etBottomUpInfo']);
 	
@@ -578,6 +673,7 @@ function processTopLevelObjects(topLevelObjs, topLevelNodes) {
 	addBottomUpInfoForNodes(etNodes, allBottomUpInfo['etBottomUpInfo']);
 	addBottomUpInfoForNodes(incidentNodes, allBottomUpInfo['incidentBottomUpInfo']);
 	addBottomUpInfoForNodes(obsNodes, allBottomUpInfo['obsBottomUpInfo']);
+	addBottomUpInfoForNodes(rptNodes, allBottomUpInfo['rptBottomUpInfo']);
 	addBottomUpInfoForNodes(taNodes, allBottomUpInfo['taBottomUpInfo']);
 	addBottomUpInfoForNodes(ttpNodes, allBottomUpInfo['ttpBottomUpInfo']);
 	
@@ -587,6 +683,7 @@ function processTopLevelObjects(topLevelObjs, topLevelNodes) {
 	topLevelNodes['incidentNodes'] = incidentNodes;
 	topLevelNodes['indiNodes'] = indiNodes;
 	topLevelNodes['obsNodes'] = obsNodes;
+	topLevelNodes['rptNodes'] = rptNodes;
 	topLevelNodes['taNodes'] = taNodes;
 	topLevelNodes['ttpNodes'] = ttpNodes;
 	

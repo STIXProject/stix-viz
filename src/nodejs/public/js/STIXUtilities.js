@@ -32,6 +32,7 @@ function vizNSResolver(prefix) {
     		'et': 'http://stix.mitre.org/ExploitTarget-1',
     		'incident': 'http://stix.mitre.org/Incident-1',
     		'indicator': 'http://stix.mitre.org/Indicator-2', 
+    		'report': 'http://stix.mitre.org/Report-1',
     		'threat-actor': 'http://stix.mitre.org/ThreatActor-1',
     		'ttp': 'http://stix.mitre.org/TTP-1' 
     	};
@@ -47,6 +48,7 @@ var STIXType = {
 		'incident' : 'Incident',
 		'indi': 'Indicator',
 		'obs' : 'Observable',
+		'rpt' : 'Report',
 		'ta' : 'Threat_Actor',
 		'ttp' : 'TTP'
 };
@@ -59,6 +61,7 @@ var STIXGroupings = {
 	'incident' : 'Incidents',
 	'indi' : 'Indicators',
 	'obs' : 'Observables',
+	'rpt': 'Reports',
 	'ta' : 'Threat_Actors',
 	'ttp' : 'TTPs'
 };
@@ -70,6 +73,7 @@ var entityRelationshipMap = {
 		'Incident' : ['COA_Requested', 'COA_Taken', 'Leveraged_TTP', 'Related_Incident', 'Related_Indicator', 'Related_Observable', 'Threat_Actor'],
 		'Indicator' : ['Indicated_TTP', 'Observable', 'Related_Indicator', 'Suggested_COA'],
 		'Observable' : [],
+		'Report' : ['Observable','Indicator','TTP', 'Exploit_Target', 'Incident', 'Course_Of_Action', 'Campaign', 'Threat_Actor', 'Related_Report'], 	
 		'Threat_Actor' : ['Associated_Actor', 'Associated_Campaign', 'Observed_TTP'],
 		'TTP' : ['Attack_Pattern', 'Exploit_Target', 'Malware', 'Observable', 'Related_TTP', 'Tool', 'Victim_Targeting']
 }
@@ -131,6 +135,8 @@ var nodeTypeMap = {
 		"Observable-IPRange" : "observable",
 		"Observable-MD5" : "observable",
 		"Observable-URI" : "observable",
+		"Report" : "report",
+		"Reports" : "report",
 		"UsesTool" : "tool",
 		"Tools" : "tool",
 		"VictimTargeting" : "victim_targeting",
@@ -148,6 +154,7 @@ var STIXPattern = {
 		'incident' : './/stixCommon:Incident',
 		'indi': './/stixCommon:Indicator',
 		'obs': './/stixCommon:Observable',
+		'rpt' : './/stixCommon:Report',
 		'ta' : './/stixCommon:Threat_Actor',
 		'ttp' : './/stixCommon:TTP'	
 };

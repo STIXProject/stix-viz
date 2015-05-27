@@ -309,6 +309,34 @@ function getBestObservableName(obs) {
     return nameStr;
 }
 
+//Title
+//Intent
+//Description (truncate) – probably won’t be used w/o Title but you never know
+//@id
+function getBestReportName(rpt) {
+	var nameStr = "";
+	var titleNode = xpFindSingle('.//report:Title', rpt);
+	if (titleNode != null) {
+		nameStr = $(titleNode).text();
+	}
+	else { 
+		var intentNode = xpFindSingle('.//report:Intent', rpt);
+		if (intentNode != null) {
+			nameStr = $(intentNode).Text();
+		}
+		else {
+			var desc = xpFindSingle('.//report:Description', rpt);
+			if (desc != null) {
+				nameStr = $(desc).text();
+			} 
+		}
+	}
+	if (nameStr == "") {
+		nameStr = getObjIdStr(rpt);
+	}
+	return nameStr;
+}
+
 // Title
 // Description (truncate) – probably won’t be used w/o Title but you never know
 // This is a little complicated, but maybe say which of the following elements are there plus the ID: Behavior, Resources, Victim_Targeting. 
