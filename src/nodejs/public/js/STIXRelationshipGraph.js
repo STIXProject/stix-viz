@@ -924,6 +924,8 @@ var StixGraph = function () {
 				nodes.push(node);
 
 				var relationship = null;
+				
+				
 				if (node.relationship && parent) {
 					relationship = node.relationship.split(':')[1] || node.relationship;
 				}
@@ -964,12 +966,14 @@ var StixGraph = function () {
 					nodes[parent].children.splice(childPos,1,ref);
 				}
 
+
 				var relationship = null;
 				if (node.relationship && parent) { 
 					relationship = node.relationship.split(':')[1] || node.relationship;
 				}
 				
-				if (nodes[parent]) {
+				
+				if (nodes[parent] && ref.parents[nodes[parent].id] == null) {
 					ref.parents[nodes[parent].id] = {node:nodes[parent],relationship:relationship,linkType:node.linkType};
 				}
 				
