@@ -420,7 +420,13 @@ function processChildCampaigns(cas, relationship) {
     var caJson = null;
     var caId = null;
     $(cas).each(function (index, ca) {
-	    var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ca, ca)));
+    	var idRef = "";
+    	if (relationship == 'report:Campaign') {
+    		idRef = getObjIdRefStr(ca);
+    	}
+    	else {
+    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.ca, ca)));
+    	}
             if (idRef != "") {
             	if (relationship == 'campaign:Associated_Campaign') {
             		caJson = createSiblingIdRef(STIXType.ca, idRef, relationship);
