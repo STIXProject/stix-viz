@@ -292,7 +292,7 @@ function processReportObjs(rptObjs, allBottomUpInfo) {
 		rptChildren = [];
     	var observables = xpFind('.//report:Observables//cybox:Observable', rpt);
     	$.merge(rptChildren, processChildObservables(observables, 'report:Observable'));
-		var indicators = xpFind('.//report:Indicators', rpt);
+		var indicators = xpFind('.//report:Indicators/report:Indicator', rpt);
 		$.merge(rptChildren, processChildIndicators(indicators, 'report:Indicator'));
 		var ttps = xpFind('.//report:TTP', rpt);
 		$.merge(rptChildren, processChildTTPs(ttps, 'report:TTP'));
@@ -552,7 +552,13 @@ function processChildIncidents(incidents, relationship) {
 function processChildIndicators(indis, relationship) {
 	var indiNodes = [];
 	$(indis).each(function (index, indi) {
-		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.indi, indi)));
+		var idRef = "";
+		if (relationship == 'report:Indicator') {
+			idRef = getObjIdRefStr(indi);
+		}
+		else {
+			idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.indi, indi)));
+		}
 		if (idRef != "") {
 			if (relationship == 'indicator:Related_Indicator') {
 				indiNodes.push(createSiblingIdRef(STIXType.indi, idRef, relationship));
