@@ -487,7 +487,13 @@ function processChildCoas(coas, relationship) {
 function processChildExploitTargets(ets, relationship) {
 	var etNodes = [];
 	$(ets).each(function(index, etObj) {
-		var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.et, etObj)));
+		var idRef = "";
+		if (relationship == 'report:Exploit_Target') {
+			idRef = getObjIdRefStr(etObj);
+		}
+		else {
+			idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.et, etObj)));
+		}
 	    if (idRef != "") {
 	    	if (relationship == 'et:Related_Exploit_Target') {
 	    		etNodes.push(createSiblingIdRef(STIXType.et, idRef, relationship));
@@ -541,7 +547,13 @@ function processChildThreatActors(actors, relationship) {
 function processChildIncidents(incidents, relationship) {
     var incidentNodes = [];
     $(incidents).each(function (index, incident) {
-    	var idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.incident, incident)));
+    	var idRef = "";
+    	if (relationship == 'report:Incident') {
+    		idRef = getObjIdRefStr(incident);
+    	}
+    	else {
+    		idRef = getObjIdRefStr($(xpFindSingle(STIXPattern.incident, incident)));
+    	}
 		if (idRef != "") {
 			if (relationship == 'incident:Related_Incident') {
 				incidentNodes.push(createSiblingIdRef(STIXType.incident, idRef, relationship));
