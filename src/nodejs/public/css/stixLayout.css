@@ -1,0 +1,140 @@
+/*
+ * Copyright (c) 2014 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains shared CSS for the Stix Visualization tools
+ * 
+ * created 2014
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+
+body,html,#contentDiv{ 
+	height: 100%;
+}
+
+body.loading { 
+	cursor:wait !important;
+}
+
+
+
+body {
+  cursor:default;
+  margin: 0;
+  padding: 0;
+}
+
+
+.itemCategoryIcon svg {
+	height: 100%;
+	width: 100%;
+}
+
+
+#viewContainer { 
+	padding:0;
+}
+
+#contentDiv { 
+	align: right;
+	overflow: hidden;
+}
+
+#filterDivTitle {
+	font: 14px sans-serif;
+	font-weight: bold;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+#filterDiv {
+	float: left;
+	/* height:100%; */
+	background-color: #F0F0F0;
+	border: 1px solid #DDDDDD;
+	border-radius:4px;
+	font: 12px sans-serif;
+	font-weight: bold;
+	margin-left: 5px;
+	margin-top: 5px;
+}
+
+.expandCollapse:hover {
+	cursor:pointer;
+	text-decoration:none;
+}
+.expandCollapse { 
+	padding: 0px 3px;
+}
+
+.entityFilter {
+	display: block;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+.relationshipFilter {
+	display: block;
+	margin-top: 3px;
+	margin-left: 15px;
+}
+
+.expandCollapse
+{
+	font: 20px sans-serif;
+	font-weight: bold;
+}
+
+#initialInstructions {
+	display: block;
+	font-size: 150%;
+	text-align: center;
+	margin-top: 100px;	
+}
+
+#htmlView {
+margin: 0;
+width: 100%;
+height: 30%;
+padding: 0;
+overflow-y: auto;
+border-top:4px ridge lightgray;
+}
+
+#loadingMessage { 
+	margin:20px;
+}
+
+.loading { 
+	background: lightgray;
+}
+
+nav.navbar { 
+	margin-bottom:0;
+}
+
+#menubar { 
+	overflow:visible;
+	padding: 0;
+	font-size: 14px;
+}
+
+.nav-divider { 
+	color: #bbb;
+	font-size: large;
+}
+
+.nav-divider { 
+	color: #bbb;
+	font-size: large;
+}
+
+.ui-layout-pane-north { 
+	border:none;
+}
+
+.ui-layout-pane-center { 
+	border-top: none; 
+}

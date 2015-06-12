@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!-- /*
+ * Copyright (c) 2015 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This is the html file used for the STIXViz interface.  
+ * 
+ */ -->
+<html xmlns:stix="http://stix.mitre.org/stix-1"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:indicator="http://stix.mitre.org/Indicator-2"
+	xmlns:TTP="http://stix.mitre.org/TTP-1"
+	xmlns:COA="http://stix.mitre.org/CourseOfAction-1"
+	xmlns:capec="http://stix.mitre.org/extensions/AP#CAPEC2.5-1"
+	xmlns:marking="http://data-marking.mitre.org/Marking-1"
+	xmlns:tlpMarking="http://data-marking.mitre.org/extensions/MarkingStructure#TLP-1"
+	xmlns:stixVocabs="http://stix.mitre.org/default_vocabularies-1"
+	xmlns:cyboxCommon="http://cybox.mitre.org/common-2"
+	xmlns:cyboxVocabs="http://cybox.mitre.org/default_vocabularies-2"
+	xmlns:stixCommon="http://stix.mitre.org/common-1" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<title id="viewName">STIX Viz</title>
+
+<link rel="stylesheet" type="text/css"
+	href="./public/css/jquery-ui/jquery-ui-1.10.3.custom.min.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/jquery-ui/plugin/layout-default-latest.css" />
+<link rel="stylesheet" type="text/css"
+	href="./public/css/bootstrap/bootstrap.min.css" />
+
+<link rel="stylesheet" type="text/css" href="./public/xslt/common.css" />
+<link rel="stylesheet" type="text/css" href="./public/xslt/theme_default.css" />
+<link rel="stylesheet" type="text/css" href="./public/css/treeLayout.css" />
+<link rel="stylesheet" type="text/css" href="./public/css/timeline.css" />
+<link rel="stylesheet" type="text/css"href="./public/css/stixLayout.css" />
+<link rel="stylesheet" type="text/css" href="./public/css/graphLayout.css" />
+
+
+<script type="text/javascript" src="./public/js/d3/d3.v3.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery/jquery-1.10.2.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/jquery-ui-1.10.3.custom.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/jquery.ui.draggable.js"></script>
+<script type="text/javascript"
+	src="./public/js/jquery-ui/plugin/jquery.layout-latest.min.js"></script>
+<script type="text/javascript"
+	src="./public/js/bootstrap/bootstrap.min.js"></script>
+
+
+<script type="text/javascript" src="./public/js/STIXUtilities.js"></script>
+<script type="text/javascript" src="./public/js/STIXNameResolver.js"></script>
+<script type="text/javascript" src="./public/js/STIXFilters.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipTree.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipGraph.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipTimeline.js"></script>
+<script type="text/javascript" src="./public/js/StixViz.js"></script>
+<script type="text/javascript" src="./public/js/STIXJsonGeneration.js"></script>
+<script type="text/javascript" src="./public/js/STIXRelationshipJson.js"></script>
+<script type="text/javascript" src="./public/js/STIXTimelineJson.js"></script>
+<script type="text/javascript" src="./public/js/STIXTTPProcessing.js"></script>
+<script type="text/javascript" src="./public/js/STIXXSLTTransformer.js"></script>
+
+<script type="text/javascript" src="./public/xslt/common.js"></script> 
+<script type="text/javascript" src="./public/xslt/wgxpath.install.js"></script> 
+
+
+
+<script>
+var fs = require('fs');    
+</script>
+
+</head>
+<body>
+
+        <canvas id="jcanvas" width="500" height="500"></canvas> 
+
+	<div class="ui-layout-center" id="viewContainer">
+		<div id="jsonOutput"></div>
+		<div id="contextMenu" class="dropdown clearfix"
+			style="display: none;">
+			<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu"
+				style="display: block; position: static; margin-bottom: 5px;">
+				      <li id="showHtml"><a tabindex="-1" href="#">Show HTML</a></li>
+			</ul>
+		</div>
+		<div id="filterDiv">
+			<div id="filterDivTitle"><span id="filterDivTitleText">Filter by Nodes/Relationships</span><a data-toggle="collapse" + data-target="#filterDivMenu" class="expandCollapse">-</a></div>
+			<div class="collapse in" id="filterDivMenu" ></div>
+		</div>
+		<div id="contentDiv" style="overflow: auto">
+			<span id="initialInstructions">Choose files to generate a tree view, or use the drop down menu to select another view type.</span>
+			<!--  leave for debugging purposes -->
+		</div>
+	</div>
+
+
+
+	<div class="ui-layout-south" id="htmlView"></div>
+
+	<!--  Put this pane last so that it will have the highest z-index -->
+	<div id="menubar" class="ui-layout-north">
+		<nav class="navbar navbar-default" role="navigation">
+			<div class="collapse navbar-collapse navbar-ex1-collapse">
+				<form class="navbar-form navbar-left">
+					<div class="form-group">
+						<input class="form-control" type="file" id="files" name="file"
+							accept="application/xml" multiple />
+					</div>
+				</form>
+				<ul class="nav navbar-nav navbar-left">
+					<li class="dropdown"><a href="#" class="dropdown-toggle"
+						data-toggle="dropdown">Show HTML<b class="caret"></b></a>
+						<ul id="xmlFileList" class="dropdown-menu">
+						</ul></li>
+
+					<li class="dropdown"><a href="#" class="dropdown-toggle"
+						data-toggle="dropdown" id="selectedView">Graph View<b class="caret"></b></a>
+						<ul id="viewList" class="dropdown-menu">
+              <li id="selectView-graph"><a href="#">Graph
+                View</a></li>
+							<li id="selectView-tree"><a href="#">Tree
+								View</a></li>
+							<li id="selectView-timeline"><a href="#">Timeline
+								View</a></li>
+
+				</ul>
+					</li>
+					
+				</ul>
+				<div class="navbar-right" id="viewControls" />
+
+				
+			</div>
+		</nav>
+	</div>
+	
+	<script id="treeContextMenuTemplate" type="text/template">
+  </script>
+  
+  <script id="graphContextMenuTemplate" type="text/template">
+      <li id="toggleFix"><a tabindex="-1" href="#"></a></li>
+      <li id="showLabels"><a tabindex="-1" href="#"></a></li>
+      <li id="hideNode"><a tabindex="-1" href="#">Hide Node</a></li>
+  </script>
+
+  <script id="graphTemplate" type="text/template">
+    <div id="graphSVGContainer"></div>
+  </script>
+  
+  <script id="graphControlsTemplate" type="text/template">
+    <form class="navbar-form">
+    <div class="form-group">
+      <div class="form-control">
+        <input id="dragToPinInput" type="checkbox" checked><label for="dragToPinInput">Drag To Pin</label>
+      </div>
+    </div>
+    <button id="unpinAllButton" type="button" class="btn btn-default">Unpin All</button>
+    <span class="nav-divider">|</span>
+    <table id="graphSizeTable">
+      <tr id="sizePlus">
+        <td><button id="widthPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Width">width+</button></td>
+        <td><button id="heightPlus" type="button" class="btn btn-default sizeButton" title="Increase Graph Height">height+</button></td>
+      </tr>
+      <tr id="sizeMinus">
+        <td><button id="widthMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Width">width-</button></td>
+        <td><button id="heightMinus" type="button" class="btn btn-default sizeButton" title="Decrease Graph Height">height-</button></td>
+      </tr>
+    </table>
+    <span class="nav-divider">|</span>
+    <button id="resetGraphButton" type="button" class="btn btn-default" title="Reset Graph">Reset</button>
+    <span class="nav-divider">|</span>
+    <button id="freeze" type="button" class="btn btn-default freeze" title="Freeze Graph">Freeze</button>
+    <span class="nav-divider">|</span>
+    <button id="groupButton" type="button" class="btn btn-default" title="Toggle Grouping Nodes">Ungroup</button>
+    </form>
+  </script>
+  
+ 
+
+</body>
+</html>
+

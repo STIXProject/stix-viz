@@ -1,0 +1,261 @@
+****************************************************
+
+      STIX Viz v1alpha5
+
+ Copyright (c) 2014 - The MITRE Corporation
+ All rights reserved. See LICENSE.txt for complete terms.
+
+****************************************************
+
+BY USING THE STIX VIZ APPLICATION, YOU SIGNIFY YOUR ACCEPTANCE OF THE 
+TERMS AND CONDITIONS OF USE.  IF YOU DO NOT AGREE TO THESE TERMS, DO NOT USE 
+THE STIX VIZ APPLICATION. 
+
+For more information, please refer to the terms.txt file.
+
+#################################################################
+StixViz v1.0 alpha5
+Compatible with STIX v1.0.1
+
+This is a proof of concept prototype to visualize a set of STIX documents 
+as a node-link tree with the root at the top of the XML structure.
+
+StixViz is implemented in Javascript as a standalone application using the node-webkit
+application runtime which is based on the Chromium rendering engine and node.js.
+
+
+To use STIXViz, first select a set of related XML files using the
+'Choose Files' menu.  
+
+STIXViz v1.0a5 includes three different views of STIX documents: Graph View,
+Tree View and Timeline View. These views show the same information using different layouts. 
+To switch between views, use the drop-down menu at the top of the 
+window. On startup, the default view is Graph View.  
+
+
+Graph View
+
+Graph View displays the same entities as tree view, but in a fully connected
+graph layout. The graph view uses a force-directed graph layout in order to 
+dynamically position the nodes. Nodes may be dragged into a new position, 
+in which case the layout will dynamically reconfigure itself. 
+
+Nodes in the Graph View are expandable. The display begins with all but the top two 
+levels collapsed. To view the underlying structure of a node, single-click on the node 
+and it will expand. Single-click again and the node will collapse. Leaf nodes
+are nodes with no children, and are represented by a washed-out color scheme and 
+no dark border. 
+
+By default, the graph includes "Grouping" nodes which are a parent of all nodes of the same
+type. To remove these grouping nodes and see just the entity nodes in the graph, click
+the "Ungroup" button in the menu bar. 
+
+Hovering over a node in graph view highlights the links with other nodes. In-links
+are shown in blue and out-links in green. 
+
+Nodes may be fixed in position using the right-button context menu on each 
+node. If a node is fixed, it may be dragged to a new position and it will stay 
+where it was placed. Nodes may be un-fixed again using the context menu. 
+
+Nodes and links may be filtered using the Filter menu on the left of the screen. Uncheck 
+checkbox next to a node type to hide all nodes of that type. Click the plus sign next 
+to a node type to see a list of all link types associated with that node type. Filter
+links using the checkboxes next to the link types.
+
+Nodes may also be hidden using the context menu. To re-display a hidden node, 
+click on its parent node. 
+
+
+
+Tree View
+
+STIXViz Tree View displays a tree containing nodes for top
+level STIX entities:  campaign, course of action, exploit target,
+incident, indicator, observable, threat actor, and TTP. When the tree
+first displays, there is a top level node shown for each component type
+included in the xml files processed.  Nodes with a black and white
+border can be expanded with a single click.
+
+Each category of top level "items" is turned into a node in the tree. 
+The nodes themselves are expandable to show the structure of the relationships 
+between entities.  
+
+A down arrow on a link indicates that the child node is specified as
+part of the parent node's XML.  For instance, a campaign will contain
+links with down arrows to indicator nodes specified by
+campaign:Related_Indicators.
+
+An up arrow indicates that the parent node is specified via an idRef
+attribute in the child node.   For instance, a threat actor will contain
+links to it from incident nodes that specify it under
+incident:Threat_Actors.
+
+Long node names are truncated in the tree view.  Mousing over a named
+node will display the node's id if it has one, as well as the full
+version of the text used as it's name.
+
+A double click on a node will cause it to become the root node of the
+tree, hiding other branches from view.   Double click on the root node
+again to walk back up the tree.
+
+
+
+Timeline View: 
+
+The timeline view shows timestamped entities within a STIX document, such as 
+incidents and their associated activities. Events that occur at a single point
+in time are represented by a dot, and events that occur over a period of time (with a
+start and end time) are represented by a horizontal bar. Different types of 
+events are displayed with different colors, as denoted by the legend at the
+upper right of the timeline view. 
+
+The timeline can be zoomed and scrolled. When a new STIX file is loaded, it will 
+initially display the full extent of the time period represented in the file. To zoom in on 
+a specific period of time within the file, you can click and drag on the Overview bar
+below the main timeline display. When a region of time in the overview bar is selected, 
+the main timeline will zoom in on that region of time. You can then scroll the selected
+area within the overview bar and the main display will scroll to show the corresponding
+time interval.  
+
+
+
+HTML Transform
+
+The 'Show HTML' menu at the top of the page can be used to display an
+XSLT transformed file at the bottom of the STIXViz window. In both Tree View and
+Graph View, nodes that have an id specified in the XML file can be displayed 
+in the HTML view as well. To do this, click right on the node and select 'Show HTML'.
+
+
+
+This is a work in progress.  Feedback is most welcome!
+
+requirements:
+ - node webkit framework including mime module from node.js (currently tested with node-webkit v0.9.2) 
+ - node.js (currently tested with version 0.10.13)
+ - bootstrap.js (v3.0)
+ - d3.js (v3)
+ - jquery and jquery-ui (tested with jquery 1.10.2)
+ - Stix HTML package (tested with v1beta4)
+ - one or more STIX 1.0 input xml documents
+ - Java 1.7 executable for XSLT transforms
+    - Java Gson package (tested with 2.2.4)
+    - Saxon HE (tested with version 9.5.3)
+ 
+v1.0alpha5
+2014-06-13
+
+STIX - http://stix.mitre.org
+#################################################################
+--------------------------------------------------------------------------------
+--Included Files----------------------------------------------------------------
+
+README: this file.
+LICENSE.txt
+-src
+ -nodejs: Runnable NodeJS package 
+    index.html: The main html page for the application
+    package.json: node-webkit config file for the StixViz app
+    java.exe: Java executable needed for xslt STIX to HTML transform
+    -public
+     -js
+        StixViz.js: Top level StixViz app
+        JavaRpcClient.js: Remote connection to Java processing of XML transform
+        STIXJsonGeneration.js:Manages conversion of STIX files into JSON
+        STIXRelationshipJson.js: Transforms STIX XML into JSON data structure for tree layout
+        STIXTTPProcessing.js: Converts TTP structure to JSON
+        STIXNameResolver.js: Determine node names
+        STIXRelationshipTree.js: Displays the tree structure
+        STIXRelationshipGraph.js: Displays the graph structure
+        STIXTTPProcessing.js: Process TTPs into Json
+        STIXXSLTTransformer.js: Converts XML to HTML
+        STIXUtilities.js: Utilities for XML to JSON conversion
+        STIXRelationshipTimeline.js: Displays the Timeline view
+        STIXTimelineJson.js: converts STIX to JSON Format for timeline
+        -bootstrap
+          bootstrap.min.js
+        -d3
+          d3.v3.js
+        -jquery
+          jquery-1.10.2.min.js
+        -jquery-ui
+          jquery-ui-1.10.3.custom.min.js
+          jquery.ui.draggable.js
+          -plugin
+            jquery.layout-latest.min.js
+      -xslt
+        -images
+          directory of icon images
+        cybox_common.xsl
+        icons.xsl
+        normalize.xsl
+        stix_common.xsl
+        stix_to_html.xsl
+        common.js
+        wgxpath.install.js
+        common.css
+        theme_default.css
+        
+     -css
+      stixLayout.css: common styles used by all views
+      treeLayout.css: Stylesheet for tree display
+      graphLayout.css: Stylesheet for graph view
+      timeline.css: Stylesheet for timeline view
+      -bootstrap
+        bootstrap.min.css
+      -jquery-ui
+        jquery-ui-1.10.3.custom.min.css
+        -plugin
+          layout-default.css
+    -node_modules
+      mime
+        node.js mime package contents
+    -dist
+      NodeRpc.jar: java package for handling remote procedure calls to perform XSLT transform
+  -java
+    Source code for the Java RPC library to respond to requests for XSLT transform. The executable jar file 
+    containing this code is included in the "dist" directory of the nodejs package.
+    
+--------------------------------------------------------------------------------
+--Usage Notes-------------------------------------------------------------------
+
+Building: 
+The StixViz app depends on the node.js "mime" module which is available from the npm package management system.
+The mime module is already included in the node_modules directory of this package. To 
+reinstall the mime module, be sure you have node.js installed, then cd to the root directory of the StixViz app 
+and execute the command: 
+> npm install mime
+
+To run the StixViz app using node-webkit, execute the following command: 
+
+> nw.exe {path to StixViz main directory}
+
+To package the StixViz app to run standalone perform the following steps on Windows: 
+
+1. Create a zip file (NOT zipx) containing index.html, package.json, the public directory and the node_modules directory
+2. Name the zip file StixViz.nw
+3. At the command prompt run 
+> copy /b nw.exe+StixViz.nw StixViz.exe
+This will create an executable StixViz.exe 
+4. The executable requires the following files that come with the node-webkit distribution to be on the path:
+nw.pak 
+icudt.dll
+ffmpegsumo.dll
+libEGL.dll
+libGLESv2.dll
+
+On other platforms follow the instructions from https://github.com/rogerwang/node-webkit/wiki/How-to-package-and-distribute-your-apps 
+
+-- Runnning from Binary Executable --
+
+A pre-packaged Java 7 executable is available from the GitHub release page at 
+https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro_Windows_java7.zip
+
+A pre-packaged Java 8 executable is available from the GitHub release page at 
+https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixVizDistro_Windows_Java8.zip
+
+To run the pre-packaged Windows executable, extract all of the files included in the zip file into a directory and double click the file StixViz.exe. 
+
+A pre-packaged Mac OSX executable can be downloaded from https://github.com/STIXProject/stix-viz/releases/download/v1.0.5a/StixViz_Mac.zip.
+Extract StixViz.app from the zip file. 
+ 

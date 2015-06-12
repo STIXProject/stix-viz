@@ -1,0 +1,17 @@
+{
+    "name":"stix_viz",
+    "main":"index.html",
+    "description":"stix visualization app",
+    "version":"0.0.1",
+    "private":true,
+    "dependencies": {
+        "mime":"1.2.10"
+    },
+    "window":{
+        "toolbar":false,  
+        "width":1250,
+        "height":700,
+        "icon":"public/icons/werner_icon.png"
+    }
+    
+}

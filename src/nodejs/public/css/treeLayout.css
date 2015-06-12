@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2013 – The MITRE Corporation
+ * All rights reserved. See LICENSE.txt for complete terms.
+ * 
+ * This file contains the CSS for the Stix tree display
+ * 
+ * created 2013
+ * gertner@mitre.org
+ * lubar@mitre.org
+ * 
+ */
+
+#treeDiv {
+	height: 100%;
+	width: 100%;
+	overflow:auto;
+}
+
+.NodeTypeLabel {
+    font-size : 10px;
+    fill: white;
+}
+
+.nodeborder { 
+	stroke: yellow;
+	stroke-width: 5px;
+	fill:none;
+	z-index: 99;
+}
+
+.parentborder {
+  stroke: #333;
+  stroke-width: 2px;
+  fill:none;
+}
+
+.node.parent {
+  cursor: pointer;
+}
+
+.node image { 
+	opacity: 1;
+}
+
+.node text,h1,button { 
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: moz-none;
+-ms-user-select: none;
+user-select: none;
+}
+
+
+
+.node text {
+  font: 10px sans-serif;
+}
+
+/* For Tree view */
+path.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+
+
+.infocus { 
+	background-color: yellow;
+}
+
+
