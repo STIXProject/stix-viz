@@ -621,19 +621,20 @@ var StixGraph = function () {
 
 		if (!hasChildren(d)) return; // ignore leaf nodes
 
-		var numChildren = getChildCount(d);
-		if(numChildren >=  nodeWarnThresh)
-		{
-			var r=confirm("This node has "+numChildren+" child nodes! Do you still want to expand this node?");
-		}
-		else
-		{
-			r = true;
-		}
-		if (r===true)
-		{
-			d3.select('body').classed('loading',true);  // Set wait cursor while expanding
-			if (d._children && d._children.length > 0) {
+
+		d3.select('body').classed('loading',true);  // Set wait cursor while expanding
+		if (d._children && d._children.length > 0) {
+			var numChildren = getChildCount(d);
+			if(numChildren >=  nodeWarnThresh)
+			{
+				var r=confirm("This node has "+numChildren+" child nodes! Do you still want to expand this node?");
+			}
+			else
+			{
+				r = true;
+			}
+			if (r===true)
+			{
 				d.children = d._children.concat(d.children);
 				d._children = [];
 				d.children.forEach(function (c) {
@@ -652,28 +653,28 @@ var StixGraph = function () {
 						}
 					});
 				});
-			} else {
-				d._children = d.children.concat(d._children);
-				d.children = [];
-				// collapse other nodes that have children in common with the clicked node
-				d._children.forEach(function (c) { 
-					$.each(c.parents,function (id,properties) {
-						n = properties.node;
-						if (n.children) {
-							pos = n.children.indexOf(c);
-							if (pos > -1) {
-								n._children.push(c);
-								n.children.splice(pos,1); // remove node from other node's children
-							}
-						}
-					});
-				});
 			} 
-			update();
-			$(this).mouseenter();
-			d3.select('body').classed('loading',false);
-		}	
-	}	
+		} else {
+			d._children = d.children.concat(d._children);
+			d.children = [];
+			// collapse other nodes that have children in common with the clicked node
+			d._children.forEach(function (c) { 
+				$.each(c.parents,function (id,properties) {
+					n = properties.node;
+					if (n.children) {
+						pos = n.children.indexOf(c);
+						if (pos > -1) {
+							n._children.push(c);
+							n.children.splice(pos,1); // remove node from other node's children
+						}
+					}
+				});
+			});
+		}
+		update();
+		$(this).mouseenter();
+		d3.select('body').classed('loading',false);
+	}
 
 	/** 
 	 * Reposition nodes and links on each tick
@@ -854,6 +855,13 @@ var StixGraph = function () {
             var counter = {};
             var uniqueCount = 0;
             d._children.forEach(function (cc) {
+                if(!counter[cc.id])
+                {
+                    counter[cc.id] = cc.id;
+                    uniqueCount++;
+                }
+            });
+            d.children.forEach(function (cc) {
                 if(!counter[cc.id])
                 {
                     counter[cc.id] = cc.id;
