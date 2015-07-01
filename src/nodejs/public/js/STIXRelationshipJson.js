@@ -76,139 +76,228 @@ function createRelationshipJson(jsonObj, topLevelNodes, topNodeName) {
     return jsonObj;
 }
 
+function processSingleCampaign(ca, allBottomUpInfo, relationship, direction) {
+	var caJson = null;
+    var caChildren = null;
+    var caId = "";
+	caId = getObjIdStr(ca);
+	
+	if (direction == "sibling") {
+		caJson = createSiblingNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+	}
+	else {
+		caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+	}
+    // children are related_ttps, related_incidents, related_indicators, attribution(threat actors)
+    caChildren = [];
+    var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
+    $.merge(caChildren, processChildTTPs(relatedTTPs, 'campaign:Related_TTP'));
+    var incidents = xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca);
+    $.merge(caChildren, processChildIncidents(incidents, 'campaign:Related_Incident'));
+    var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
+    $.merge(caChildren, processChildIndicators(indicators, 'campaign:Related_Indicator'));
+    var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
+    $.merge(caChildren, processChildThreatActors(attributedActors, 'campaign:Attributed_Threat_Actor'));
+    var associatedCampaigns = xpFind('.//campaign:Associated_Campaign', ca);
+    $.merge(caChildren, processChildCampaigns(associatedCampaigns, 'campaign:Associated_Campaign'));
+    if (caChildren.length > 0) {
+        caJson["children"] = caChildren;
+    }
+	if ((caId != "") && (allBottomUpInfo != null)) {
+        $(relatedTTPs).each(function (index, ttp) {
+        	addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ca, caId);
+        });
+        $(incidents).each(function (index, incident) {
+        	addToBottomUpInfo(allBottomUpInfo['incidentBottomUpInfo'], $(xpFindSingle(STIXPattern.incident, incident)), STIXGroupings.ca, caId);
+        });
+        $(indicators).each(function (index, indi) {
+        	addToBottomUpInfo(allBottomUpInfo['indiBottomUpInfo'], $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.ca, caId);
+        });
+        $(attributedActors).each(function (index, actor) {
+        	addToBottomUpInfo(allBottomUpInfo['taBottomUpInfo'], $(xpFindSingle(STIXPattern.ta, actor)), STIXGroupings.ca, caId);
+        });
+	}
+	return caJson;
+}
+
 //TODO add associated campaigns
 function processCampaignObjs(caObjs, allBottomUpInfo) {
     var campaignNodes = [];
     var caJson = null;
-    var caChildren = null;
-    var caId = "";
     $(caObjs).each(function (index, ca) {
-    		caId = getObjIdStr(ca);
-            caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), "");
-            // children are related_ttps, related_incidents, related_indicators, attribution(threat actors)
-            caChildren = [];
-            var relatedTTPs = xpFind('.//campaign:Related_TTPs//campaign:Related_TTP', ca);
-            $.merge(caChildren, processChildTTPs(relatedTTPs, 'campaign:Related_TTP'));
-            var incidents = xpFind('.//campaign:Related_Incidents//campaign:Related_Incident', ca);
-            $.merge(caChildren, processChildIncidents(incidents, 'campaign:Related_Incident'));
-            var indicators = xpFind('.//campaign:Related_Indicators//campaign:Related_Indicator', ca);
-            $.merge(caChildren, processChildIndicators(indicators, 'campaign:Related_Indicator'));
-            var attributedActors = xpFind('.//campaign:Attribution//campaign:Attributed_Threat_Actor', ca);
-            $.merge(caChildren, processChildThreatActors(attributedActors, 'campaign:Attributed_Threat_Actor'));
-            var associatedCampaigns = xpFind('.//campaign:Associated_Campaign', ca);
-            $.merge(caChildren, processChildCampaigns(associatedCampaigns, 'campaign:Associated_Campaign'));
-            if (caChildren.length > 0) {
-                caJson["children"] = caChildren;
-            }
-        	if (caId != "") {
-	            $(relatedTTPs).each(function (index, ttp) {
-	            	addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ca, caId);
-	            });
-	            $(incidents).each(function (index, incident) {
-	            	addToBottomUpInfo(allBottomUpInfo['incidentBottomUpInfo'], $(xpFindSingle(STIXPattern.incident, incident)), STIXGroupings.ca, caId);
-	            });
-	            $(indicators).each(function (index, indi) {
-	            	addToBottomUpInfo(allBottomUpInfo['indiBottomUpInfo'], $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.ca, caId);
-	            });
-	            $(attributedActors).each(function (index, actor) {
-	            	addToBottomUpInfo(allBottomUpInfo['taBottomUpInfo'], $(xpFindSingle(STIXPattern.ta, actor)), STIXGroupings.ca, caId);
-	            });
-        	}
-            campaignNodes.push(caJson);
+    	caJson = processSingleCampaign(ca, allBottomUpInfo, "", "topDown");
+        campaignNodes.push(caJson);
         });
     return campaignNodes;
+}
+
+function processSingleCoa(coa, relationship, direction) {
+	var coaJson = null;
+	var coaId = null;
+	coaId = getObjIdStr(coa);
+	if (direction == "sibling") {
+		coaJson = createSiblingNode(coaId, STIXType.coa, getBestCourseOfActionName(coa), relationship);
+	}
+	else {
+		coaJson = createTopDownNode(coaId, STIXType.coa, getBestCourseOfActionName(coa), relationship);
+	}
+	var relatedCoas = xpFind('.//coa:Related_COA', coa);
+	var coaChildren = processChildCoas(relatedCoas, 'coa:Related_COA');
+	coaJson["children"] = coaChildren;
+	return coaJson;
 }
 
 function processCoaObjs(coaObjs) {
 	var coaNodes = [];
 	var coaJson = null;
-	var coaId = null;
 	$(coaObjs).each(function (index, coa) {
-		coaId = getObjIdStr(coa);
-		coaJson = createTopDownNode(coaId, STIXType.coa, getBestCourseOfActionName(coa), "");
-		var relatedCoas = xpFind('.//coa:Related_COA', coa);
-		var coaChildren = processChildCoas(relatedCoas, 'coa:Related_COA');
-		coaJson["children"] = coaChildren;
+		coaJson = processSingleCoa(coa, "", "topDown");
 		coaNodes.push(coaJson);
 	});
 	return coaNodes;
 }
 
-function processETObjs(etObjs, coaBottomUpInfo) {
-	var etNodes = [];
+function processSingleET(et, coaBottomUpInfo, relationship, direction) {
 	var etJson = null;
 	var etId = null;
 	var etChildren = null;
+	
+	etId = getObjIdStr(et);
+	if (direction == "sibling") {
+		etJson = createSiblingNode(etId, STIXType.et, getBestExploitTargetName(et), relationship);		
+	}
+	else {
+		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et), relationship);
+	}
+    var coas = xpFind('.//et:Potential_COA', et);
+	etChildren = processChildCoas(coas, 'et:Potential_COA');
+	var ets = xpFind('.//et:Related_Exploit_Target', et);
+	$.merge(etChildren, processChildExploitTargets(ets, 'et:Related_Exploit_Target'));
+	if (etChildren.length > 0) {
+		etJson["children"] = etChildren;
+	}
+    if ((etId != "") && (coaBottomUpInfo != null)) {
+    	$(coas).each(function(index, coa) {
+    		addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), STIXGroupings.et, etId);
+    	});
+    }
+    return etJson;
+}
+
+function processETObjs(etObjs, coaBottomUpInfo) {
+	var etNodes = [];
+	var etJson = null;
 	$(etObjs).each(function (index, et) {
-		etId = getObjIdStr(et);
-		etJson = createTopDownNode(etId, STIXType.et, getBestExploitTargetName(et), "");
-        var coas = xpFind('.//et:Potential_COA', et);
-		etChildren = processChildCoas(coas, 'et:Potential_COA');
-		var ets = xpFind('.//et:Related_Exploit_Target', et);
-		$.merge(etChildren, processChildExploitTargets(ets, 'et:Related_Exploit_Target'));
-		if (etChildren.length > 0) {
-			etJson["children"] = etChildren;
-		}
-        if (etId != "") {
-        	$(coas).each(function(index, coa) {
-        		addToBottomUpInfo(coaBottomUpInfo, $(xpFindSingle(STIXPattern.coa, coa)), STIXGroupings.et, etId);
-        	});
-        }
+		etJson = processSingleET(et, coaBottomUpInfo, "", "topDown");
 		etNodes.push(etJson);
 	});
 	return etNodes;
 }
 
-function processIncidentObjs(incidentObjs, allBottomUpInfo) {
-    var incidentNodes = [];
+function processSingleIncident(incident, allBottomUpInfo, relationship, direction) {
     var incidentJson = null;
     var incidentChildren = null;
     var incidentId = null;
+    
+   	incidentId = getObjIdStr(incident);
+   	if (direction == "sibling") {
+   		incidentJson = createSiblingNode(incidentId, STIXType.incident, getBestIncidentName(incident), relationship);
+   	}
+   	else {
+   		incidentJson = createTopDownNode(incidentId, STIXType.incident, getBestIncidentName(incident), relationship);
+   	}
+	// children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
+	incidentChildren = [];
+	var indicators = xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident);
+	$.merge(incidentChildren, processChildIndicators(indicators, 'incident:Related_Indicator'));
+	var observables = xpFind('.//incident:Related_Observables//incident:Related_Observable', incident);
+	$.merge(incidentChildren, processChildObservables(observables, 'incident:Related_Observable'));
+	var ttps = xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident);
+	$.merge(incidentChildren, processChildTTPs(ttps, 'incident:Leveraged_TTP'));
+	var tas = xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident);
+	$.merge(incidentChildren, processChildThreatActors(tas, 'incident:Threat_Actor'));
+	var coas = xpFind('./incident:COA_Requested', incident);	
+	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Requested'));
+	coas = xpFind('./incident:COA_Taken', incident);    	
+	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Taken'));
+	var relatedIncidents = xpFind('./incident:Related_Incident', incident);
+	$.merge(incidentChildren, processChildIncidents(relatedIncidents, 'incident:Related_Incident'));
+	if (incidentChildren.length > 0) {
+		incidentJson["children"] = incidentChildren;
+	}
+	if ((incidentId != "") && (allBottomUpInfo != null)) {
+		$(indicators).each(function (index, indi) {
+			addToBottomUpInfo(allBottomUpInfo['indiBottomUpInfo'], $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.incident, incidentId);
+		});
+		$(observables).each(function (index, obs) {
+			addToBottomUpInfo(allBottomUpInfo['obsBottomUpInfo'], $(xpFindSingle(STIXPattern.obs, obs)), STIXGroupings.incident, incidentId);
+		});
+		$(ttps).each(function (index, ttp) {
+			addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.incident, incidentId);
+		});
+		$(tas).each(function (index, ta) {
+			addToBottomUpInfo(allBottomUpInfo['taBottomUpInfo'], $(xpFindSingle(STIXPattern.ta, ta)), STIXGroupings.incident, incidentId);
+		});
+		$(coas).each(function (index, coa) {
+			addToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle('./incident:Course_Of_Action', coa)), STIXGroupings.incident, incidentId);
+		});
+		$(coas).each(function (index, coa) {
+			addToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle('./incident:Course_Of_Action', coa)), incidentId);
+		});
+	} 
+	return incidentJson;
+}
+
+function processIncidentObjs(incidentObjs, allBottomUpInfo) {
+    var incidentNodes = [];
+    var incidentJson = null;
     $(incidentObjs).each(function (index, incident) {
-    	incidentId = getObjIdStr(incident);
-    	incidentJson = createTopDownNode(incidentId, STIXType.incident, getBestIncidentName(incident), "");
-    	// children are related_indicators, related_observables, leverage_TTPs, Attributed_Threat_Actors
-    	incidentChildren = [];
-    	var indicators = xpFind('.//incident:Related_Indicators//incident:Related_Indicator', incident);
-    	$.merge(incidentChildren, processChildIndicators(indicators, 'incident:Related_Indicator'));
-    	var observables = xpFind('.//incident:Related_Observables//incident:Related_Observable', incident);
-    	$.merge(incidentChildren, processChildObservables(observables, 'incident:Related_Observable'));
-    	var ttps = xpFind('.//incident:Leveraged_TTPs//incident:Leveraged_TTP', incident);
-    	$.merge(incidentChildren, processChildTTPs(ttps, 'incident:Leveraged_TTP'));
-    	var tas = xpFind('./incident:Attributed_Threat_Actors//incident:Threat_Actor', incident);
-    	$.merge(incidentChildren, processChildThreatActors(tas, 'incident:Threat_Actor'));
-    	var coas = xpFind('./incident:COA_Requested', incident);	
-    	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Requested'));
-    	coas = xpFind('./incident:COA_Taken', incident);    	
-    	$.merge(incidentChildren, processChildCoas(coas, 'incident:COA_Taken'));
-    	var relatedIncidents = xpFind('./incident:Related_Incident', incident);
-    	$.merge(incidentChildren, processChildIncidents(relatedIncidents, 'incident:Related_Incident'));
-    	if (incidentChildren.length > 0) {
-    		incidentJson["children"] = incidentChildren;
-    	}
-		if (incidentId != "") {
-			$(indicators).each(function (index, indi) {
-				addToBottomUpInfo(allBottomUpInfo['indiBottomUpInfo'], $(xpFindSingle(STIXPattern.indi, indi)), STIXGroupings.incident, incidentId);
-			});
-			$(observables).each(function (index, obs) {
-				addToBottomUpInfo(allBottomUpInfo['obsBottomUpInfo'], $(xpFindSingle(STIXPattern.obs, obs)), STIXGroupings.incident, incidentId);
-			});
-			$(ttps).each(function (index, ttp) {
-				addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.incident, incidentId);
-			});
-			$(tas).each(function (index, ta) {
-				addToBottomUpInfo(allBottomUpInfo['taBottomUpInfo'], $(xpFindSingle(STIXPattern.ta, ta)), STIXGroupings.incident, incidentId);
-			});
-			$(coas).each(function (index, coa) {
-				addToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle('./incident:Course_Of_Action', coa)), STIXGroupings.incident, incidentId);
-			});
-			$(coas).each(function (index, coa) {
-				addToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle('./incident:Course_Of_Action', coa)), incidentId);
-			});
-		} 
+    	incidentJson = processSingleIncident(incident, allBottomUpInfo, "", "topDown");
     	incidentNodes.push(incidentJson);
 		});
     return incidentNodes;
+}
+
+function processSingleIndicator(indi, subType, allBottomUpInfo, relationship, direction) {
+	var childJson = null;
+	var indiChildren = [];
+	var indiId = null;	
+	
+	indiId = getObjIdStr(indi);
+	if (direction == "sibling") {
+		childJson = createSiblingNode(indiId, STIXType.indi, getBestIndicatorName(indi), relationship);		
+	}
+	else {
+		childJson = createTopDownNode(indiId, STIXType.indi, getBestIndicatorName(indi), relationship);
+	}
+    if (allBottomUpInfo != null) {
+    	addBottomUpInfoToChildren(childJson, allBottomUpInfo['indiBottomUpInfo']);
+    }
+	indiChildren = childJson["children"];
+	var coas = xpFind('.//indicator:Suggested_COA', indi);
+	$.merge(indiChildren, processChildCoas(coas, 'indicator:Suggested_COA'));
+	// children are Indicated_TTP, Observables
+    var indicatedTTPs = xpFind('.//indicator:Indicated_TTP', indi);
+	$.merge(indiChildren, processChildTTPs(indicatedTTPs, 'indicator:Indicated_TTP'));
+	var observables = xpFind('.//indicator:Observable', indi);
+	$.merge(indiChildren, processChildObservables(observables, 'indicator:Observable'));
+	var relatedIndicators = xpFind('.//indicator:Related_Indicator', indi);
+	$.merge(indiChildren, processChildIndicators(relatedIndicators, 'indicator:Related_Indicator'));
+	if ((indiId != "") && (allBottomUpInfo != null)) {
+		$(coas).each(function (index, coa) {
+			addIndicatorToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
+		});
+		$(indicatedTTPs).each(function (index, indicatedTTP) {
+			addIndicatorToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, indicatedTTP)), subType, indiId);
+		});
+		$(observables).each(function (index, obs) {
+			addIndicatorToBottomUpInfo(allBottomUpInfo['obsBottomUpInfo'], obs, subType, indiId);
+		});
+	}
+	if (indiChildren.length > 0) {
+		childJson["children"] = indiChildren;
+	}
+	return childJson;
 }
 
 // TODO add related_indicators
@@ -216,43 +305,18 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
 	var subTypeMap = {};
 	var subType = null;
 	var indiNodes = [];
-	var indiJson = null;
-	var indiChildren = [];
-	var indiId = null;
+	var indiJson = null;	
+	var childJson = null;
 	// first, group indicators by indicator type
 	$(indiObjs).each(function (index, indi) {	
 		subType = "not specified";
-		indiId = getObjIdStr(indi);
-	    var childJson = createTopDownNode(indiId, STIXType.indi, getBestIndicatorName(indi), "");
+
 	    var typeNode = xpFindSingle('.//indicator:Type', indi);
 	    if (typeNode != null) {
 	    	subType = $(typeNode).text();
 	    }
-	    addBottomUpInfoToChildren(childJson, allBottomUpInfo['indiBottomUpInfo']);
-		indiChildren = childJson["children"];
-		var coas = xpFind('.//indicator:Suggested_COA', indi);
-		$.merge(indiChildren, processChildCoas(coas, 'indicator:Suggested_COA'));
-		// children are Indicated_TTP, Observables
-	    var indicatedTTPs = xpFind('.//indicator:Indicated_TTP', indi);
-		$.merge(indiChildren, processChildTTPs(indicatedTTPs, 'indicator:Indicated_TTP'));
-		var observables = xpFind('.//indicator:Observable', indi);
-		$.merge(indiChildren, processChildObservables(observables, 'indicator:Observable'));
-		var relatedIndicators = xpFind('.//indicator:Related_Indicator', indi);
-		$.merge(indiChildren, processChildIndicators(relatedIndicators, 'indicator:Related_Indicator'));
-		if (indiId != "") {
-			$(coas).each(function (index, coa) {
-				addIndicatorToBottomUpInfo(allBottomUpInfo['coaBottomUpInfo'], $(xpFindSingle(STIXPattern.coa, coa)), subType, indiId);
-			});
-			$(indicatedTTPs).each(function (index, indicatedTTP) {
-				addIndicatorToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, indicatedTTP)), subType, indiId);
-			});
-			$(observables).each(function (index, obs) {
-				addIndicatorToBottomUpInfo(allBottomUpInfo['obsBottomUpInfo'], obs, subType, indiId);
-			});
-		}
-		if (indiChildren.length > 0) {
-			childJson["children"] = indiChildren;
-		}
+	    
+	    childJson = processSingleIndicator(indi, subType, allBottomUpInfo, "", "topDown");
 	    if (typeof(subTypeMap[subType]) == 'undefined') {
 	    	subTypeMap[subType] = [childJson];
 	    }
@@ -268,14 +332,22 @@ function processIndicatorObjs(indiObjs, allBottomUpInfo) {
     return indiNodes;
 }
 
+// there are no sibling relationships for observables so don't need direction param
+function processSingleObservable(obs, relationship) {
+	var obsJson = null;
+	var obsId = null;
+	
+	obsId = getObjIdStr(obs);
+	obsJson = createTopDownNode(obsId, STIXType.obs, getBestObservableName(obs), relationship);
+	return obsJson;
+}
+
 // NOT including sub-observables for now
 function processObservableObjs(obsObjs) {
 	var obsNodes = [];
-	var obsJson = null;
-	var obsId = null;
+
 	$(obsObjs).each(function (index, obs) {
-		obsId = getObjIdStr(obs);
-		obsJson = createTopDownNode(obsId, STIXType.obs, getBestObservableName(obs), "");
+		obsJson = processSingleObservable(obs, "");
 		obsNodes.push(obsJson);
 	});
 	return obsNodes;
@@ -341,6 +413,40 @@ function processReportObjs(rptObjs, allBottomUpInfo) {
 	return rptNodes;
 }
 
+function processSingleThreatActor(ta, allBottomUpInfo, relationship, direction) {
+    var taJson = null;
+    var taChildren = null;
+    var taId = null;
+    
+	taId = getObjIdStr(ta);
+	if (direction == "sibling") {
+		taJson = createSiblingNode(taId, STIXType.ta, getBestThreatActorName(ta), relationship);		
+	}
+	else {
+		taJson = createTopDownNode(taId, STIXType.ta, getBestThreatActorName(ta), relationship);
+	}
+    // children are observed_ttps, associated_campaigns, <Incidents>
+    taChildren = [];
+    var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
+    $.merge(taChildren, processChildTTPs(relatedTTPs, 'threat-actor:Observed_TTP'));
+    var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
+    $.merge(taChildren, processChildCampaigns(campaigns, 'threat-actor:Associated_Campaign'));
+    var relatedActors = xpFind('.//threat-actor:Associated_Actor', ta);
+    $.merge(taChildren, processChildThreatActors(relatedActors, 'threat-actor:Associated_Actor'));
+    if (taChildren.length > 0) {
+        taJson["children"] = taChildren;
+    }
+	if ((taId != "") && (allBottomUpInfo != null)) {
+        $(relatedTTPs).each(function (index, ttp) {
+        	addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ta, taId);
+        });
+        $(campaigns).each(function (index, ca) {
+        	addToBottomUpInfo(allBottomUpInfo['campaignBottomUpInfo'], ca, STIXGroupings.ta, taId);
+        });
+	}
+	return taJson;
+}
+
 // TODO - add associated actors
 // Note: if a threat actor is specified via Attribution in a campaign, and 
 //     the campaign is specified as an associated_campaign in the threat actor,
@@ -348,30 +454,8 @@ function processReportObjs(rptObjs, allBottomUpInfo) {
 function processThreatActorObjs(taObjs, allBottomUpInfo) {
     var taNodes = [];
     var taJson = null;
-    var taChildren = null;
-    var taId = null;
     $(taObjs).each(function (index, ta) {
-    		taId = getObjIdStr(ta);
-            taJson = createTopDownNode(taId, STIXType.ta, getBestThreatActorName(ta), "");
-            // children are observed_ttps, associated_campaigns, <Incidents>
-            taChildren = [];
-            var relatedTTPs = xpFind('.//threat-actor:Observed_TTP', ta);
-            $.merge(taChildren, processChildTTPs(relatedTTPs, 'threat-actor:Observed_TTP'));
-            var campaigns = xpFind('.//threat-actor:Associated_Campaign', ta);
-            $.merge(taChildren, processChildCampaigns(campaigns, 'threat-actor:Associated_Campaign'));
-            var relatedActors = xpFind('.//threat-actor:Associated_Actor', ta);
-            $.merge(taChildren, processChildThreatActors(relatedActors, 'threat-actor:Associated_Actor'));
-            if (taChildren.length > 0) {
-                taJson["children"] = taChildren;
-            }
-    		if (taId != "") {
-	            $(relatedTTPs).each(function (index, ttp) {
-	            	addToBottomUpInfo(allBottomUpInfo['ttpBottomUpInfo'], $(xpFindSingle(STIXPattern.ttp, ttp)), STIXGroupings.ta, taId);
-	            });
-	            $(campaigns).each(function (index, ca) {
-	            	addToBottomUpInfo(allBottomUpInfo['campaignBottomUpInfo'], ca, STIXGroupings.ta, taId);
-	            });
-    		}
+    	taJson = processSingleThreatActor(ta, allBottomUpInfo, "", "topDown");
             taNodes.push(taJson);
         });
     return taNodes;
@@ -440,10 +524,10 @@ function processChildCampaigns(cas, relationship) {
         else {  // inline specification
         	caId = getObjIdStr(ca);
         	if (relationship == 'campaign:Associated_Campaign') {
-        		caJson = createSiblingNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+        		caJson = processSingleCampaign(ca, null, relationship, "sibling");
         	}
         	else {
-        		caJson = createTopDownNode(caId, STIXType.ca, getBestCampaignName(ca), relationship);
+        		caJson = processSingleCampaign(ca, null, relationship, "topDown");
         	}
         }
         caNodes.push(caJson);
@@ -480,10 +564,10 @@ function processChildCoas(coas, relationship) {
 	        else { // inline definition
 	        	coaId = getObjIdStr(coa);
 	        	if (relationship == 'coa:Related_COA') {
-	        		coaJson = createSiblingNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        		coaJson = processSingleCoa(coa, relationship, "sibling");
 	        	}
 	        	else {
-	        		coaJson = createTopDownNode(coaId, STIXType.coa,getBestCourseOfActionName(coa), relationship);
+	        		coaJson = processSingleCoa(coa, relationship, "topDown");
 	        	}
 	        }
 	        coaNodes.push(coaJson);
@@ -516,10 +600,10 @@ function processChildExploitTargets(ets, relationship) {
         else { // inline definition
         	etId = getObjIdStr(etObj);
         	if (relationship == 'et:Related_Exploit_Target') {
-        		etJson = createSiblingNode(etId, STIXType.et,getBestExploitTargetName(etObj), relationship);
+        		etJson = processSingleET(et, null, relationship, "sibling");
         	}
         	else {
-        		etJson = createTopDownNode(etId, STIXType.et,getBestExploitTargetName(etObj), relationship);
+        		etJson = processSingleET(et, null, relationship, "topDown");
         	}
         }
         etNodes.push(etJson);	    
@@ -571,10 +655,10 @@ function processChildThreatActors(actors, relationship) {
         else { // inline definition
         	actorId = getObjIdStr(actor);
         	if (relationship == 'threat-actor:Associated_Actor') {
-        		actorJson = createSiblingNode(actorId, STIXType.ta,getBestThreatActorName(actor), relationship);
+        		actorJson = processSingleThreatActor(actor, null, relationship, "sibling");
         	}
         	else {
-        		actorJson = createTopDownNode(actorId, STIXType.ta,getBestThreatActorName(actor), relationship);
+        		actorJson = processSingleThreatActor(actor, null, relationship, "topDown");
         	}
         }
         actorNodes.push(actorJson);	
@@ -607,9 +691,10 @@ function processChildIncidents(incidents, relationship) {
         	incidentId = getObjIdStr(incident);
         	if (relationship == 'incident:Related_Incident') {
         		incidentJson = createSiblingNode(incidentId, STIXType.incident,getBestIncidentName(incident), relationship);
+        		incidentJson = processSingleIncident(incident, null, relationship, "sibling");
         	}
         	else {
-        		incidentJson = createTopDownNode(incidentId, STIXType.incident,getBestIncidentName(incident), relationship);
+            	incidentJson = processSingleIncident(incident, null, relationship, "topDown");
         	}
         }
         incidentNodes.push(incidentJson);	
@@ -641,10 +726,10 @@ function processChildIndicators(indis, relationship) {
         else { // inline definition
         	indiId = getObjIdStr(indi);
         	if (relationship == 'indicator:Related_Indicator') {
-        		indiJson = createSiblingNode(indiId, STIXType.indi,getBestIndicatorName(indi), relationship);
+        		indiJson = processSingleIndicator(indi, null, null, relationship, "sibling");
         	}
         	else {
-        		indiJson = createTopDownNode(indiId, STIXType.indi,getBestIndicatorName(indi), relationship);
+        		indiJson = processSingleIndicator(indi, null, null, relationship, "topDown");
         	}
         }
 		indiNodes.push(indiJson);			
@@ -655,7 +740,7 @@ function processChildIndicators(indis, relationship) {
 // look for idRef, if not found, process as inline
 function processChildObservables(observables, relationship) {
     var obsNodes = [];
-    var obsId = null;
+    var obsJson = null;
     $(observables).each(function (index, obs) {
     	var idRef = getObjIdRefStr(obs);  // indicators have idRef on them
     	if (idRef == "") {   // other refs are on Observable
@@ -665,8 +750,8 @@ function processChildObservables(observables, relationship) {
     		obsNodes.push(createTopDownIdRef(STIXType.obs, idRef, relationship));
     	}
     	else { // process inline definition
-    		obsId = getObjIdStr(obs);
-    		obsNodes.push(createTopDownNode(obsId, STIXType.obs,getBestObservableName(obs), relationship));
+    		obsJson = processSingleObservable(obs, relationship);
+    		obsNodes.push(obsJson);
     	}
     });
     return obsNodes;
