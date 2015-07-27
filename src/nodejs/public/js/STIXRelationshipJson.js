@@ -522,7 +522,6 @@ function processChildCampaigns(cas, relationship) {
         	}
         }
         else {  // inline specification
-        	caId = getObjIdStr(ca);
         	if (relationship == 'campaign:Associated_Campaign') {
         		caJson = processSingleCampaign(ca, null, relationship, "sibling");
         	}
@@ -562,7 +561,6 @@ function processChildCoas(coas, relationship) {
 	        	}
 	        }	
 	        else { // inline definition
-	        	coaId = getObjIdStr(coa);
 	        	if (relationship == 'coa:Related_COA') {
 	        		coaJson = processSingleCoa(coa, relationship, "sibling");
 	        	}
@@ -598,12 +596,11 @@ function processChildExploitTargets(ets, relationship) {
 	    	}
 	    }
         else { // inline definition
-        	etId = getObjIdStr(etObj);
         	if (relationship == 'et:Related_Exploit_Target') {
-        		etJson = processSingleET(et, null, relationship, "sibling");
+        		etJson = processSingleET(etObj, null, relationship, "sibling");
         	}
         	else {
-        		etJson = processSingleET(et, null, relationship, "topDown");
+        		etJson = processSingleET(etObj, null, relationship, "topDown");
         	}
         }
         etNodes.push(etJson);	    
@@ -653,7 +650,6 @@ function processChildThreatActors(actors, relationship) {
 	    	}
 	    }
         else { // inline definition
-        	actorId = getObjIdStr(actor);
         	if (relationship == 'threat-actor:Associated_Actor') {
         		actorJson = processSingleThreatActor(actor, null, relationship, "sibling");
         	}
@@ -724,7 +720,6 @@ function processChildIndicators(indis, relationship) {
 			}
 		}
         else { // inline definition
-        	indiId = getObjIdStr(indi);
         	if (relationship == 'indicator:Related_Indicator') {
         		indiJson = processSingleIndicator(indi, null, null, relationship, "sibling");
         	}
