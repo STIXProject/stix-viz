@@ -17,7 +17,7 @@ For more information, please refer to the terms.txt file.
 StixViz v1.0 alpha5
 Compatible with STIX v1.0.1
 
-This is a proof of concept prototype to visualize a set of STIX documents 
+This is a proof of concept prototype to visualize a set of Structured Threat Information eXpression (STIX™) documents 
 as a node-link tree with the root at the top of the XML structure.
 
 StixViz is implemented in Javascript as a standalone application using the node-webkit
@@ -100,7 +100,7 @@ again to walk back up the tree.
 
 
 
-Timeline View: 
+Timeline View 
 
 The timeline view shows timestamped entities within a STIX document, such as 
 incidents and their associated activities. Events that occur at a single point
@@ -145,7 +145,7 @@ requirements:
 v1.0alpha5
 2014-06-13
 
-STIX - http://stix.mitre.org
+STIX - https://stixproject.github.io/
 #################################################################
 --------------------------------------------------------------------------------
 --Included Files----------------------------------------------------------------
